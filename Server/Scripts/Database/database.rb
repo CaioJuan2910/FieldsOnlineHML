@@ -5,74 +5,52 @@
 # e lista de banidos.
 #------------------------------------------------------------------------------
 #  Autor: Valentine
-#  Revisão: Caio Juan De Lima Silva — Março 2026
 #==============================================================================
-
-# Dependência: require 'digest' (usado para hash de senha via SHA256)
-require 'digest'
 
 module Database
 
-	# --- Conexão ---
-
 	def self.sql_client
 		if DATABASE_PATH.empty?
+			#Sequel.connect("mysql2://#{DATABASE_USER}:#{DATABASE_PASS}@#{DATABASE_HOST}:#{DATABASE_PORT}/#{DATABASE_NAME}")
 			Sequel.connect("postgres://#{DATABASE_USER}:#{DATABASE_PASS}@#{DATABASE_HOST}/#{DATABASE_NAME}")
 		else
 			Sequel.connect("sqlite://Data/#{DATABASE_PATH}.db")
 		end
 	end
 
-	# Gera um hash SHA256 da senha fornecida.
-	# AVISO: Em produção, considere BCrypt no lugar de SHA256 para maior segurança.
-	def self.hash_password(pass)
-		Digest::SHA256.hexdigest(pass)
-	end
-
-	# --- Conta ---
-
 	def self.create_account(user, pass, email)
 		s_client = sql_client
-		begin
-			# Transação garante atomicidade — ou tudo é salvo, ou nada é
-			s_client.transaction do
-				s_client[:accounts].insert(:username => user, :password => hash_password(pass), :email => email,
-				  :vip_time => Time.now.to_i, :creation_date => Time.now.to_i, :cash => 0)
-				account_id_db = s_client[:accounts].select(:id).where(:username => user).single_value
-				s_client[:banks].insert(:account_id => account_id_db)
-			end
-		rescue Sequel::Error => e
-			puts "[Database] Erro ao criar conta #{user}: #{e.message}"
-		ensure
-			s_client.disconnect
-		end
+		# Salva o valor 0 em cash para que esta coluna, cujo tipo é text, não fique vazia
+		s_client[:accounts].insert(:username => user, :password => pass, :email => email, 
+		  :vip_time => Time.now.to_i, :creation_date => Time.now.to_i, :cash => 0)
+		account_id_db = s_client[:accounts].select(:id).where(:username => user).single_value
+		s_client[:banks].insert(:account_id => account_id_db)
+		s_client.disconnect
 	end
 
 	def self.load_account(user)
 		s_client = sql_client
-		begin
-			result = s_client[:accounts].where(:username => user)
-			account = Account.new
-			account.id_db = result.get(:id)
-			account.pass_hash = result.get(:password)
-			account.group = result.get(:group)
-			account.vip_time = [Time.at(result.get(:vip_time)), Time.now].max
-			account.friends = s_client[:account_friends].select(:name).where(:account_id => account.id_db).map(:name)
-			account.actors = {}
-			actors = s_client[:actors].where(:account_id => account.id_db)
-			actors.each { |row| account.actors[row[:slot_id]] = load_player(row, s_client) }
-			account
-		rescue Sequel::Error => e
-			puts "[Database] Erro ao carregar conta #{user}: #{e.message}"
-			nil
-		ensure
-			s_client.disconnect
-		end
+		result = s_client[:accounts].where(:username => user)#Sequel.ilike(:username, "#{user}%"))
+		account = Account.new
+		account.id_db = result.get(:id)
+		account.pass = result.get(:password)
+		account.group = result.get(:group)
+		account.vip_time = [Time.at(result.get(:vip_time)), Time.now].max
+		account.friends = s_client[:account_friends].select(:name).where(:account_id => account.id_db).map(:name)
+		account.actors = {}
+		actors = s_client[:actors].where(:account_id => account.id_db)
+		actors.each { |row| account.actors[row[:slot_id]] = load_player(row, s_client) }
+		s_client.disconnect
+		account
 	end
 
 	def self.save_account(client, s_client)
+		# Carrega vip_time da conta no banco de dados, pois o jogador pode ter
+		#comprado vip na loja do site durante o jogo
 		vip_time = [s_client[:accounts].select(:vip_time).where(:id => client.account_id_db).single_value, Time.now.to_i].max
 		s_client[:accounts].where(:id => client.account_id_db).update(:vip_time => vip_time + client.added_vip_time)
+		# Atualiza o tempo VIP e reseta o tempo VIP adicionado caso o jogador
+		#vá para seleção de personagens e depois volte para o jogo
 		client.vip_time = Time.at(vip_time) + client.added_vip_time
 		client.added_vip_time = 0
 		friends = s_client[:account_friends].select(:name).where(:account_id => client.account_id_db).map(:name)
@@ -86,13 +64,11 @@ module Database
 
 	def self.account_exist?(user)
 		s_client = sql_client
-		account = s_client[:accounts].select(:id).where(:username => user)
+		account = s_client[:accounts].select(:id).where(:username => user)#Sequel.ilike(:username, "#{user}%"))
 		s_client.disconnect
 		!account.empty?
 	end
-
-	# --- Personagem ---
-
+	
 	def self.create_player(client, actor_id, name, character_index, class_id, sex, params, points)
 		actor = Actor.new
 		actor.name = name
@@ -124,41 +100,38 @@ module Database
 		actor.skills = []
 		$data_classes[class_id].learnings.each { |learning| actor.skills << learning.skill_id if learning.level <= actor.level }
 		actor.quests = {}
+		# Preenche a matriz com objetos mutáveis separados
 		actor.hotbar = Array.new(Configs::MAX_HOTBAR) { Hotbar.new(0, 0) }
 		actor.switches = Array.new(Configs::MAX_PLAYER_SWITCHES, false)
 		actor.variables = Array.new(Configs::MAX_PLAYER_VARIABLES, 0)
 		actor.self_switches = {}
 		s_client = sql_client
-		# Transação garante atomicidade — ou tudo é salvo, ou nada é
-		s_client.transaction do
-			s_client[:actors].insert(:slot_id => actor_id, :account_id => client.account_id_db, :name => actor.name,
-				:character_name => actor.character_name, :character_index => actor.character_index, :face_name => actor.face_name,
-			  :face_index => actor.face_index, :class_id => actor.class_id, :sex => actor.sex, :level => actor.level,
-			  :exp => actor.exp, :hp => actor.hp, :mp => actor.mp, :mhp => actor.param_base[0], :mmp => actor.param_base[1],
-				:atk => actor.param_base[2], :def => actor.param_base[3], :int => actor.param_base[4], :res => actor.param_base[5],
-				:agi => actor.param_base[6], :luk => actor.param_base[7], :points => actor.points,
-				:revive_map_id => actor.revive_map_id, :revive_x => actor.revive_x, :revive_y => actor.revive_y,
-				:map_id => actor.map_id, :x => actor.x, :y => actor.y, :direction => actor.direction,
-				:creation_date => Time.now.to_i, :last_login => Time.now.to_i)
-			actor.id_db = s_client[:actors].select(:id).where(:name => actor.name).single_value
-			actor.equips.each_with_index { |equip_id, slot_id| s_client[:actor_equips].insert(:actor_id => actor.id_db, :slot_id => slot_id, :equip_id => equip_id) }
-			actor.skills.each { |skill| s_client[:actor_skills].insert(:actor_id => actor.id_db, :skill_id => skill) }
-			Configs::MAX_HOTBAR.times { |slot_id| s_client[:actor_hotbars].insert(:actor_id => actor.id_db, :slot_id => slot_id) }
-			Configs::MAX_PLAYER_SWITCHES.times { |switch_id| s_client[:actor_switches].insert(:actor_id => actor.id_db, :switch_id => switch_id + 1) }
-			Configs::MAX_PLAYER_VARIABLES.times { |variable_id| s_client[:actor_variables].insert(:actor_id => actor.id_db, :variable_id => variable_id + 1) }
-		end
+		s_client[:actors].insert(:slot_id => actor_id, :account_id => client.account_id_db, :name => actor.name,
+			:character_name => actor.character_name, :character_index => actor.character_index, :face_name => actor.face_name,
+		  :face_index => actor.face_index, :class_id => actor.class_id, :sex => actor.sex, :level => actor.level,
+		  :exp => actor.exp, :hp => actor.hp, :mp => actor.mp, :mhp => actor.param_base[0], :mmp => actor.param_base[1],
+			:atk => actor.param_base[2], :def => actor.param_base[3], :int => actor.param_base[4], :res => actor.param_base[5],
+			:agi => actor.param_base[6], :luk => actor.param_base[7], :points => actor.points,
+			:revive_map_id => actor.revive_map_id, :revive_x => actor.revive_x, :revive_y => actor.revive_y,
+			:map_id => actor.map_id, :x => actor.x, :y => actor.y, :direction => actor.direction, 
+			:creation_date => Time.now.to_i, :last_login => Time.now.to_i)
+		actor.id_db = s_client[:actors].select(:id).where(:name => actor.name).single_value
+		actor.equips.each_with_index { |equip_id, slot_id| s_client[:actor_equips].insert(:actor_id => actor.id_db, :slot_id => slot_id, :equip_id => equip_id) }
+		actor.skills.each { |skill| s_client[:actor_skills].insert(:actor_id => actor.id_db, :skill_id => skill) }
+		Configs::MAX_HOTBAR.times { |slot_id| s_client[:actor_hotbars].insert(:actor_id => actor.id_db, :slot_id => slot_id) }
+		Configs::MAX_PLAYER_SWITCHES.times { |switch_id| s_client[:actor_switches].insert(:actor_id => actor.id_db, :switch_id => switch_id + 1) }
+		Configs::MAX_PLAYER_VARIABLES.times { |variable_id| s_client[:actor_variables].insert(:actor_id => actor.id_db, :variable_id => variable_id + 1) }
 		s_client.disconnect
 		client.actors[actor_id] = actor
 	end
 
 	def self.load_some_player_data(name)
 		s_client = sql_client
-		actor = s_client[:actors].select(:account_id, :name).where(:name => name)
+		# O ilike pesquisa de maneira não sensível a maiúsculas e minúsculas no SQLite
+		actor = s_client[:actors].select(:account_id, :name).where(:name => name)#Sequel.ilike(:name, "#{name}%"))
 		s_client.disconnect
 		actor.map([:account_id, :name]).first
 	end
-
-	# --- Carregamento de Dados do Personagem ---
 
 	def self.load_player(row, s_client)
 		actor = Actor.new
@@ -181,12 +154,15 @@ module Database
 		actor.revive_x = row[:revive_x]
 		actor.revive_y = row[:revive_y]
 		map_id = row[:map_id]
+		# Se o mapa existe
 		actor.map_id = $network.maps.has_key?(map_id) ? map_id : actor.revive_map_id
 		actor.x = row[:x]
 		actor.y = row[:y]
 		actor.direction = row[:direction]
 		actor.gold = row[:gold]
 		actor.skills = s_client[:actor_skills].select(:skill_id).where(:actor_id => actor.id_db).map(:skill_id)
+		# O SQLite não possui uma classe de armazenamento booleana separada, por isso
+		#os valores booleanos são armazenados como inteiros 1 (true) e 0 (false)
 		actor.switches = s_client[:actor_switches].select(:value).where(:actor_id => actor.id_db).map { |r| r[:value] == 1 }
 		actor.variables = s_client[:actor_variables].select(:value).where(:actor_id => actor.id_db).map(:value)
 		actor.self_switches = {}
@@ -199,11 +175,12 @@ module Database
 		load_player_hotbar(actor, s_client)
 		actor
 	end
-
+	
 	def self.load_player_equips(actor, s_client)
 		actor.equips = []
 		equips = s_client[:actor_equips].select(:equip_id, :slot_id).where(:actor_id => actor.id_db)
 		equips.each do |row|
+			# Se o equipamento não existe no banco de dados
 			row[:equip_id] = 0 if row[:slot_id] == Enums::Equip::WEAPON && !$data_weapons[row[:equip_id]] ||
 			  row[:slot_id] > Enums::Equip::WEAPON && !$data_armors[row[:equip_id]]
 			actor.equips << row[:equip_id]
@@ -213,6 +190,7 @@ module Database
 	def self.load_player_items(actor, s_client)
 		actor.items = {}
 		items = s_client[:actor_items].select(:item_id, :amount).where(:actor_id => actor.id_db)
+		# Se o item existe no banco de dados
 		items.each { |row| actor.items[row[:item_id]] = row[:amount] if $data_items[row[:item_id]] }
 	end
 
@@ -238,52 +216,38 @@ module Database
 		actor.hotbar = []
 		hotbar = s_client[:actor_hotbars].select(:item_id, :type).where(:actor_id => actor.id_db)
 		hotbar.each do |row|
-			row[:type] = row[:item_id] = 0 if row[:type] == Enums::Hotbar::ITEM && !$data_items[row[:item_id]] ||
+			row[:type] = row[:item_id] = 0 if row[:type] == Enums::Hotbar::ITEM && !$data_items[row[:item_id]] || 
 			  row[:type] == Enums::Hotbar::SKILL && !$data_skills[row[:item_id]]
 			actor.hotbar << Hotbar.new(row[:type], row[:item_id])
 		end
 	end
 
-	# --- Salvamento de Dados do Personagem ---
-
 	def self.save_player(client)
 		s_client = sql_client
-		begin
-			# Transação garante atomicidade — ou tudo é salvo, ou nada é
-			s_client.transaction do
-				s_client[:actors].where(:id => client.id_db).update(:character_name => client.character_name,
-					:character_index => client.character_index, :face_name => client.face_name, :face_index => client.face_index,
-					:class_id => client.class_id, :sex => client.sex, :level => client.level, :exp => client.exp, :hp => client.hp,
-					:mp => client.mp, :mhp => client.param_base[0], :mmp => client.param_base[1], :atk => client.param_base[2],
-					:def => client.param_base[3], :int => client.param_base[4], :res => client.param_base[5],
-					:agi => client.param_base[6], :luk => client.param_base[7], :points => client.points,
-					:guild_id => $network.find_guild_id_db(client.guild_name), :revive_map_id => client.revive_map_id,
-					:revive_x => client.revive_x, :revive_y => client.revive_y, :map_id => client.map_id, :x => client.x,
-					:y => client.y, :direction => client.direction, :gold => client.gold, :last_login => Time.now.to_i)
-				client.equips.each_with_index { |equip_id, slot_id| s_client[:actor_equips].where(:actor_id => client.id_db, :slot_id => slot_id).update(:equip_id => equip_id) }
-				client.hotbar.each_with_index { |hotbar, slot_id| s_client[:actor_hotbars].where(:actor_id => client.id_db, :slot_id => slot_id).update(:type => hotbar.type, :item_id => hotbar.item_id) }
-				client.switches.data.each_with_index { |value, switch_id| s_client[:actor_switches].where(:actor_id => client.id_db, :switch_id => switch_id + 1).update(:value => value ? 1 : 0) }
-				client.variables.data.each_with_index { |value, variable_id| s_client[:actor_variables].where(:actor_id => client.id_db, :variable_id => variable_id + 1).update(:value => value) }
-				save_items(client, client.items, s_client, 'item')
-				save_items(client, client.weapons, s_client, 'weapon')
-				save_items(client, client.armors, s_client, 'armor')
-				save_player_skills(client, s_client)
-				save_player_quests(client, s_client)
-				save_player_self_switches(client, s_client)
-				save_account(client, s_client)
-				save_bank(client, s_client)
-			end
-		rescue Sequel::Error => e
-			puts "[Database] Erro ao salvar jogador #{client.name}: #{e.message}"
-			raise
-		ensure
-			s_client.disconnect
-		end
+		s_client[:actors].where(:id => client.id_db).update(:character_name => client.character_name,
+			:character_index => client.character_index, :face_name => client.face_name, :face_index => client.face_index,
+			:class_id => client.class_id, :sex => client.sex, :level => client.level, :exp => client.exp, :hp => client.hp,
+			:mp => client.mp, :mhp => client.param_base[0], :mmp => client.param_base[1], :atk => client.param_base[2],
+			:def => client.param_base[3], :int => client.param_base[4], :res => client.param_base[5],
+			:agi => client.param_base[6], :luk => client.param_base[7], :points => client.points,
+			:guild_id => $network.find_guild_id_db(client.guild_name), :revive_map_id => client.revive_map_id,
+			:revive_x => client.revive_x, :revive_y => client.revive_y, :map_id => client.map_id, :x => client.x,
+			:y => client.y, :direction => client.direction, :gold => client.gold, :last_login => Time.now.to_i)
+		client.equips.each_with_index { |equip_id, slot_id| s_client[:actor_equips].where(:actor_id => client.id_db, :slot_id => slot_id).update(:equip_id => equip_id) }
+		client.hotbar.each_with_index { |hotbar, slot_id| s_client[:actor_hotbars].where(:actor_id => client.id_db, :slot_id => slot_id).update(:type => hotbar.type, :item_id => hotbar.item_id) }
+		client.switches.data.each_with_index { |value, switch_id| s_client[:actor_switches].where(:actor_id => client.id_db, :switch_id => switch_id + 1).update(:value => value ? 1 : 0) }
+		client.variables.data.each_with_index { |value, variable_id| s_client[:actor_variables].where(:actor_id => client.id_db, :variable_id => variable_id + 1).update(:value => value) }
+		save_items(client, client.items, s_client, 'item')
+		save_items(client, client.weapons, s_client, 'weapon')
+		save_items(client, client.armors, s_client, 'armor')
+		save_player_skills(client, s_client)
+		save_player_quests(client, s_client)
+		save_player_self_switches(client, s_client)
+		save_account(client, s_client)
+		save_bank(client, s_client)
+		s_client.disconnect
 	end
-
-	# Sincroniza o inventário do jogador com o banco de dados usando diff.
-	# Lógica: compara o estado atual com o que está salvo e aplica apenas as diferenças
-	# (insert para novos itens, update para quantidades alteradas, delete para itens removidos).
+	
 	def self.save_items(client, actor_items, s_client, item)
 		if actor_items.object_id == client.items.object_id || actor_items.object_id == client.weapons.object_id ||
 		 actor_items.object_id == client.armors.object_id
@@ -295,20 +259,16 @@ module Database
 			object_id = :bank_id
 			table = "bank_#{item}s".to_sym
 		end
-		# Carrega o estado atual do banco para comparação (diff de inventário)
 		items = s_client[table].select("#{item}_id".to_sym, :amount).where(object_id => id_db).as_hash("#{item}_id".to_sym, :amount)
 		actor_items.each do |item_id, amount|
 			if !items.has_key?(item_id)
-				# Item novo: inserir no banco
 				s_client[table].insert(object_id => id_db, "#{item}_id".to_sym => item_id, :amount => amount)
 				next
 			elsif amount != items[item_id]
-				# Quantidade alterada: atualizar no banco
 				s_client[table].where(object_id => id_db, "#{item}_id".to_sym => item_id).update(:amount => amount)
 			end
 			items.delete(item_id)
 		end
-		# Itens restantes no hash local não existem mais no inventário: remover do banco
 		items.each_key { |item_id| s_client[table].where(object_id => id_db, "#{item}_id".to_sym => item_id).delete }
 	end
 
@@ -329,6 +289,8 @@ module Database
 				s_client[:actor_quests].where(:actor_id => client.id_db, :quest_id => quest_id).update(:state => quest.state, :kills => quest.kills)
 				quests.delete(quest_id)
 			else
+				# Salva todos os dados da nova missão, inclusive state e kills, já que ela
+				#pode ter sido finalizada logo após ter sido iniciada pelo jogador
 				s_client[:actor_quests].insert(:actor_id => client.id_db, :quest_id => quest_id, :state => quest.state, :kills => quest.kills)
 			end
 		end
@@ -350,35 +312,29 @@ module Database
 
 	def self.player_exist?(name)
 		s_client = sql_client
-		player = s_client[:actors].select(:id).where(:name => name)
+		# Embora não seja necessário pesquisar o nome do jogador de maneira não sensível
+		#a maiúsculas e minúsculas na criação de personagem em razão do titleize, é
+		#necessário fazer uma busca case-insensitive ao banir jogador off-line
+		player = s_client[:actors].select(:id).where(:name => name)#Sequel.ilike(:name, "#{name}%"))
 		s_client.disconnect
 		!player.empty?
 	end
 
-	# Remove um personagem e todos os seus dados associados do banco.
-	# As tabelas filhas são deletadas antes da tabela principal (actors) para
-	# respeitar as restrições de chave estrangeira e evitar erros de integridade referencial.
 	def self.remove_player(actor_id_db)
 		s_client = sql_client
-		# Transação garante atomicidade — ou tudo é salvo, ou nada é
-		s_client.transaction do
-			s_client[:actor_equips].where(:actor_id => actor_id_db).delete
-			s_client[:actor_items].where(:actor_id => actor_id_db).delete
-			s_client[:actor_weapons].where(:actor_id => actor_id_db).delete
-			s_client[:actor_armors].where(:actor_id => actor_id_db).delete
-			s_client[:actor_skills].where(:actor_id => actor_id_db).delete
-			s_client[:actor_quests].where(:actor_id => actor_id_db).delete
-			s_client[:actor_hotbars].where(:actor_id => actor_id_db).delete
-			s_client[:actor_switches].where(:actor_id => actor_id_db).delete
-			s_client[:actor_variables].where(:actor_id => actor_id_db).delete
-			s_client[:actor_self_switches].where(:actor_id => actor_id_db).delete
-			# Remove o registro principal após todas as tabelas filhas serem limpas
-			s_client[:actors].where(:id => actor_id_db).delete
-		end
+		s_client[:actors].where(:id => actor_id_db).delete
+		s_client[:actor_equips].where(:actor_id => actor_id_db).delete
+		s_client[:actor_items].where(:actor_id => actor_id_db).delete
+		s_client[:actor_weapons].where(:actor_id => actor_id_db).delete
+		s_client[:actor_armors].where(:actor_id => actor_id_db).delete
+		s_client[:actor_skills].where(:actor_id => actor_id_db).delete
+		s_client[:actor_quests].where(:actor_id => actor_id_db).delete
+		s_client[:actor_hotbars].where(:actor_id => actor_id_db).delete
+		s_client[:actor_switches].where(:actor_id => actor_id_db).delete
+		s_client[:actor_variables].where(:actor_id => actor_id_db).delete
+		s_client[:actor_self_switches].where(:actor_id => actor_id_db).delete
 		s_client.disconnect
 	end
-
-	# --- Banco (Cofre) ---
 
 	def self.load_bank(client)
 		s_client = sql_client
@@ -401,20 +357,20 @@ module Database
 		save_items(client, client.bank_armors, s_client, 'armor')
 	end
 
-	# --- Distribuidor ---
-
 	def self.load_distributor(client)
 		s_client = sql_client
 		items = s_client[:distributor].where(:account_id => client.account_id_db)
+		# Carrega os itens comprados na loja do site de uma tabela específica, em vez de
+		#carregá-los diretamente do banco, para evitar que o item seja deletado erroneamente
+		#após fechar o banco, quando o jogador comprar no site enquanto estiver com o banco aberto
 		items.each do |row|
 			container = client.bank_item_container(row[:kind])
 			container[row[:item_id]] = [client.bank_item_number(container[row[:item_id]]) + row[:amount], Configs::MAX_ITEMS].min
 		end
+		# Deleta do distribuidor do banco de dados todos os itens vinculados à conta
 		items.delete
 		s_client.disconnect
 	end
-
-	# --- Guilda ---
 
 	def self.create_guild(name)
 		s_client = sql_client
@@ -457,8 +413,6 @@ module Database
 		s_client.disconnect
 	end
 
-	# --- Lista de Banidos ---
-
 	def self.load_banlist
 		s_client = sql_client
 		s_client[:ban_list].each do |row|
@@ -490,16 +444,15 @@ module Database
 
 	def self.unban(client, player_name)
 		s_client = sql_client
-		account_id_db = s_client[:actors].select(:account_id).where(:name => player_name).single_value
+		account_id_db = s_client[:actors].select(:account_id).where(:name => player_name).single_value#Sequel.ilike(:name, "#{player_name}%")).single_value
 		s_client.disconnect
+		# O ID da conta é diferente de nulo se o nome do jogador existe no banco de dados
 		if account_id_db
 			$network.ban_list.delete(account_id_db)
 			$network.global_chat_message("#{player_name} #{NotBanned}")
 			$network.log.add(client.group, :blue, "#{client.user} removeu o banimento de #{player_name}.")
 		end
 	end
-
-	# --- Status Online ---
 
 	def self.change_whos_online(id_db, command)
 		s_client = sql_client
