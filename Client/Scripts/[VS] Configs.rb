@@ -441,6 +441,14 @@ module Configs
   # Cantos DECORATIVOS (4×4 px) nos 4 cantos da borda interna
   MINIMAP_FRAME_CORNER = Color.new(255, 220, 120, 255)
 
+  # ── Ícone PVP / Safe ─────────────────────────────────────────────────────────
+  # Sprite separado posicionado ao lado esquerdo do minimap.
+  # Os offsets são relativos à posição self.x / self.y do Sprite_Minimap.
+  # Ajuste MINIMAP_PVP_X_OFFSET para mover horizontalmente (negativo = esquerda).
+  # Ajuste MINIMAP_PVP_Y_OFFSET para mover verticalmente.
+  MINIMAP_PVP_X_OFFSET = -28   # 28px à esquerda da borda esquerda do minimap
+  MINIMAP_PVP_Y_OFFSET = 0     # Alinhado ao topo do minimap
+
   #============================================================================
   # ── DEBUG ─────────────────────────────────────────────────────────────────────
   # Flags de debug para desenvolvimento. Desative em produção.

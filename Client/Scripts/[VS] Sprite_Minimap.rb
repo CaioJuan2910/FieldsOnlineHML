@@ -8,6 +8,7 @@
 #   - Frame desenhado via Bitmap (fill_rect) — sem Windowskin
 #   - Todas as dimensões e cores centralizadas em Configs::MINIMAP_*
 #   - Otimização: refresh só ocorre quando o mapa muda (@last_map_id)
+#   - Ícone PVP/Safe como sprite separado ao lado do minimap
 #
 # Inspirado em: Tibia Online, MU Online, Ragnarok Online
 #------------------------------------------------------------------------------
@@ -60,6 +61,7 @@ class Sprite_Minimap < Sprite2
 
     create_player_point
     create_tool_tip
+    create_pvp_icon
     refresh
     update
   end
@@ -94,6 +96,7 @@ class Sprite_Minimap < Sprite2
   def change_opacity(x = 0, y = 0)
     super()
     @player_sprite.opacity = self.opacity
+    @pvp_sprite.opacity    = self.opacity
     @event_sprites.each_value { |sprite| sprite.opacity = self.opacity }
   end
 
@@ -118,6 +121,43 @@ class Sprite_Minimap < Sprite2
     @tool_tip        = Sprite.new
     @tool_tip.bitmap = Bitmap.new(Configs::MINIMAP_SIZE, line_height)
     @tool_tip.z      = @player_sprite.z + 1
+  end
+
+  #----------------------------------------------------------------------------
+  # * Cria o sprite do ícone PVP / Safe (sprite separado, fora do bitmap)
+  #   Posicionado ao lado esquerdo do minimap via Configs::MINIMAP_PVP_X_OFFSET
+  #   e Configs::MINIMAP_PVP_Y_OFFSET.
+  #   O ícone é atualizado em refresh_pvp_icon quando o mapa muda.
+  #----------------------------------------------------------------------------
+  def create_pvp_icon
+    @pvp_sprite        = Sprite.new
+    @pvp_sprite.bitmap = Bitmap.new(24, 24)
+    @pvp_sprite.z      = self.z + 1
+    refresh_pvp_icon
+  end
+
+  #----------------------------------------------------------------------------
+  # * Atualiza o conteúdo do ícone PVP / Safe
+  #   Redesenha o ícone de acordo com o estado PVP atual do mapa
+  #   Chamado em refresh() sempre que o mapa muda
+  #----------------------------------------------------------------------------
+  def refresh_pvp_icon
+    @pvp_sprite.bitmap.clear
+    iconset    = Cache.system('Iconset')
+    icon_index = $game_map.pvp? ? Configs::MAP_PVP_ICON : Configs::MAP_NONPVP_ICON
+    rect       = Rect.new(icon_index % 16 * 24, icon_index / 16 * 24, 24, 24)
+    @pvp_sprite.bitmap.blt(0, 0, iconset, rect)
+    update_pvp_position
+  end
+
+  #----------------------------------------------------------------------------
+  # * Atualiza a posição do sprite de ícone PVP / Safe
+  #   Usa os offsets definidos em Configs para posicionar ao lado do minimap.
+  #   Chamado em refresh_pvp_icon e update() para acompanhar drag do minimap.
+  #----------------------------------------------------------------------------
+  def update_pvp_position
+    @pvp_sprite.x = self.x + Configs::MINIMAP_PVP_X_OFFSET
+    @pvp_sprite.y = self.y + Configs::MINIMAP_PVP_Y_OFFSET
   end
 
   #----------------------------------------------------------------------------
@@ -152,6 +192,8 @@ class Sprite_Minimap < Sprite2
     super
     @player_sprite.bitmap.dispose
     @player_sprite.dispose
+    @pvp_sprite.bitmap.dispose
+    @pvp_sprite.dispose
     @tool_tip.bitmap.dispose
     @tool_tip.dispose
     dispose_events
@@ -198,14 +240,14 @@ class Sprite_Minimap < Sprite2
   #----------------------------------------------------------------------------
   # * Redesenha o minimap completo
   #   Chamado na inicialização e quando o mapa muda (detectado em update)
-  #   Sequência: fundo → frame → ícone PVP → nome do mapa → eventos
+  #   Sequência: fundo → frame → nome do mapa → ícone PVP → eventos
   #----------------------------------------------------------------------------
   def refresh
     @tool_tip.visible = false
     draw_background
     draw_frame
-    draw_icon
     draw_map_name
+    refresh_pvp_icon
     dispose_events
 
     if FileTest.exist?("Graphics/Minimaps/#{$game_map.map_id}.png")
@@ -289,22 +331,6 @@ class Sprite_Minimap < Sprite2
     self.bitmap.fill_rect(m + ma - cs, m,           cs, cs, corner)  # Superior direito
     self.bitmap.fill_rect(m,           m + ma - cs, cs, cs, corner)  # Inferior esquerdo
     self.bitmap.fill_rect(m + ma - cs, m + ma - cs, cs, cs, corner)  # Inferior direito
-  end
-
-  #----------------------------------------------------------------------------
-  # * Desenha o ícone PVP ou Não-PVP no canto superior direito do frame
-  #   Ícones definidos em Configs::MAP_PVP_ICON e Configs::MAP_NONPVP_ICON
-  #   Posicionado dentro do frame, no canto superior direito da área do mapa
-  #----------------------------------------------------------------------------
-  def draw_icon
-    bitmap     = Cache.system('Iconset')
-    icon_index = $game_map.pvp? ? Configs::MAP_PVP_ICON : Configs::MAP_NONPVP_ICON
-    rect       = Rect.new(icon_index % 16 * 24, icon_index / 16 * 24, 24, 24)
-
-    # Posiciona no canto superior direito dentro do frame
-    icon_x = Configs::MINIMAP_SIZE - 24 - Configs::MINIMAP_BORDER - 2
-    icon_y = Configs::MINIMAP_BORDER + 2
-    self.bitmap.blt(icon_x, icon_y, bitmap, rect)
   end
 
   #----------------------------------------------------------------------------
@@ -414,6 +440,10 @@ class Sprite_Minimap < Sprite2
 
     # Atualiza opacidade (drag/hover)
     change_opacity(Configs::MINIMAP_PADDING)
+
+    # Mantém o ícone PVP/Safe sincronizado com a posição atual do minimap
+    # (necessário quando o minimap é arrastado pelo jogador)
+    update_pvp_position
 
     # Atualiza posição do sprite do jogador no minimap
     @player_sprite.x = self.x + object_x($game_player)
