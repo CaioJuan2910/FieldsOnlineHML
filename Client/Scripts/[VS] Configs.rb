@@ -47,7 +47,8 @@ module Configs
   RESOLUTIONS = [
     { :width => 800,  :height => 608 },
     { :width => 1024, :height => 608 },
-    { :width => 1024, :height => 672 }
+    { :width => 1024, :height => 672 },
+    { :width => 1152, :height => 768 }
   ]
 
   #============================================================================
@@ -303,39 +304,30 @@ module Configs
   #============================================================================
 
   # Índice do ator principal exibido na HUD (padrão: 1)
-  # Usado em: [VS] Sprite_HUD.rb – draw_face, draw_hp_bar, draw_mp_bar, draw_exp_bar, draw_level
   HUD_ACTOR_INDEX = 1
 
   # Posição da HUD na tela (canto superior esquerdo)
-  # Usado em: [VS] Sprite_HUD.rb – initialize
   HUD_X = 11
   HUD_Y = 9
   HUD_Z = 50
 
   # Dimensões do bitmap principal da HUD
-  # Usado em: [VS] Sprite_HUD.rb – initialize (Bitmap.new)
   HUD_WIDTH  = 255
   HUD_HEIGHT = 107
 
   # Fonte da HUD
-  # Usado em: [VS] Sprite_HUD.rb – initialize
   HUD_FONT_SIZE = 18
   HUD_FONT_BOLD = true
 
   # Dimensões do recorte do fundo (HUDBase)
-  # Usado em: [VS] Sprite_HUD.rb – draw_background
   HUD_BG_RECT_W = 248
   HUD_BG_RECT_H = 98
 
   # Posição da face do personagem dentro da HUD
-  # Usado em: [VS] Sprite_HUD.rb – draw_face
   HUD_FACE_X = 8
   HUD_FACE_Y = 1
 
   # Configurações das barras de HP e MP
-  # Largura máxima da barra (em pixels, corresponde ao spritesheet HUDBars)
-  # Posição X/Y de cada barra dentro do bitmap da HUD
-  # Usado em: [VS] Sprite_HUD.rb – draw_hp_bar, draw_mp_bar
   HUD_BAR_MAX_WIDTH = 123
   HUD_HP_BAR_X      = 107
   HUD_HP_BAR_Y      = 2
@@ -349,19 +341,16 @@ module Configs
   HUD_MP_TEXT_Y     = 35
 
   # Configurações da barra de EXP (sprite separado, centralizado na base da tela)
-  # Usado em: [VS] Sprite_HUD.rb – create_exp_bar, adjust_x, adjust_y, draw_exp_bar
   HUD_EXP_WIDTH    = 308
   HUD_EXP_HEIGHT   = 22
-  HUD_EXP_OFFSET_X = -109   # Offset a partir do centro da tela (Graphics.width / 2 + offset)
-  HUD_EXP_OFFSET_Y = -28    # Offset a partir do fundo da tela (Graphics.height + offset)
+  HUD_EXP_OFFSET_X = -109
+  HUD_EXP_OFFSET_Y = -28
 
   # Se true, exibe o percentual de EXP restante (ex: "72.4%") no estilo MU Online
   # Se false, exibe o valor numérico de EXP faltante (comportamento original)
-  # Usado em: [VS] Sprite_HUD.rb – draw_exp_bar
   HUD_EXP_SHOW_PERCENT = true
 
   # Configurações do nível exibido na HUD
-  # Usado em: [VS] Sprite_HUD.rb – draw_level
   HUD_LEVEL_X      = 0
   HUD_LEVEL_Y      = 77
   HUD_LEVEL_TEXT_Y = 83
@@ -369,73 +358,88 @@ module Configs
   #============================================================================
   # ── COMBATE (game_battle) ────────────────────────────────────────────────────
   # Configurações do sistema de combate em tempo real.
-  # Inspirado em Tibia, MU Online, Ragnarok, Diablo e WoW.
   #============================================================================
 
   # Multiplicador de dano crítico
-  # Ex: 3.0 = dano crítico é 3x o dano normal (padrão Tibia/Diablo)
-  # Usado em: Server/Combat/game_battle.rb – make_damage_value
   CRITICAL_MULTIPLIER = 3.0
 
   # Número máximo de passos do loop de trajetória de projétil
-  # Evita loop infinito em make_damage_value em mapas com geometria incomum
-  # Usado em: Server/Combat/game_battle.rb – max_passage
   MAX_PROJECTILE_STEPS = 50
 
   #============================================================================
   # ── DROPS (Sprite_Drop) ──────────────────────────────────────────────────────
   # Configurações visuais dos drops no mapa.
-  # Inspirado no sistema de Tibia Online e Diablo.
   #============================================================================
 
   # Tamanho da fonte do nome do item exibido ao passar o mouse
-  # Usado em: [VS] Sprite_Drop.rb – create_name
   DROP_FONT_SIZE = 15
 
   # Distância vertical (em pixels) do nome acima do ícone do drop
-  # Usado em: [VS] Sprite_Drop.rb – update
   DROP_NAME_OFFSET_Y = 18
 
   #============================================================================
   # ── MINIMAP (Sprite_Minimap) ─────────────────────────────────────────────────
-  # Configurações do Minimap quadrado, inspirado em Tibia Online, MU Online
-  # e Ragnarok Online. Será utilizado pelo script [VS] Sprite_Minimap.rb.
+  # Configurações do Minimap QUADRADO com frame desenhado via Bitmap.
+  # Inspirado em Tibia Online, MU Online e Ragnarok Online.
   #============================================================================
 
-  # Tamanho do Minimap (largura e altura iguais = quadrado)
-  # Usado em: [VS] Sprite_Minimap.rb – initialize
-  MINIMAP_SIZE = 120
+  # ── Dimensões ────────────────────────────────────────────────────────────────
 
-  # Escala de renderização: quantos pixels do minimap por tile do mapa
-  # Ex: 2 = cada tile ocupa 2x2 pixels no minimap
-  # Usado em: [VS] Sprite_Minimap.rb – draw_tiles, draw_characters
-  MINIMAP_SCALE = 2
+  # Tamanho total do minimap (largura = altura = quadrado)
+  MINIMAP_SIZE     = 160
 
-  # Posição do Minimap na tela (canto superior direito por padrão)
-  # Ajuste MINIMAP_X para posicionar; sugestão: Graphics.width - MINIMAP_SIZE - 10
-  # Usado em: [VS] Sprite_Minimap.rb – initialize
-  MINIMAP_X = 10    # será recalculado no script com base em Graphics.width
-  MINIMAP_Y = 10
-  MINIMAP_Z = 200   # acima da HUD (z=50) e dos sprites de mapa
+  # Tamanho da área de mapa interna (dentro do frame)
+  # Regra: MINIMAP_SIZE - 2 * MINIMAP_PADDING = 160 - 2*16 = 128
+  MINIMAP_MAP_AREA = 128
 
-  # Opacidade do Minimap (0 = invisível, 255 = opaco)
-  # Usado em: [VS] Sprite_Minimap.rb – initialize, change_opacity
-  MINIMAP_OPACITY = 210
+  # Espaço entre a borda do frame e a borda da área do mapa (em pixels)
+  MINIMAP_PADDING  = 16
 
-  # Cores dos tiles e personagens no Minimap
-  # Usado em: [VS] Sprite_Minimap.rb – draw_tiles, draw_characters
-  MINIMAP_COLOR_FLOOR  = Color.new(50,  50,  50,  200)   # Chão transitável
-  MINIMAP_COLOR_WALL   = Color.new(100, 100, 100, 220)   # Obstáculo/parede
-  MINIMAP_COLOR_PLAYER = Color.new(255, 255, 0,   255)   # Jogador (amarelo – estilo Tibia)
-  MINIMAP_COLOR_ENEMY  = Color.new(255, 50,  50,  255)   # Inimigo (vermelho)
-  MINIMAP_COLOR_NPC    = Color.new(50,  255, 100, 255)   # NPC (verde)
-  MINIMAP_COLOR_PARTY  = Color.new(100, 200, 255, 255)   # Membro do grupo (azul claro)
-  MINIMAP_COLOR_BORDER = Color.new(30,  30,  30,  230)   # Borda do frame
-  MINIMAP_COLOR_BG     = Color.new(0,   0,   0,   180)   # Fundo do minimap
+  # Espessura das linhas do frame (bordas externa e interna), em pixels
+  MINIMAP_BORDER   = 2
 
-  # Espessura da borda do frame do Minimap (em pixels)
-  # Usado em: [VS] Sprite_Minimap.rb – draw_frame
-  MINIMAP_BORDER_SIZE = 2
+  # Altura da área do nome do mapa abaixo do quadrado do frame (em pixels)
+  MINIMAP_NAME_HEIGHT = 20
+
+  # ── Posição na tela ───────────────────────────────────────────────────────────
+
+  # Margem em pixels entre o minimap e a borda direita da tela
+  MINIMAP_X_MARGIN = 10
+
+  # Posição Y do minimap (pixels a partir do topo da tela)
+  MINIMAP_Y = 8
+
+  # Z index do minimap
+  MINIMAP_Z = 50
+
+  # ── Fonte ────────────────────────────────────────────────────────────────────
+
+  # Tamanho da fonte para o nome do mapa e tooltips de eventos
+  MINIMAP_FONT_SIZE = 14
+
+  # Negrito para o nome do mapa
+  MINIMAP_FONT_BOLD = false
+
+  # ── Cores do fundo ───────────────────────────────────────────────────────────
+
+  # Cor de fundo do bitmap completo do minimap
+  MINIMAP_BG_COLOR  = Color.new(0, 0, 0, 200)
+
+  # Cor de fundo específica da área do mapa interno
+  MINIMAP_MAP_BG    = Color.new(20, 20, 40, 200)
+
+  # ── Cores do frame ───────────────────────────────────────────────────────────
+  # Frame desenhado via fill_rect — sem Windowskin
+  # Inspirado nos frames dourados de Tibia Online e MU Online
+
+  # Borda EXTERNA ao redor de todo o minimap
+  MINIMAP_FRAME_OUTER  = Color.new(180, 150, 80, 255)
+
+  # Borda INTERNA ao redor da área de mapa
+  MINIMAP_FRAME_INNER  = Color.new(80, 60, 20, 220)
+
+  # Cantos DECORATIVOS (4×4 px) nos 4 cantos da borda interna
+  MINIMAP_FRAME_CORNER = Color.new(255, 220, 120, 255)
 
   #============================================================================
   # ── DEBUG ─────────────────────────────────────────────────────────────────────
@@ -443,7 +447,6 @@ module Configs
   #============================================================================
 
   # Se true, exibe logs de conexão/desconexão de clientes no console do servidor
-  # Usado em: Server/Network/network.rb – connect_client, disconnect_client
   DEBUG_LOG = false
 
 end
