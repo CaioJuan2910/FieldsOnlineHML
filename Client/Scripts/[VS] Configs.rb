@@ -455,6 +455,13 @@ module Configs
   # Cantos DECORATIVOS (4×4 px) nos 4 cantos da borda interna
   MINIMAP_FRAME_CORNER = Color.new(255, 220, 120, 255)
 
+  # ── Separadores de seção ─────────────────────────────────────────────────────
+  # Linhas horizontais de 1px que dividem visualmente as seções de texto
+  # abaixo do frame do mapa (nome → coordenadas → relógio).
+  # A linha tem margem de 4px em cada lado para não tocar as bordas do frame.
+  # Ajuste a cor e a opacidade (4º parâmetro) conforme o estilo desejado.
+  MINIMAP_SEPARATOR_COLOR = Color.new(180, 150, 80, 160)
+
   # ── Ícone PVP / Safe ─────────────────────────────────────────────────────────
   # Sprite separado posicionado ao lado esquerdo do minimap.
   # Os offsets são relativos à posição self.x / self.y do Sprite_Minimap.

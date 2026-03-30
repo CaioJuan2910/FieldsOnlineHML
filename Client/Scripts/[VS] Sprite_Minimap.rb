@@ -11,6 +11,7 @@
 #   - Ícone PVP/Safe como sprite separado ao lado do minimap
 #   - Coordenadas do jogador (X/Y) exibidas abaixo do nome do mapa
 #   - Relógio em tempo real exibido abaixo das coordenadas
+#   - Linhas separadoras entre as seções de texto (nome / coords / relógio)
 #
 # Inspirado em: Tibia Online, MU Online, Ragnarok Online
 #------------------------------------------------------------------------------
@@ -38,8 +39,8 @@ class Sprite_Minimap < Sprite2
 
     self.bitmap = Bitmap.new(
       Configs::MINIMAP_SIZE,
-      Configs::MINIMAP_SIZE      +
-      Configs::MINIMAP_NAME_HEIGHT +
+      Configs::MINIMAP_SIZE        +
+      Configs::MINIMAP_NAME_HEIGHT  +
       Configs::MINIMAP_COORD_HEIGHT +
       Configs::MINIMAP_CLOCK_HEIGHT
     )
@@ -236,11 +237,12 @@ class Sprite_Minimap < Sprite2
   #----------------------------------------------------------------------------
   # * Redesenha o minimap completo
   #   Chamado na inicialização e quando o mapa muda (detectado em update)
-  #   Sequência: fundo → frame → nome → coordenadas → relógio → PVP → eventos
+  #   Sequência: fundo → separadores → frame → nome → coords → relógio → PVP → eventos
   #----------------------------------------------------------------------------
   def refresh
     @tool_tip.visible = false
     draw_background
+    draw_separators   # Linhas divisórias entre as seções de texto
     draw_frame
     draw_map_name
     draw_coordinates
@@ -266,8 +268,8 @@ class Sprite_Minimap < Sprite2
     self.bitmap.clear
 
     # Fundo geral (quadrado + nome + coordenadas + relógio)
-    total_h = Configs::MINIMAP_SIZE      +
-              Configs::MINIMAP_NAME_HEIGHT +
+    total_h = Configs::MINIMAP_SIZE        +
+              Configs::MINIMAP_NAME_HEIGHT  +
               Configs::MINIMAP_COORD_HEIGHT +
               Configs::MINIMAP_CLOCK_HEIGHT
 
@@ -286,6 +288,37 @@ class Sprite_Minimap < Sprite2
       ),
       Configs::MINIMAP_MAP_BG
     )
+  end
+
+  #----------------------------------------------------------------------------
+  # * Desenha as linhas separadoras entre as seções de texto
+  #   Três linhas de 1px são desenhadas nas bordas de cada seção:
+  #     1. Entre o frame do mapa e o nome do mapa
+  #     2. Entre o nome do mapa e as coordenadas
+  #     3. Entre as coordenadas e o relógio
+  #
+  #   Cada linha tem margem horizontal de 4px (evita encostar na borda do frame).
+  #   Cor configurável em Configs::MINIMAP_SEPARATOR_COLOR.
+  #
+  #   Importante: draw_coordinates e draw_clock preservam o 1º pixel de cada
+  #   seção (fill_rect começa em y_pos + 1) para não apagar o separador superior.
+  #----------------------------------------------------------------------------
+  def draw_separators
+    sep    = Configs::MINIMAP_SEPARATOR_COLOR
+    w      = Configs::MINIMAP_SIZE - 8   # Largura da linha (margem de 4px em cada lado)
+    x_left = 4                           # Margem esquerda da linha
+
+    # Separador 1: entre o frame do mapa e o nome
+    y1 = Configs::MINIMAP_SIZE
+    self.bitmap.fill_rect(Rect.new(x_left, y1, w, 1), sep)
+
+    # Separador 2: entre o nome do mapa e as coordenadas
+    y2 = Configs::MINIMAP_SIZE + Configs::MINIMAP_NAME_HEIGHT
+    self.bitmap.fill_rect(Rect.new(x_left, y2, w, 1), sep)
+
+    # Separador 3: entre as coordenadas e o relógio
+    y3 = Configs::MINIMAP_SIZE + Configs::MINIMAP_NAME_HEIGHT + Configs::MINIMAP_COORD_HEIGHT
+    self.bitmap.fill_rect(Rect.new(x_left, y3, w, 1), sep)
   end
 
   #----------------------------------------------------------------------------
@@ -329,6 +362,7 @@ class Sprite_Minimap < Sprite2
   #----------------------------------------------------------------------------
   # * Desenha o nome do mapa centralizado abaixo do frame
   #   Área: de y=MINIMAP_SIZE até y=MINIMAP_SIZE+MINIMAP_NAME_HEIGHT
+  #   O 1º pixel da área (separador) é preservado — o texto começa em y+2.
   #----------------------------------------------------------------------------
   def draw_map_name
     self.bitmap.draw_text(
@@ -345,14 +379,18 @@ class Sprite_Minimap < Sprite2
   # * Desenha as coordenadas X/Y do jogador abaixo do nome do mapa
   #   Área: de y=MINIMAP_SIZE+MINIMAP_NAME_HEIGHT até +MINIMAP_COORD_HEIGHT
   #   Formato definido em Configs::MINIMAP_COORD_FORMAT (ex: 'X: %d  Y: %d')
+  #
   #   Otimização: só redesenha quando o jogador se move (@last_player_x/y)
+  #
+  #   Preservação do separador: fill_rect começa em y_pos + 1 para não apagar
+  #   a linha separadora do topo desta seção (desenhada em draw_separators).
   #----------------------------------------------------------------------------
   def draw_coordinates
     y_pos = Configs::MINIMAP_SIZE + Configs::MINIMAP_NAME_HEIGHT
 
-    # Limpa apenas a área das coordenadas para não apagar o nome do mapa
+    # Limpa a área das coordenadas preservando o separador superior (1px)
     self.bitmap.fill_rect(
-      Rect.new(0, y_pos, Configs::MINIMAP_SIZE, Configs::MINIMAP_COORD_HEIGHT),
+      Rect.new(0, y_pos + 1, Configs::MINIMAP_SIZE, Configs::MINIMAP_COORD_HEIGHT - 1),
       Configs::MINIMAP_BG_COLOR
     )
 
@@ -373,18 +411,22 @@ class Sprite_Minimap < Sprite2
   #   Área: de y=MINIMAP_SIZE+MINIMAP_NAME_HEIGHT+MINIMAP_COORD_HEIGHT até +CLOCK_HEIGHT
   #   Formato definido em Configs::MINIMAP_CLOCK_FORMAT (padrão strftime do Ruby)
   #     '%H:%M:%S' → 14:32:07   |   '%H:%M' → 14:32
+  #
   #   Otimização: só redesenha quando o segundo muda (@last_time)
+  #
+  #   Preservação do separador: fill_rect começa em y_pos + 1 para não apagar
+  #   a linha separadora do topo desta seção (desenhada em draw_separators).
   #----------------------------------------------------------------------------
   def draw_clock
-    y_pos = Configs::MINIMAP_SIZE +
-            Configs::MINIMAP_NAME_HEIGHT +
+    y_pos = Configs::MINIMAP_SIZE        +
+            Configs::MINIMAP_NAME_HEIGHT  +
             Configs::MINIMAP_COORD_HEIGHT
 
     current_time = Time.now.strftime(Configs::MINIMAP_CLOCK_FORMAT)
 
-    # Limpa apenas a área do relógio
+    # Limpa a área do relógio preservando o separador superior (1px)
     self.bitmap.fill_rect(
-      Rect.new(0, y_pos, Configs::MINIMAP_SIZE, Configs::MINIMAP_CLOCK_HEIGHT),
+      Rect.new(0, y_pos + 1, Configs::MINIMAP_SIZE, Configs::MINIMAP_CLOCK_HEIGHT - 1),
       Configs::MINIMAP_BG_COLOR
     )
 
