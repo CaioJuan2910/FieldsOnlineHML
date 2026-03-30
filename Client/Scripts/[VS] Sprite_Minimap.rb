@@ -13,6 +13,16 @@
 #   - Relógio em tempo real exibido abaixo das coordenadas
 #   - Linhas separadoras entre as seções de texto (nome / coords / relógio)
 #   - Posição FIXA: drag desabilitado (@dragable = false)
+#   - NOVO: Toggle de visibilidade via tecla N ou clique no botão ▼/▲
+#            O botão permanece sempre visível no topo-direito do frame
+#
+# Configs necessários (adicionar em [VS] Configs.rb):
+#   MINIMAP_TOGGLE_KEY    = :N                            # Tecla de toggle
+#   MINIMAP_BTN_SIZE      = 16                            # Tamanho do botão (px)
+#   MINIMAP_BTN_BG        = Color.new(0, 0, 0, 180)       # Fundo do botão
+#   MINIMAP_BTN_BORDER    = Color.new(180, 150, 80, 200)  # Borda dourada
+#   MINIMAP_BTN_COLOR     = Color.new(255, 255, 200, 255) # Cor do símbolo ▼/▲
+#   MINIMAP_BTN_FONT_SIZE = 10                            # Tamanho da fonte
 #
 # Inspirado em: Tibia Online, MU Online, Ragnarok Online
 #------------------------------------------------------------------------------
@@ -74,9 +84,13 @@ class Sprite_Minimap < Sprite2
     # Cache: detecta mudança de segundo para atualizar o relógio
     @last_time = nil
 
+    # Estado de visibilidade do corpo do minimap (toggle)
+    @minimap_visible = true
+
     create_player_point
     create_tool_tip
     create_pvp_icon
+    create_toggle_btn
     refresh
     update
   end
@@ -104,11 +118,13 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Atualiza opacidade do minimap e de todos os sprites filhos
+  #   O botão de toggle recebe opacity independente (sempre bem visível)
   #----------------------------------------------------------------------------
   def change_opacity(x = 0, y = 0)
     super()
     @player_sprite.opacity = self.opacity
     @pvp_sprite.opacity    = self.opacity
+    @toggle_btn.opacity    = [self.opacity, 180].max  # botão nunca fica transparente demais
     @event_sprites.each_value { |sprite| sprite.opacity = self.opacity }
   end
 
@@ -133,8 +149,6 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Cria o sprite do ícone PVP / Safe (sprite separado, fora do bitmap)
-  #   Posicionado ao lado esquerdo do minimap via Configs::MINIMAP_PVP_X_OFFSET
-  #   e Configs::MINIMAP_PVP_Y_OFFSET.
   #   Como o minimap é fixo, a posição do ícone só precisa ser definida uma vez.
   #----------------------------------------------------------------------------
   def create_pvp_icon
@@ -145,8 +159,124 @@ class Sprite_Minimap < Sprite2
   end
 
   #----------------------------------------------------------------------------
+  # * Cria o botão de toggle (mostrar/esconder minimap)
+  #
+  #   Sprite quadrado de Configs::MINIMAP_BTN_SIZE px posicionado no
+  #   canto superior direito do frame, com margem interna de 2px.
+  #   Permanece SEMPRE visível, mesmo quando o corpo do minimap é ocultado,
+  #   permitindo que o jogador reabra o minimap ao clicar nele.
+  #
+  #   Símbolo exibido:
+  #     ▼  → minimap visível   (clicar irá esconder)
+  #     ▲  → minimap oculto    (clicar irá mostrar)
+  #----------------------------------------------------------------------------
+  def create_toggle_btn
+    btn_s              = Configs::MINIMAP_BTN_SIZE
+    @toggle_btn        = Sprite.new
+    @toggle_btn.bitmap = Bitmap.new(btn_s, btn_s)
+    @toggle_btn.x      = self.x + Configs::MINIMAP_SIZE - btn_s - 2
+    @toggle_btn.y      = self.y + 2
+    @toggle_btn.z      = self.z + 2
+    refresh_toggle_btn
+  end
+
+  #----------------------------------------------------------------------------
+  # * Redesenha o botão de toggle
+  #   Fundo semi-transparente + borda dourada + símbolo ▼ ou ▲
+  #   Chamado em create_toggle_btn e sempre que o estado de visibilidade muda
+  #----------------------------------------------------------------------------
+  def refresh_toggle_btn
+    btn_s  = Configs::MINIMAP_BTN_SIZE
+    bitmap = @toggle_btn.bitmap
+    bitmap.clear
+
+    # ── Fundo ─────────────────────────────────────────────────────────────────
+    bitmap.fill_rect(0, 0, btn_s, btn_s, Configs::MINIMAP_BTN_BG)
+
+    # ── Borda (1px, dourada) ──────────────────────────────────────────────────
+    bdr = Configs::MINIMAP_BTN_BORDER
+    bitmap.fill_rect(0,         0,         btn_s, 1,     bdr)  # Topo
+    bitmap.fill_rect(0,         btn_s - 1, btn_s, 1,     bdr)  # Base
+    bitmap.fill_rect(0,         0,         1,     btn_s, bdr)  # Esquerda
+    bitmap.fill_rect(btn_s - 1, 0,         1,     btn_s, bdr)  # Direita
+
+    # ── Símbolo ▼/▲ ───────────────────────────────────────────────────────────
+    bitmap.font.size  = Configs::MINIMAP_BTN_FONT_SIZE
+    bitmap.font.bold  = false
+    bitmap.font.color = Configs::MINIMAP_BTN_COLOR
+    bitmap.draw_text(0, 0, btn_s, btn_s, @minimap_visible ? '▼' : '▲', 1)
+  end
+
+  #----------------------------------------------------------------------------
+  # * Alterna a visibilidade do corpo do minimap
+  #
+  #   Quando oculto:
+  #     - self (bitmap principal), sprites de player, pvp e eventos → invisible
+  #     - @toggle_btn → permanece VISÍVEL (permite reabrir)
+  #     - @tool_tip   → sempre resetado para invisible
+  #
+  #   Quando visível:
+  #     - Todos os sprites são restaurados
+  #     - O estado dos sprites de eventos respeita @minimap_visible
+  #----------------------------------------------------------------------------
+  def toggle_minimap
+    @minimap_visible = !@minimap_visible
+
+    self.visible           = @minimap_visible
+    @player_sprite.visible = @minimap_visible
+    @pvp_sprite.visible    = @minimap_visible
+    @tool_tip.visible      = false  # sempre reseta tooltip ao alternar
+
+    @event_sprites.each_value { |s| s.visible = @minimap_visible }
+
+    refresh_toggle_btn
+  end
+
+  #----------------------------------------------------------------------------
+  # * Verifica se a tecla de toggle foi pressionada
+  #
+  #   Usa Configs::MINIMAP_TOGGLE_KEY (padrão: :N).
+  #   O rescue garante que, caso o módulo Input do VXA-OS não suporte
+  #   a constante de tecla configurada, o script não quebre.
+  #   Se necessário, substitua Input.trigger? pelo método do seu VXA-OS:
+  #     Keyboard.trigger?(:N)   ou similar
+  #----------------------------------------------------------------------------
+  def toggle_key_triggered?
+    Input.trigger?(Configs::MINIMAP_TOGGLE_KEY)
+  rescue
+    false
+  end
+
+  #----------------------------------------------------------------------------
+  # * Verifica se o botão de toggle foi clicado com o mouse (botão esquerdo)
+  #   A área de clique equivale exatamente ao bitmap do botão
+  #----------------------------------------------------------------------------
+  def toggle_btn_clicked?
+    btn_s = Configs::MINIMAP_BTN_SIZE
+    bx    = self.x + Configs::MINIMAP_SIZE - btn_s - 2
+    by    = self.y + 2
+
+    Mouse.trigger?(:left)   &&
+    Mouse.x >= bx           &&
+    Mouse.x <= bx + btn_s   &&
+    Mouse.y >= by           &&
+    Mouse.y <= by + btn_s
+  end
+
+  #----------------------------------------------------------------------------
+  # * Processa o input de toggle a cada frame
+  #   Prioridade: tecla N → clique no botão
+  #   Chamado ANTES do guard `return unless @minimap_visible` para que
+  #   o toggle funcione mesmo com o minimap oculto
+  #----------------------------------------------------------------------------
+  def update_toggle
+    if toggle_key_triggered? || toggle_btn_clicked?
+      toggle_minimap
+    end
+  end
+
+  #----------------------------------------------------------------------------
   # * Atualiza o conteúdo do ícone PVP / Safe
-  #   Redesenha de acordo com o estado PVP atual do mapa
   #----------------------------------------------------------------------------
   def refresh_pvp_icon
     @pvp_sprite.bitmap.clear
@@ -202,6 +332,8 @@ class Sprite_Minimap < Sprite2
     @pvp_sprite.dispose
     @tool_tip.bitmap.dispose
     @tool_tip.dispose
+    @toggle_btn.bitmap.dispose
+    @toggle_btn.dispose
     dispose_events
   end
 
@@ -293,31 +425,22 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Desenha as linhas separadoras entre as seções de texto
-  #   Três linhas de 1px são desenhadas nas bordas de cada seção:
+  #   Três linhas de 1px desenhadas nas bordas de cada seção:
   #     1. Entre o frame do mapa e o nome do mapa
   #     2. Entre o nome do mapa e as coordenadas
   #     3. Entre as coordenadas e o relógio
-  #
-  #   Cada linha tem margem horizontal de 4px (evita encostar na borda do frame).
-  #   Cor configurável em Configs::MINIMAP_SEPARATOR_COLOR.
-  #
-  #   Importante: draw_coordinates e draw_clock preservam o 1º pixel de cada
-  #   seção (fill_rect começa em y_pos + 1) para não apagar o separador superior.
   #----------------------------------------------------------------------------
   def draw_separators
     sep    = Configs::MINIMAP_SEPARATOR_COLOR
     w      = Configs::MINIMAP_SIZE - 8
     x_left = 4
 
-    # Separador 1: entre o frame do mapa e o nome
     y1 = Configs::MINIMAP_SIZE
     self.bitmap.fill_rect(Rect.new(x_left, y1, w, 1), sep)
 
-    # Separador 2: entre o nome do mapa e as coordenadas
     y2 = Configs::MINIMAP_SIZE + Configs::MINIMAP_NAME_HEIGHT
     self.bitmap.fill_rect(Rect.new(x_left, y2, w, 1), sep)
 
-    # Separador 3: entre as coordenadas e o relógio
     y3 = Configs::MINIMAP_SIZE + Configs::MINIMAP_NAME_HEIGHT + Configs::MINIMAP_COORD_HEIGHT
     self.bitmap.fill_rect(Rect.new(x_left, y3, w, 1), sep)
   end
@@ -354,16 +477,14 @@ class Sprite_Minimap < Sprite2
 
     # ── Cantos DECORATIVOS ─────────────────────────────────────────────────────
     cs = 4
-    self.bitmap.fill_rect(m,           m,           cs, cs, corner)  # Superior esquerdo
-    self.bitmap.fill_rect(m + ma - cs, m,           cs, cs, corner)  # Superior direito
-    self.bitmap.fill_rect(m,           m + ma - cs, cs, cs, corner)  # Inferior esquerdo
-    self.bitmap.fill_rect(m + ma - cs, m + ma - cs, cs, cs, corner)  # Inferior direito
+    self.bitmap.fill_rect(m,           m,           cs, cs, corner)
+    self.bitmap.fill_rect(m + ma - cs, m,           cs, cs, corner)
+    self.bitmap.fill_rect(m,           m + ma - cs, cs, cs, corner)
+    self.bitmap.fill_rect(m + ma - cs, m + ma - cs, cs, cs, corner)
   end
 
   #----------------------------------------------------------------------------
   # * Desenha o nome do mapa centralizado abaixo do frame
-  #   Área: de y=MINIMAP_SIZE até y=MINIMAP_SIZE+MINIMAP_NAME_HEIGHT
-  #   O 1º pixel da área (separador) é preservado — o texto começa em y+2.
   #----------------------------------------------------------------------------
   def draw_map_name
     self.bitmap.draw_text(
@@ -378,13 +499,8 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Desenha as coordenadas X/Y do jogador abaixo do nome do mapa
-  #   Área: de y=MINIMAP_SIZE+MINIMAP_NAME_HEIGHT até +MINIMAP_COORD_HEIGHT
-  #   Formato definido em Configs::MINIMAP_COORD_FORMAT (ex: 'X: %d  Y: %d')
-  #
   #   Otimização: só redesenha quando o jogador se move (@last_player_x/y)
-  #
-  #   Preservação do separador: fill_rect começa em y_pos + 1 para não apagar
-  #   a linha separadora do topo desta seção (desenhada em draw_separators).
+  #   Preservação do separador: fill_rect começa em y_pos + 1
   #----------------------------------------------------------------------------
   def draw_coordinates
     y_pos = Configs::MINIMAP_SIZE + Configs::MINIMAP_NAME_HEIGHT
@@ -408,14 +524,8 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Desenha o relógio em tempo real abaixo das coordenadas
-  #   Área: de y=MINIMAP_SIZE+MINIMAP_NAME_HEIGHT+MINIMAP_COORD_HEIGHT até +CLOCK_HEIGHT
-  #   Formato definido em Configs::MINIMAP_CLOCK_FORMAT (padrão strftime do Ruby)
-  #     '%H:%M:%S' → 14:32:07   |   '%H:%M' → 14:32
-  #
   #   Otimização: só redesenha quando o segundo muda (@last_time)
-  #
-  #   Preservação do separador: fill_rect começa em y_pos + 1 para não apagar
-  #   a linha separadora do topo desta seção (desenhada em draw_separators).
+  #   Preservação do separador: fill_rect começa em y_pos + 1
   #----------------------------------------------------------------------------
   def draw_clock
     y_pos = Configs::MINIMAP_SIZE        +
@@ -441,8 +551,6 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Desenha a imagem PNG do mapa na área interna do frame
-  #   Redimensionada (stretch_blt) para caber em MINIMAP_MAP_AREA × MINIMAP_MAP_AREA
-  #   Origem: Graphics/Minimaps/{map_id}.png
   #----------------------------------------------------------------------------
   def draw_map
     bitmap = Cache.minimap($game_map.map_id.to_s)
@@ -457,8 +565,6 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Atualiza o conteúdo do tooltip com o nome do evento
-  #   Fundo semi-transparente + texto centralizado
-  #   Só redesenha se o nome do evento mudou
   #----------------------------------------------------------------------------
   def refresh_tool_tip(event_name, width)
     @last_tip_name = event_name
@@ -471,7 +577,6 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Desenha os sprites de eventos especiais no minimap
-  #   Tipos detectados: Missão, Boss, Loja, Banco, Teleporte, CheckPoint
   #----------------------------------------------------------------------------
   def draw_events
     @player_sprite.visible = true
@@ -510,12 +615,15 @@ class Sprite_Minimap < Sprite2
   end
 
   #----------------------------------------------------------------------------
-  # * Update: atualiza posição do jogador, eventos, tooltip, coordenadas e relógio
+  # * Update principal
   #
-  #   Otimizações aplicadas:
-  #     - refresh()           → só quando o mapa muda  (@last_map_id)
-  #     - draw_coordinates()  → só quando o jogador move (@last_player_x/y)
-  #     - draw_clock()        → só quando o segundo muda (@last_time)
+  #   Fluxo:
+  #     1. update_toggle  → sempre processado (tecla N + clique no botão)
+  #     2. guard          → sai se o minimap estiver oculto (@minimap_visible)
+  #     3. refresh        → só se o mapa trocou
+  #     4. coordenadas    → só se o jogador se moveu
+  #     5. relógio        → só se o segundo mudou
+  #     6. sprites        → posições do jogador e eventos
   #
   #   Nota: update_pvp_position não é chamado aqui pois o minimap é fixo —
   #   a posição do ícone PVP é definida uma única vez em refresh_pvp_icon.
@@ -523,26 +631,32 @@ class Sprite_Minimap < Sprite2
   def update
     super
 
-    # Redesenha tudo apenas se o mapa trocou
+    # Passo 1: toggle sempre processado, inclusive com minimap oculto
+    update_toggle
+
+    # Passo 2: nada mais precisa rodar se o minimap estiver oculto
+    return unless @minimap_visible
+
+    # Passo 3: refresh completo apenas na troca de mapa
     refresh if $game_map.map_id != @last_map_id
 
     # Atualiza opacidade (hover)
     change_opacity(Configs::MINIMAP_PADDING)
 
-    # Atualiza coordenadas apenas quando o jogador se move
+    # Passo 4: coordenadas apenas quando o jogador se move
     if $game_player.x != @last_player_x || $game_player.y != @last_player_y
       draw_coordinates
     end
 
-    # Atualiza relógio apenas quando o segundo muda
+    # Passo 5: relógio apenas quando o segundo muda
     current_time = Time.now.strftime(Configs::MINIMAP_CLOCK_FORMAT)
     draw_clock if current_time != @last_time
 
-    # Atualiza posição do sprite do jogador no minimap
+    # Passo 6: posição do sprite do jogador no minimap
     @player_sprite.x = self.x + object_x($game_player)
     @player_sprite.y = self.y + object_y($game_player)
 
-    # Atualiza posição e tooltip de cada evento
+    # Posição e tooltip de cada evento
     @event_sprites.each do |event_id, event_sprite|
       event_sprite.x = self.x + object_x($game_map.events[event_id])
       event_sprite.y = self.y + object_y($game_map.events[event_id])
@@ -552,8 +666,6 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Atualiza o tooltip do evento sob o cursor do mouse
-  #   Exibe apenas quando o mouse está sobre o ícone do evento
-  #   Posiciona o tooltip seguindo o mouse sem sair da tela
   #----------------------------------------------------------------------------
   def update_tool_tip(event_id)
     return if @tool_tip.visible && @last_tip_name != @event_data[event_id].name
