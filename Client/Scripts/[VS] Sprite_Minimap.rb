@@ -12,6 +12,7 @@
 #   - Coordenadas do jogador (X/Y) exibidas abaixo do nome do mapa
 #   - Relógio em tempo real exibido abaixo das coordenadas
 #   - Linhas separadoras entre as seções de texto (nome / coords / relógio)
+#   - Posição FIXA: drag desabilitado (@dragable = false)
 #
 # Inspirado em: Tibia Online, MU Online, Ragnarok Online
 #------------------------------------------------------------------------------
@@ -57,7 +58,8 @@ class Sprite_Minimap < Sprite2
     # Spritesheet 'Minimap': usada apenas para ícones de player/eventos
     @bitmap = Cache.system('Minimap')
 
-    @dragable      = true
+    # Minimap fixo: jogador não pode arrastar
+    @dragable      = false
     @event_sprites = {}
     @event_data    = {}
     @last_tip_name = ''
@@ -133,6 +135,7 @@ class Sprite_Minimap < Sprite2
   # * Cria o sprite do ícone PVP / Safe (sprite separado, fora do bitmap)
   #   Posicionado ao lado esquerdo do minimap via Configs::MINIMAP_PVP_X_OFFSET
   #   e Configs::MINIMAP_PVP_Y_OFFSET.
+  #   Como o minimap é fixo, a posição do ícone só precisa ser definida uma vez.
   #----------------------------------------------------------------------------
   def create_pvp_icon
     @pvp_sprite        = Sprite.new
@@ -155,8 +158,8 @@ class Sprite_Minimap < Sprite2
   end
 
   #----------------------------------------------------------------------------
-  # * Atualiza a posição do sprite de ícone PVP / Safe
-  #   Chamado em refresh_pvp_icon e update() para acompanhar drag do minimap
+  # * Define a posição do sprite de ícone PVP / Safe
+  #   Como o minimap é fixo, basta chamar uma única vez (em refresh_pvp_icon).
   #----------------------------------------------------------------------------
   def update_pvp_position
     @pvp_sprite.x = self.x + Configs::MINIMAP_PVP_X_OFFSET
@@ -242,7 +245,7 @@ class Sprite_Minimap < Sprite2
   def refresh
     @tool_tip.visible = false
     draw_background
-    draw_separators   # Linhas divisórias entre as seções de texto
+    draw_separators
     draw_frame
     draw_map_name
     draw_coordinates
@@ -267,7 +270,6 @@ class Sprite_Minimap < Sprite2
   def draw_background
     self.bitmap.clear
 
-    # Fundo geral (quadrado + nome + coordenadas + relógio)
     total_h = Configs::MINIMAP_SIZE        +
               Configs::MINIMAP_NAME_HEIGHT  +
               Configs::MINIMAP_COORD_HEIGHT +
@@ -278,7 +280,6 @@ class Sprite_Minimap < Sprite2
       Configs::MINIMAP_BG_COLOR
     )
 
-    # Fundo específico da área de mapa interno
     self.bitmap.fill_rect(
       Rect.new(
         Configs::MINIMAP_PADDING,
@@ -305,8 +306,8 @@ class Sprite_Minimap < Sprite2
   #----------------------------------------------------------------------------
   def draw_separators
     sep    = Configs::MINIMAP_SEPARATOR_COLOR
-    w      = Configs::MINIMAP_SIZE - 8   # Largura da linha (margem de 4px em cada lado)
-    x_left = 4                           # Margem esquerda da linha
+    w      = Configs::MINIMAP_SIZE - 8
+    x_left = 4
 
     # Separador 1: entre o frame do mapa e o nome
     y1 = Configs::MINIMAP_SIZE
@@ -388,7 +389,6 @@ class Sprite_Minimap < Sprite2
   def draw_coordinates
     y_pos = Configs::MINIMAP_SIZE + Configs::MINIMAP_NAME_HEIGHT
 
-    # Limpa a área das coordenadas preservando o separador superior (1px)
     self.bitmap.fill_rect(
       Rect.new(0, y_pos + 1, Configs::MINIMAP_SIZE, Configs::MINIMAP_COORD_HEIGHT - 1),
       Configs::MINIMAP_BG_COLOR
@@ -424,7 +424,6 @@ class Sprite_Minimap < Sprite2
 
     current_time = Time.now.strftime(Configs::MINIMAP_CLOCK_FORMAT)
 
-    # Limpa a área do relógio preservando o separador superior (1px)
     self.bitmap.fill_rect(
       Rect.new(0, y_pos + 1, Configs::MINIMAP_SIZE, Configs::MINIMAP_CLOCK_HEIGHT - 1),
       Configs::MINIMAP_BG_COLOR
@@ -517,6 +516,9 @@ class Sprite_Minimap < Sprite2
   #     - refresh()           → só quando o mapa muda  (@last_map_id)
   #     - draw_coordinates()  → só quando o jogador move (@last_player_x/y)
   #     - draw_clock()        → só quando o segundo muda (@last_time)
+  #
+  #   Nota: update_pvp_position não é chamado aqui pois o minimap é fixo —
+  #   a posição do ícone PVP é definida uma única vez em refresh_pvp_icon.
   #----------------------------------------------------------------------------
   def update
     super
@@ -524,11 +526,8 @@ class Sprite_Minimap < Sprite2
     # Redesenha tudo apenas se o mapa trocou
     refresh if $game_map.map_id != @last_map_id
 
-    # Atualiza opacidade (drag/hover)
+    # Atualiza opacidade (hover)
     change_opacity(Configs::MINIMAP_PADDING)
-
-    # Mantém ícone PVP/Safe sincronizado com drag do minimap
-    update_pvp_position
 
     # Atualiza coordenadas apenas quando o jogador se move
     if $game_player.x != @last_player_x || $game_player.y != @last_player_y
