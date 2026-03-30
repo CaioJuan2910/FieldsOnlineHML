@@ -1,276 +1,280 @@
 #==============================================================================
-# ** Configs
+# [VS] Configs
 #------------------------------------------------------------------------------
-#  Este módulo lida com as configurações gerais. Ele também
-# é executado no servidor.
-#------------------------------------------------------------------------------
-#  Autor: Valentine
+# Autor: Valentine
+# Descrição: Configurações globais do sistema VXA-OS.
+#             Todas as constantes do projeto são centralizadas aqui para
+#             facilitar manutenção, ajustes e personalização sem precisar
+#             editar scripts individuais.
 #==============================================================================
 
 module Configs
-  
-  # Nome, esboço, sombra, negrito e tamanho da fonte padrão
-  Font.default_name = 'VL Gothic'
+
+  #============================================================================
+  # ── FONTE PADRÃO ────────────────────────────────────────────────────────────
+  # Configurações globais de fonte aplicadas a todos os elementos do jogo.
+  #============================================================================
+  Font.default_name    = 'VL Gothic'
   Font.default_outline = true
-  Font.default_shadow = false
-  Font.default_bold = false
-  Font.default_size = 16
-  
-  # Nome, esboço, sombra, negrito e tamanho da fonte da
-  #janela do bate-papo
-  CHAT_FONT_NAME = 'VL Gothic'
+  Font.default_shadow  = false
+  Font.default_bold    = false
+  Font.default_size    = 16
+
+  #============================================================================
+  # ── FONTE DO CHAT ────────────────────────────────────────────────────────────
+  # Configurações de fonte específicas para a janela de chat.
+  #============================================================================
+  CHAT_FONT_NAME    = 'VL Gothic'
   CHAT_FONT_OUTLINE = false
-  CHAT_FONT_SHADOW = true
-  CHAT_FONT_BOLD = true
-  CHAT_FONT_SIZE = 17
-  
-  # Endereço da rede
-  HOST = '127.0.0.1'
-  
-  # Porta da rede
-  # Qualquer alteração na porta da rede deve ser repetida
-  #no arquivo configs.ini do servidor
-  PORT = 5000
-  
-  # Versão
+  CHAT_FONT_SHADOW  = true
+  CHAT_FONT_BOLD    = true
+  CHAT_FONT_SIZE    = 17
+
+  #============================================================================
+  # ── REDE / SERVIDOR ──────────────────────────────────────────────────────────
+  # Endereço do servidor, porta de conexão, versão do jogo e site da loja.
+  #============================================================================
+  HOST         = '127.0.0.1'
+  PORT         = 5000
   GAME_VERSION = 12983
-  
-  # Site da loja para comprar VIP
   SHOP_WEBSITE = 'www.aldeiarpg.com'
-  
-  # Resoluções
-  # As dimensões máximas da tela no executável
-  #sem DirectX é 640x480
+
+  #============================================================================
+  # ── RESOLUÇÕES ───────────────────────────────────────────────────────────────
+  # Lista de resoluções disponíveis para o jogador selecionar nas opções.
+  # Cada entrada é um hash com :width e :height.
+  #============================================================================
   RESOLUTIONS = [
-    {:width => 800, :height => 608},
-    {:width => 1024, :height => 608},
-    {:width => 1024, :height => 672}
+    { :width => 800,  :height => 608 },
+    { :width => 1024, :height => 608 },
+    { :width => 1024, :height => 672 }
   ]
-  
-  # Tempo (em segundos) do carregamento (0 = desativado)
-  LOADING_TIME = 2
-  
-  # Imagens de fundo do carregamento que serão
-  #escolhidas aleatoriamente
+
+  #============================================================================
+  # ── TELA DE CARREGAMENTO ─────────────────────────────────────────────────────
+  # Tempo de exibição (em segundos) e lista de imagens de título usadas
+  # na tela de loading.
+  #============================================================================
+  LOADING_TIME   = 2
   LOADING_TITLES = ['Title1', 'Title2']
-  
-  # Quantidade mínima e máxima de caracteres
+
+  #============================================================================
+  # ── PERSONAGENS ──────────────────────────────────────────────────────────────
+  # Limites de caracteres no nome, nível mínimo para PVP e número máximo
+  # de personagens por conta.
+  #============================================================================
   MIN_CHARACTERS = 3
   MAX_CHARACTERS = 13
-  
-  # Nível mínimo para atacar e ser atacado por outros
-  #jogadores em mapas PvP
-  MIN_LEVEL_PVP = 2
-  
-  # Quantidade máxima de heróis por conta
-  MAX_ACTORS = 3
-  
-  # Quantidade máxima de atalhos
-  MAX_HOTBAR = 9
-  
-  # Quantidade máxima de classes na criação de personagem
-  #para jogadores comuns
+  MIN_LEVEL_PVP  = 2
+
+  #============================================================================
+  # ── LIMITES GERAIS ───────────────────────────────────────────────────────────
+  # Quantidade máxima de atores, slots de hotbar, classes padrão e VIP.
+  #============================================================================
+  MAX_ACTORS          = 3
+  MAX_HOTBAR          = 9
   MAX_DEFAULT_CLASSES = 5
-  
-  # Quantidade máxima de classes na criação de personagem
-  #para VIPs
-  MAX_VIP_CLASSES = 9
-  
-  # Quantidade máxima de itens, armas, protetores,
-  #ouro, parâmetros e nível do jogador
+  MAX_VIP_CLASSES     = 9
+
+  #============================================================================
+  # ── LIMITES DE VALORES ───────────────────────────────────────────────────────
+  # Caps de itens, ouro, atributos e nível máximo do personagem.
+  #============================================================================
   MAX_ITEMS  = 999
   MAX_GOLD   = 99_999_999
   MAX_PARAMS = 999_999
   MAX_LEVEL  = 99
-  
-  # Quantidade máxima de switches do jogador
-  # Este valor deve ser definido antes do personagem ser criado
-  MAX_PLAYER_SWITCHES = 100
-  
-  # Quantidade máxima de variáveis do jogador
-  # Este valor deve ser definido antes do personagem ser criado
-  MAX_PLAYER_VARIABLES = 100
-  
-  # Quantidade máxima de amigos
-  MAX_FRIENDS = 20
-  
-  # Quantidade máxima de membros da guilda
-  MAX_GUILD_MEMBERS = 50
-  
-  # Quantidade máxima de itens do inventário, da troca e do banco
-  MAX_PLAYER_ITEMS = 30
-  MAX_TRADE_ITEMS = 12
-  MAX_BANK_ITEMS = 42
-  
-  # Quantidade máxima de linhas do bate-papo
-  MAX_CHAT_LINES = 10 # Recomendável
-  
-  # Quantidade máxima de membros do grupo
-  MAX_PARTY_MEMBERS = 4
-  
-  # Quantidade máxima de equipamentos
-  # Este valor deve corresponder ao número de elementos da
-  #matriz da ordem do gráfico dos equipamentos abaixo,
-  #def equip_slots na [VS] Window_Equip e def draw_paperdolls
-  #na [VS] Window_Base. Ele deve ser definido antes
-  #do personagem ser criado
-  MAX_EQUIPS = 9
-  
-  # Ordem do gráfico dos equipamentos
-  # 0 = Arma, 1 = Escudo, 2 = Capacete, 3 = Armadura
-  #4 = Acessório, 5 = Amuleto, 6 = Capa, 7 = Luva, 8 = Bota
-  # Frente
-  PAPERDOLL_DOWN_DIR = [3, 5, 2, 7, 6, 8, 1, 0, 4]
-  # Esquerda
-  PAPERDOLL_LEFT_DIR = [7, 0, 3, 5, 2, 6, 8, 1, 4]
-  # Direita
+
+  #============================================================================
+  # ── LIMITES DE SISTEMAS ──────────────────────────────────────────────────────
+  # Capacidade máxima de cada sistema: switches, variáveis, amigos, guilda,
+  # inventário, troca, banco, chat, grupo e equipamentos.
+  #============================================================================
+  MAX_PLAYER_SWITCHES   = 100
+  MAX_PLAYER_VARIABLES  = 100
+  MAX_FRIENDS           = 20
+  MAX_GUILD_MEMBERS     = 50
+  MAX_PLAYER_ITEMS      = 30
+  MAX_TRADE_ITEMS       = 12
+  MAX_BANK_ITEMS        = 42
+  MAX_CHAT_LINES        = 10
+  MAX_PARTY_MEMBERS     = 4
+  MAX_EQUIPS            = 9
+
+  #============================================================================
+  # ── PAPERDOLL (DIREÇÕES) ─────────────────────────────────────────────────────
+  # Ordem dos frames do paperdoll para cada direção de movimento do personagem.
+  # Os índices correspondem às posições no spritesheet de equipamentos.
+  #============================================================================
+  PAPERDOLL_DOWN_DIR  = [3, 5, 2, 7, 6, 8, 1, 0, 4]
+  PAPERDOLL_LEFT_DIR  = [7, 0, 3, 5, 2, 6, 8, 1, 4]
   PAPERDOLL_RIGHT_DIR = [1, 3, 5, 2, 7, 6, 8, 0, 4]
-  # Costas
-  PAPERDOLL_UP_DIR = [7, 1, 0, 3, 5, 2, 8, 6, 4]
-  
-  # Índice da cor das mensagens do bate-papo na
-  #Window.png da pasta System
+  PAPERDOLL_UP_DIR    = [7, 1, 0, 3, 5, 2, 8, 6, 4]
+
+  #============================================================================
+  # ── CORES DO CHAT ────────────────────────────────────────────────────────────
+  # Índices de cor usados nas mensagens do chat (referência à paleta do sistema).
+  #============================================================================
   NORMAL_COLOR  = 0
   GLOBAL_COLOR  = 1
   SUCCESS_COLOR = 5
   ERROR_COLOR   = 10
   ALERT_COLOR   = 8
   ADM_MSG_COLOR = 17
-  
-  # Índice da cor do nome dos jogadores, inimigos e guildas
-  #na Window.png da pasta System
+
+  #============================================================================
+  # ── CORES DE ENTIDADES ───────────────────────────────────────────────────────
+  # Índices de cor para nomes de jogadores, NPCs, inimigos e guildas
+  # exibidos acima dos personagens no mapa.
+  #============================================================================
   DEFAULT_COLOR = 0
   MONITOR_COLOR = 4
   ADMIN_COLOR   = 6
   ENEMY_COLOR   = 0
   BOSS_COLOR    = 10
   GUILD_COLOR   = 16
-  
-  # Índice no IconSet dos ícones do menu
-  ITEM_ICON   = 260
-  SKILL_ICON  = 96
-  STATUS_ICON = 121
-  QUEST_ICON  = 227
-  FRIEND_ICON = 536
-  GUILD_ICON  = 535
-  MENU_ICON   = 117
-  
-  # Índice no IconSet dos ícones do menu de interação
+
+  #============================================================================
+  # ── ÍCONES DE MENU ───────────────────────────────────────────────────────────
+  # Índices dos ícones usados nos botões e abas do menu principal.
+  #============================================================================
+  ITEM_ICON    = 260
+  SKILL_ICON   = 96
+  STATUS_ICON  = 121
+  QUEST_ICON   = 227
+  FRIEND_ICON  = 536
+  GUILD_ICON   = 535
+  MENU_ICON    = 117
+
+  #============================================================================
+  # ── ÍCONES DE AÇÃO (JOGADOR) ─────────────────────────────────────────────────
+  # Ícones usados em menus de contexto e ações sobre outros jogadores
+  # (mensagem privada, bloquear, desbloquear, trocar, grupo).
+  #============================================================================
   PRIVATE_ICON = 4
   BLOCK_ICON   = 538
   UNLOCK_ICON  = 539
   TRADE_ICON   = 540
   PARTY_ICON   = 12
-  
-  # Índice no IconSet dos demais ícones
-  CONFIG_ICON            = 532
-  GOLD_ICON              = 262
-  EXP_ICON               = 125
-  ADD_GOLD_ICON          = 528
-  REMOVE_GOLD_ICON       = 529
-  MAP_PVP_ICON           = 534
-  MAP_NONPVP_ICON        = 533
-  PLAYER_ON_ICON         = 189
-  PLAYER_OFF_ICON        = 187
+
+  #============================================================================
+  # ── ÍCONES DE SISTEMA ────────────────────────────────────────────────────────
+  # Ícones usados em janelas de configuração, ouro, EXP, mapa, status
+  # de jogadores online/offline, missões e grupo.
+  #============================================================================
+  CONFIG_ICON        = 532
+  GOLD_ICON          = 262
+  EXP_ICON           = 125
+  ADD_GOLD_ICON      = 528
+  REMOVE_GOLD_ICON   = 529
+  MAP_PVP_ICON       = 534
+  MAP_NONPVP_ICON    = 533
+  PLAYER_ON_ICON     = 189
+  PLAYER_OFF_ICON    = 187
   QUEST_NOT_STARTED_ICON = 537
   QUEST_FINISHED_ICON    = 190
   QUEST_IN_PROGRESS_ICON = 189
-  LEAVE_PARTY_ICON       = 530
-  EMOJI_ICON             = 541
-  
-  # Índice no IconSet do início dos ícones de fortalecimento/buff
-  ICON_BUFF_START = 64
-  
-  # Índice no IconSet do início dos ícones de enfraquecimento/debuff
+  LEAVE_PARTY_ICON   = 530
+  EMOJI_ICON         = 541
+
+  #============================================================================
+  # ── ÍCONES DE BUFF / DEBUFF ──────────────────────────────────────────────────
+  # Índice inicial dos ícones de buff e debuff no iconset.
+  # Os ícones são lidos sequencialmente a partir desses índices.
+  #============================================================================
+  ICON_BUFF_START   = 64
   ICON_DEBUFF_START = 80
-  
-  # Quantidade de pontos iniciais na criação de personagem
-  START_POINTS = 10
-  
-  # Altura de barra de título da janela
-  TITLE_BAR_HEIGHT = 20
-  
-  # Teletransportes
+
+  #============================================================================
+  # ── PONTOS INICIAIS / INTERFACE ──────────────────────────────────────────────
+  # Pontos de atributo disponíveis ao criar um personagem e altura da
+  # barra de título das janelas.
+  #============================================================================
+  START_POINTS      = 10
+  TITLE_BAR_HEIGHT  = 20
+
+  #============================================================================
+  # ── TELEPORTES ───────────────────────────────────────────────────────────────
+  # Lista de destinos de teleporte disponíveis no jogo.
+  # Cada entrada contém: mapa de destino, coordenadas X/Y e custo em ouro.
+  #============================================================================
   TELEPORTS = []
   TELEPORTS << [
-    {:map_id => 1, :x => 21, :y => 12, :gold => 10},
-    {:map_id => 2, :x => 4, :y => 20, :gold => 20}
+    { :map_id => 1, :x => 21, :y => 12, :gold => 10 },
+    { :map_id => 2, :x => 4,  :y => 20, :gold => 20 }
   ]
-  
-  # Armas de longo alcance
+
+  #============================================================================
+  # ── ARMAS DE ALCANCE ─────────────────────────────────────────────────────────
+  # Define quais armas (por ID) disparam projéteis.
+  # Chave: ID da arma no banco de dados.
+  # Valores:
+  #   :projectile_name => nome do arquivo de animação do projétil
+  #   :range           => alcance máximo em tiles
+  #   :item_id         => ID do item consumido por disparo (0 = nenhum)
+  #   :step_anime      => anima o projétil passo a passo (opcional)
+  #   :mp_cost         => custo de MP por disparo (opcional)
+  #============================================================================
   RANGE_WEAPONS = {}
-  # Arma: Arco Curto (ID 31)
   RANGE_WEAPONS[31] = {
-    # Gráfico
     :projectile_name => 'Arrow',
-    # Alcance em tiles
     :range           => 10,
-    # ID da munição (0 = infinito)
     :item_id         => 18
   }
-  # Arma: Cajado de Madeira (ID 49)
   RANGE_WEAPONS[49] = {
-    # Gráfico
     :projectile_name => 'Fire',
-    # Alcance em tiles
-    :range           => 10, 
-    # ID da munição (0 = infinito)
+    :range           => 10,
     :item_id         => 0,
-    # Animação (opcional)
     :step_anime      => false,
-    # Custo de MP (opcional)
     :mp_cost         => 3
   }
-  
-  # Habilidades de longo alcance
+
+  #============================================================================
+  # ── HABILIDADES DE ALCANCE ───────────────────────────────────────────────────
+  # Define quais habilidades (por ID) disparam projéteis.
+  # Chave: ID da habilidade no banco de dados.
+  # Valores:
+  #   :projectile_name => nome do arquivo de animação do projétil
+  #   :step_anime      => anima o projétil passo a passo (opcional)
+  #============================================================================
   RANGE_SKILLS = {}
-  # Habilidade: Fogo (ID 51)
   RANGE_SKILLS[51] = { :projectile_name => 'Fire' }
-  # Habilidade: Luz das Estrelas (ID 70)
   RANGE_SKILLS[70] = {
-    # Gráfico
     :projectile_name => 'Light',
-    # Animação (opcional)
     :step_anime      => true
   }
-  
-  # Termos proibidos no nome dos jogadores comuns
+
+  #============================================================================
+  # ── NOMES PROIBIDOS ──────────────────────────────────────────────────────────
+  # Lista de prefixos de nomes que não podem ser usados por jogadores comuns.
+  # Impede que jogadores se passem por administradores ou moderadores.
+  #============================================================================
   FORBIDDEN_NAMES = ['adm ', 'admin ', 'gm ', 'god ', 'mod ']
-  
-  # Emojis do bate-papo
-  # Cada emoji deve ter 2 caracteres
-  #CHAT_EMOJIS = [':P', '8)', ':v', '-)', ':o', ':(', ':@', '-(']
-  
-  # Tempo (em segundos) para o herói e inimigos atacarem novamente
-  #O tempo mínimo para os inimigos é 0.8 (800 milissegundos)
-  ATTACK_TIME = 0.8
-  
-  # Tempo (em segundos) para a habilidade ser utilizada novamente
-  COOLDOWN_SKILL_TIME = 1
-  
-  # Tempo (em segundos) para o jogador conversar novamente
-  #no bate-papo global
-  GLOBAL_ANTISPAM_TIME = 1
-  
-  # Tempo (em frames) da animação de ataque
-  ATTACK_ANIMATION_TIME = 30
-  
-  # ID da animação que será executada ao subir nível
-  LEVEL_UP_ANIMATION_ID = 40
-  
-  # Quantidade máxima de drops por mapa
-  MAX_MAP_DROPS = 20
-  
-  # Tecla de ataque
-  ATTACK_KEY = :CTRL
-  
-  # Tecla usada para pegar drop
-  GET_DROP_KEY = :SPACE
-  
-  # Tecla usada para selecionar o inimigo mais próximo
+
+  #============================================================================
+  # ── TEMPOS E ANIMAÇÕES ───────────────────────────────────────────────────────
+  # Intervalos de tempo (em segundos ou frames) para ações de combate,
+  # cooldowns, antispam e animações especiais.
+  #============================================================================
+  ATTACK_TIME           = 0.8   # Intervalo entre ataques normais (segundos)
+  COOLDOWN_SKILL_TIME   = 1     # Cooldown padrão de habilidades (segundos)
+  GLOBAL_ANTISPAM_TIME  = 1     # Intervalo mínimo entre mensagens no chat (segundos)
+  ATTACK_ANIMATION_TIME = 30    # Duração da animação de ataque (frames)
+  LEVEL_UP_ANIMATION_ID = 40    # ID da animação exibida ao subir de nível
+  MAX_MAP_DROPS         = 20    # Número máximo de drops simultâneos no mapa
+
+  #============================================================================
+  # ── TECLAS DE AÇÃO ───────────────────────────────────────────────────────────
+  # Mapeamento das teclas de atalho para ações principais do jogador.
+  #============================================================================
+  ATTACK_KEY       = :CTRL
+  GET_DROP_KEY     = :SPACE
   SELECT_ENEMY_KEY = :TAB
-  
-  # Teclas de atalho do menu
+
+  #============================================================================
+  # ── TECLAS DE MENU ───────────────────────────────────────────────────────────
+  # Teclas de atalho para abrir cada janela/aba do menu principal.
+  #============================================================================
   ITEM_KEY   = :LETTER_I
   SKILL_KEY  = :LETTER_H
   STATUS_KEY = :LETTER_C
@@ -278,11 +282,168 @@ module Configs
   FRIEND_KEY = :LETTER_F
   GUILD_KEY  = :LETTER_G
   MENU_KEY   = :LETTER_M
-  
-  # Teclas de atalho usadas para lançar habilidades/itens
+
+  #============================================================================
+  # ── HOTKEYS DA HOTBAR ────────────────────────────────────────────────────────
+  # Teclas numéricas associadas aos slots da hotbar (1 a 9).
+  #============================================================================
   HOTKEYS = [:KEY_1, :KEY_2, :KEY_3, :KEY_4, :KEY_5, :KEY_6, :KEY_7, :KEY_8, :KEY_9]
-  
-  # Teclas usadas para exibir balões
+
+  #============================================================================
+  # ── TECLAS DE BALÕES (EMOTES) ────────────────────────────────────────────────
+  # Teclas de função (F3–F12) usadas para exibir balões de emote no mapa.
+  #============================================================================
   BALLOONS_KEYS = [:F3, :F4, :F5, :F6, :F7, :F8, :F9, :F10, :F11, :F12]
-  
+
+  #============================================================================
+  # ── HUD (Sprite_HUD) ─────────────────────────────────────────────────────────
+  # Configurações da HUD principal (barras de HP, MP, EXP, face e nível).
+  # Todas as posições e dimensões podem ser ajustadas aqui sem precisar
+  # editar o Sprite_HUD diretamente.
+  #============================================================================
+
+  # Índice do ator principal exibido na HUD (padrão: 1)
+  # Usado em: [VS] Sprite_HUD.rb – draw_face, draw_hp_bar, draw_mp_bar, draw_exp_bar, draw_level
+  HUD_ACTOR_INDEX = 1
+
+  # Posição da HUD na tela (canto superior esquerdo)
+  # Usado em: [VS] Sprite_HUD.rb – initialize
+  HUD_X = 11
+  HUD_Y = 9
+  HUD_Z = 50
+
+  # Dimensões do bitmap principal da HUD
+  # Usado em: [VS] Sprite_HUD.rb – initialize (Bitmap.new)
+  HUD_WIDTH  = 255
+  HUD_HEIGHT = 107
+
+  # Fonte da HUD
+  # Usado em: [VS] Sprite_HUD.rb – initialize
+  HUD_FONT_SIZE = 18
+  HUD_FONT_BOLD = true
+
+  # Dimensões do recorte do fundo (HUDBase)
+  # Usado em: [VS] Sprite_HUD.rb – draw_background
+  HUD_BG_RECT_W = 248
+  HUD_BG_RECT_H = 98
+
+  # Posição da face do personagem dentro da HUD
+  # Usado em: [VS] Sprite_HUD.rb – draw_face
+  HUD_FACE_X = 8
+  HUD_FACE_Y = 1
+
+  # Configurações das barras de HP e MP
+  # Largura máxima da barra (em pixels, corresponde ao spritesheet HUDBars)
+  # Posição X/Y de cada barra dentro do bitmap da HUD
+  # Usado em: [VS] Sprite_HUD.rb – draw_hp_bar, draw_mp_bar
+  HUD_BAR_MAX_WIDTH = 123
+  HUD_HP_BAR_X      = 107
+  HUD_HP_BAR_Y      = 2
+  HUD_HP_LABEL_X    = 111
+  HUD_HP_LABEL_Y    = 7
+  HUD_HP_TEXT_Y     = 7
+  HUD_MP_BAR_X      = 107
+  HUD_MP_BAR_Y      = 30
+  HUD_MP_LABEL_X    = 111
+  HUD_MP_LABEL_Y    = 35
+  HUD_MP_TEXT_Y     = 35
+
+  # Configurações da barra de EXP (sprite separado, centralizado na base da tela)
+  # Usado em: [VS] Sprite_HUD.rb – create_exp_bar, adjust_x, adjust_y, draw_exp_bar
+  HUD_EXP_WIDTH    = 308
+  HUD_EXP_HEIGHT   = 22
+  HUD_EXP_OFFSET_X = -109   # Offset a partir do centro da tela (Graphics.width / 2 + offset)
+  HUD_EXP_OFFSET_Y = -28    # Offset a partir do fundo da tela (Graphics.height + offset)
+
+  # Se true, exibe o percentual de EXP restante (ex: "72.4%") no estilo MU Online
+  # Se false, exibe o valor numérico de EXP faltante (comportamento original)
+  # Usado em: [VS] Sprite_HUD.rb – draw_exp_bar
+  HUD_EXP_SHOW_PERCENT = true
+
+  # Configurações do nível exibido na HUD
+  # Usado em: [VS] Sprite_HUD.rb – draw_level
+  HUD_LEVEL_X      = 0
+  HUD_LEVEL_Y      = 77
+  HUD_LEVEL_TEXT_Y = 83
+
+  #============================================================================
+  # ── COMBATE (game_battle) ────────────────────────────────────────────────────
+  # Configurações do sistema de combate em tempo real.
+  # Inspirado em Tibia, MU Online, Ragnarok, Diablo e WoW.
+  #============================================================================
+
+  # Multiplicador de dano crítico
+  # Ex: 3.0 = dano crítico é 3x o dano normal (padrão Tibia/Diablo)
+  # Usado em: Server/Combat/game_battle.rb – make_damage_value
+  CRITICAL_MULTIPLIER = 3.0
+
+  # Número máximo de passos do loop de trajetória de projétil
+  # Evita loop infinito em make_damage_value em mapas com geometria incomum
+  # Usado em: Server/Combat/game_battle.rb – max_passage
+  MAX_PROJECTILE_STEPS = 50
+
+  #============================================================================
+  # ── DROPS (Sprite_Drop) ──────────────────────────────────────────────────────
+  # Configurações visuais dos drops no mapa.
+  # Inspirado no sistema de Tibia Online e Diablo.
+  #============================================================================
+
+  # Tamanho da fonte do nome do item exibido ao passar o mouse
+  # Usado em: [VS] Sprite_Drop.rb – create_name
+  DROP_FONT_SIZE = 15
+
+  # Distância vertical (em pixels) do nome acima do ícone do drop
+  # Usado em: [VS] Sprite_Drop.rb – update
+  DROP_NAME_OFFSET_Y = 18
+
+  #============================================================================
+  # ── MINIMAP (Sprite_Minimap) ─────────────────────────────────────────────────
+  # Configurações do Minimap quadrado, inspirado em Tibia Online, MU Online
+  # e Ragnarok Online. Será utilizado pelo script [VS] Sprite_Minimap.rb.
+  #============================================================================
+
+  # Tamanho do Minimap (largura e altura iguais = quadrado)
+  # Usado em: [VS] Sprite_Minimap.rb – initialize
+  MINIMAP_SIZE = 120
+
+  # Escala de renderização: quantos pixels do minimap por tile do mapa
+  # Ex: 2 = cada tile ocupa 2x2 pixels no minimap
+  # Usado em: [VS] Sprite_Minimap.rb – draw_tiles, draw_characters
+  MINIMAP_SCALE = 2
+
+  # Posição do Minimap na tela (canto superior direito por padrão)
+  # Ajuste MINIMAP_X para posicionar; sugestão: Graphics.width - MINIMAP_SIZE - 10
+  # Usado em: [VS] Sprite_Minimap.rb – initialize
+  MINIMAP_X = 10    # será recalculado no script com base em Graphics.width
+  MINIMAP_Y = 10
+  MINIMAP_Z = 200   # acima da HUD (z=50) e dos sprites de mapa
+
+  # Opacidade do Minimap (0 = invisível, 255 = opaco)
+  # Usado em: [VS] Sprite_Minimap.rb – initialize, change_opacity
+  MINIMAP_OPACITY = 210
+
+  # Cores dos tiles e personagens no Minimap
+  # Usado em: [VS] Sprite_Minimap.rb – draw_tiles, draw_characters
+  MINIMAP_COLOR_FLOOR  = Color.new(50,  50,  50,  200)   # Chão transitável
+  MINIMAP_COLOR_WALL   = Color.new(100, 100, 100, 220)   # Obstáculo/parede
+  MINIMAP_COLOR_PLAYER = Color.new(255, 255, 0,   255)   # Jogador (amarelo – estilo Tibia)
+  MINIMAP_COLOR_ENEMY  = Color.new(255, 50,  50,  255)   # Inimigo (vermelho)
+  MINIMAP_COLOR_NPC    = Color.new(50,  255, 100, 255)   # NPC (verde)
+  MINIMAP_COLOR_PARTY  = Color.new(100, 200, 255, 255)   # Membro do grupo (azul claro)
+  MINIMAP_COLOR_BORDER = Color.new(30,  30,  30,  230)   # Borda do frame
+  MINIMAP_COLOR_BG     = Color.new(0,   0,   0,   180)   # Fundo do minimap
+
+  # Espessura da borda do frame do Minimap (em pixels)
+  # Usado em: [VS] Sprite_Minimap.rb – draw_frame
+  MINIMAP_BORDER_SIZE = 2
+
+  #============================================================================
+  # ── DEBUG ─────────────────────────────────────────────────────────────────────
+  # Flags de debug para desenvolvimento. Desative em produção.
+  #============================================================================
+
+  # Se true, exibe logs de conexão/desconexão de clientes no console do servidor
+  # Usado em: Server/Network/network.rb – connect_client, disconnect_client
+  DEBUG_LOG = false
+
 end
