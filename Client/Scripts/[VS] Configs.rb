@@ -401,6 +401,20 @@ module Configs
   # Altura da área do nome do mapa abaixo do quadrado do frame (em pixels)
   MINIMAP_NAME_HEIGHT = 20
 
+  # Altura da linha de coordenadas (X/Y do jogador) abaixo do nome do mapa
+  MINIMAP_COORD_HEIGHT = 16
+
+  # Formato do texto de coordenadas — %d é substituído por X e Y respectivamente
+  MINIMAP_COORD_FORMAT = 'X: %d  Y: %d'
+
+  # Altura da linha do relógio em tempo real abaixo das coordenadas
+  MINIMAP_CLOCK_HEIGHT = 16
+
+  # Formato do relógio — padrão strftime do Ruby
+  # '%H:%M:%S' → 14:32:07 (com segundos)
+  # '%H:%M'    → 14:32    (sem segundos)
+  MINIMAP_CLOCK_FORMAT = '%H:%M:%S'
+
   # ── Posição na tela ───────────────────────────────────────────────────────────
 
   # Margem em pixels entre o minimap e a borda direita da tela
@@ -414,10 +428,10 @@ module Configs
 
   # ── Fonte ────────────────────────────────────────────────────────────────────
 
-  # Tamanho da fonte para o nome do mapa e tooltips de eventos
+  # Tamanho da fonte para o nome do mapa, coordenadas, relógio e tooltips
   MINIMAP_FONT_SIZE = 14
 
-  # Negrito para o nome do mapa
+  # Negrito para os textos do minimap
   MINIMAP_FONT_BOLD = false
 
   # ── Cores do fundo ───────────────────────────────────────────────────────────
