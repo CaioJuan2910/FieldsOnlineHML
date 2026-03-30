@@ -4,12 +4,17 @@
 #  Este script lida com as estruturas.
 #------------------------------------------------------------------------------
 #  Autor: Valentine
+#  Revisão: Caio Juan De Lima Silva — Março 2026
 #==============================================================================
+
+# --- Interface ---
 
 Hotbar = Struct.new(
 	:type,
 	:item_id
 )
+
+# --- Combate / Mundo ---
 
 Target = Struct.new(
 	:type,
@@ -21,17 +26,26 @@ Region = Struct.new(
 	:y
 )
 
+# --- Rede / Segurança ---
+
 IP_Blocked = Struct.new(
 	:attempts,
 	:time
 )
 
+# --- Drops e Recompensas ---
+
+# Lógica de visibilidade do drop:
+#   - :party_id preenchido  → drop restrito ao grupo (party)
+#   - :owner_id preenchido  → drop restrito a um jogador específico
+#   - Ambos nil             → drop público, qualquer jogador pode coletar
 Drop = Struct.new(
 	:item_id,
 	:kind,
 	:amount,
 	:name,
 	:party_id,
+	:owner_id,     # ID do jogador que causou o drop (nil = drop livre)
 	:x,
 	:y,
 	:despawn_time,
@@ -46,6 +60,8 @@ Reward = Struct.new(
 	:gold
 )
 
+# --- Sistema ---
+
 Interpreter = Struct.new(
 	:list,
 	:event_id,
@@ -53,17 +69,34 @@ Interpreter = Struct.new(
 	:time
 )
 
+# --- Social ---
+
+# Campos marcados com [planejado] estão reservados para expansão futura
+# de funcionalidades de MMO e podem ser nil no estado atual do sistema.
 Guild = Struct.new(
 	:id_db,
 	:leader,
 	:flag,
 	:members,
-	:notice
+	:notice,
+	:tag,          # [planejado] Sigla/abreviação da guilda (ex: [WAR])
+	:level,        # [planejado] Nível da guilda
+	:exp,          # [planejado] Experiência acumulada da guilda
+	:max_members,  # [planejado] Limite máximo de membros
+	:vault         # [planejado] Inventário/baú compartilhado da guilda (Array)
 )
 
+# --- Conta e Personagem ---
+
+# AVISO DE SEGURANÇA — campo :pass_hash
+#   - Este campo deve armazenar APENAS o hash da senha (ex: SHA256, BCrypt).
+#   - NUNCA armazene a senha em texto puro neste campo.
+#   - A responsabilidade de realizar o hash é do servidor, antes de preencher
+#     esta struct. O hash deve ser gerado no momento do cadastro ou login.
+#   - NUNCA logue, exiba ou transmita o conteúdo deste campo ao cliente.
 Account = Struct.new(
 	:id_db,
-	:pass,
+	:pass_hash,
 	:group,
 	:vip_time,
 	:actors,
