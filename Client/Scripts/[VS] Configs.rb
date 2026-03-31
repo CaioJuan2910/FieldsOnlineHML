@@ -451,29 +451,6 @@ module Configs
   MINIMAP_PVP_X_OFFSET = -28   # 28px à esquerda da borda esquerda do minimap
   MINIMAP_PVP_Y_OFFSET = 0     # Alinhado ao topo do minimap
 
-  # ── Botão de Toggle (mostrar/esconder minimap) ────────────────────────────
-  # Botão ▼/▲ exibido no canto superior direito do frame.
-  # Permanece sempre visível mesmo quando o minimap está oculto,
-  # permitindo que o jogador reabra o minimap ao clicar nele.
-
-  # Tecla de atalho para alternar a visibilidade do minimap
-  MINIMAP_TOGGLE_KEY    = :N
-
-  # Tamanho (largura e altura) do botão, em pixels
-  MINIMAP_BTN_SIZE      = 16
-
-  # Cor de fundo do botão (semi-transparente)
-  MINIMAP_BTN_BG        = Color.new(0, 0, 0, 180)
-
-  # Cor da borda dourada do botão
-  MINIMAP_BTN_BORDER    = Color.new(180, 150, 80, 200)
-
-  # Cor do símbolo ▼/▲ dentro do botão
-  MINIMAP_BTN_COLOR     = Color.new(255, 255, 200, 255)
-
-  # Tamanho da fonte do símbolo ▼/▲
-  MINIMAP_BTN_FONT_SIZE = 10
-
   #============================================================================
   # ── DEBUG ─────────────────────────────────────────────────────────────────
   # Flags de debug para desenvolvimento. Desative em produção.

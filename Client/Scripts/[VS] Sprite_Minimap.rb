@@ -13,8 +13,7 @@
 #   - Relógio em tempo real exibido abaixo das coordenadas
 #   - Linhas separadoras entre as seções de texto (nome / coords / relógio)
 #   - Posição FIXA: drag desabilitado (@dragable = false)
-#   - Toggle de visibilidade via tecla N ou clique no botão ▼/▲
-#     O botão permanece sempre visível no topo-direito do frame
+#   - Minimap sempre visível (sem toggle)
 #
 # Inspirado em: Tibia Online, MU Online, Ragnarok Online
 #------------------------------------------------------------------------------
@@ -67,12 +66,9 @@ class Sprite_Minimap < Sprite2
     @last_player_y = nil
     # Cache: detecta mudança de segundo para atualizar o relógio
     @last_time     = nil
-    # Estado de visibilidade do corpo do minimap (toggle)
-    @minimap_visible = true
     create_player_point
     create_tool_tip
     create_pvp_icon
-    create_toggle_btn
     refresh
     update
   end
@@ -100,13 +96,11 @@ class Sprite_Minimap < Sprite2
 
   #----------------------------------------------------------------------------
   # * Atualiza opacidade do minimap e de todos os sprites filhos
-  #   O botão de toggle recebe opacity independente (sempre bem visível)
   #----------------------------------------------------------------------------
   def change_opacity(x = 0, y = 0)
     super()
     @player_sprite.opacity = self.opacity
     @pvp_sprite.opacity    = self.opacity
-    @toggle_btn.opacity    = [self.opacity, 180].max  # botão nunca fica transparente demais
     @event_sprites.each_value { |sprite| sprite.opacity = self.opacity }
   end
 
@@ -138,112 +132,6 @@ class Sprite_Minimap < Sprite2
     @pvp_sprite.bitmap = Bitmap.new(24, 24)
     @pvp_sprite.z      = self.z + 1
     refresh_pvp_icon
-  end
-
-  #----------------------------------------------------------------------------
-  # * Cria o botão de toggle (mostrar/esconder minimap)
-  #
-  #   Sprite quadrado de Configs::MINIMAP_BTN_SIZE px posicionado no
-  #   canto superior direito do frame, com margem interna de 2px.
-  #   Permanece SEMPRE visível, mesmo quando o corpo do minimap é ocultado,
-  #   permitindo que o jogador reabra o minimap ao clicar nele.
-  #
-  #   Símbolo exibido:
-  #     ▼ → minimap visível  (clicar irá esconder)
-  #     ▲ → minimap oculto   (clicar irá mostrar)
-  #----------------------------------------------------------------------------
-  def create_toggle_btn
-    btn_s           = Configs::MINIMAP_BTN_SIZE
-    @toggle_btn     = Sprite.new
-    @toggle_btn.bitmap = Bitmap.new(btn_s, btn_s)
-    @toggle_btn.x   = self.x + Configs::MINIMAP_SIZE - btn_s - 2
-    @toggle_btn.y   = self.y + 2
-    @toggle_btn.z   = self.z + 2
-    refresh_toggle_btn
-  end
-
-  #----------------------------------------------------------------------------
-  # * Redesenha o botão de toggle
-  #   Fundo semi-transparente + borda dourada + símbolo ▼ ou ▲
-  #   Chamado em create_toggle_btn e sempre que o estado de visibilidade muda
-  #----------------------------------------------------------------------------
-  def refresh_toggle_btn
-    btn_s  = Configs::MINIMAP_BTN_SIZE
-    bitmap = @toggle_btn.bitmap
-    bitmap.clear
-    # ── Fundo ─────────────────────────────────────────────────────────────────
-    bitmap.fill_rect(0, 0, btn_s, btn_s, Configs::MINIMAP_BTN_BG)
-    # ── Borda (1px, dourada) ──────────────────────────────────────────────────
-    bdr = Configs::MINIMAP_BTN_BORDER
-    bitmap.fill_rect(0,          0,          btn_s, 1,     bdr)  # Topo
-    bitmap.fill_rect(0,          btn_s - 1,  btn_s, 1,     bdr)  # Base
-    bitmap.fill_rect(0,          0,          1,     btn_s, bdr)  # Esquerda
-    bitmap.fill_rect(btn_s - 1,  0,          1,     btn_s, bdr)  # Direita
-    # ── Símbolo ▼/▲ ───────────────────────────────────────────────────────────
-    bitmap.font.size  = Configs::MINIMAP_BTN_FONT_SIZE
-    bitmap.font.bold  = false
-    bitmap.font.color = Configs::MINIMAP_BTN_COLOR
-    bitmap.draw_text(0, 0, btn_s, btn_s, @minimap_visible ? '▼' : '▲', 1)
-  end
-
-  #----------------------------------------------------------------------------
-  # * Alterna a visibilidade do corpo do minimap
-  #
-  #   Quando oculto:
-  #     - self (bitmap principal), sprites de player, pvp e eventos → invisible
-  #     - @toggle_btn → permanece VISÍVEL (permite reabrir)
-  #     - @tool_tip   → sempre resetado para invisible
-  #
-  #   Quando visível:
-  #     - Todos os sprites são restaurados
-  #----------------------------------------------------------------------------
-  def toggle_minimap
-    @minimap_visible      = !@minimap_visible
-    self.visible          = @minimap_visible
-    @player_sprite.visible = @minimap_visible
-    @pvp_sprite.visible   = @minimap_visible
-    @tool_tip.visible     = false  # sempre reseta tooltip ao alternar
-    @event_sprites.each_value { |s| s.visible = @minimap_visible }
-    refresh_toggle_btn
-  end
-
-  #----------------------------------------------------------------------------
-  # * Verifica se a tecla de toggle foi pressionada
-  #
-  #   Usa Configs::MINIMAP_TOGGLE_KEY (padrão: :N).
-  #   O rescue garante que, caso o módulo Input não suporte a constante
-  #   configurada, o script não quebre silenciosamente.
-  #----------------------------------------------------------------------------
-  def toggle_key_triggered?
-    Input.trigger?(Configs::MINIMAP_TOGGLE_KEY)
-  rescue
-    false
-  end
-
-  #----------------------------------------------------------------------------
-  # * Verifica se o botão de toggle foi clicado com o mouse (botão esquerdo)
-  #
-  #   FIX: Substituído Mouse.trigger?(:left) por Input.trigger?(:LBUTTON),
-  #   que é o método correto disponível neste VXA-OS (ver [VS] Mouse.rb).
-  #   A área de clique equivale exatamente ao bitmap do botão.
-  #----------------------------------------------------------------------------
-  def toggle_btn_clicked?
-    btn_s = Configs::MINIMAP_BTN_SIZE
-    bx    = self.x + Configs::MINIMAP_SIZE - btn_s - 2
-    by    = self.y + 2
-    Input.trigger?(:LBUTTON) &&
-      Mouse.x >= bx && Mouse.x <= bx + btn_s &&
-      Mouse.y >= by && Mouse.y <= by + btn_s
-  end
-
-  #----------------------------------------------------------------------------
-  # * Processa o input de toggle a cada frame
-  #   Prioridade: tecla N → clique no botão
-  #   Chamado ANTES do guard `return unless @minimap_visible` para que
-  #   o toggle funcione mesmo com o minimap oculto
-  #----------------------------------------------------------------------------
-  def update_toggle
-    toggle_minimap if toggle_key_triggered? || toggle_btn_clicked?
   end
 
   #----------------------------------------------------------------------------
@@ -302,8 +190,6 @@ class Sprite_Minimap < Sprite2
     @pvp_sprite.dispose
     @tool_tip.bitmap.dispose
     @tool_tip.dispose
-    @toggle_btn.bitmap.dispose
-    @toggle_btn.dispose
     dispose_events
   end
 
@@ -425,15 +311,15 @@ class Sprite_Minimap < Sprite2
     # ── Borda INTERNA ─────────────────────────────────────────────────────────
     m  = p - b
     ma = Configs::MINIMAP_MAP_AREA + b * 2
-    self.bitmap.fill_rect(m,         m,         ma, b,  inner)  # Topo interno
-    self.bitmap.fill_rect(m,         m + ma - b, ma, b,  inner)  # Base interna
-    self.bitmap.fill_rect(m,         m,         b,  ma, inner)  # Esquerda interna
-    self.bitmap.fill_rect(m + ma - b, m,        b,  ma, inner)  # Direita interna
+    self.bitmap.fill_rect(m,          m,          ma, b,  inner)  # Topo interno
+    self.bitmap.fill_rect(m,          m + ma - b, ma, b,  inner)  # Base interna
+    self.bitmap.fill_rect(m,          m,          b,  ma, inner)  # Esquerda interna
+    self.bitmap.fill_rect(m + ma - b, m,          b,  ma, inner)  # Direita interna
     # ── Cantos DECORATIVOS ────────────────────────────────────────────────────
     cs = 4
-    self.bitmap.fill_rect(m,          m,          cs, cs, corner)
-    self.bitmap.fill_rect(m + ma - cs, m,          cs, cs, corner)
-    self.bitmap.fill_rect(m,          m + ma - cs, cs, cs, corner)
+    self.bitmap.fill_rect(m,           m,           cs, cs, corner)
+    self.bitmap.fill_rect(m + ma - cs, m,           cs, cs, corner)
+    self.bitmap.fill_rect(m,           m + ma - cs, cs, cs, corner)
     self.bitmap.fill_rect(m + ma - cs, m + ma - cs, cs, cs, corner)
   end
 
@@ -545,31 +431,25 @@ class Sprite_Minimap < Sprite2
   # * Update principal
   #
   #   Fluxo:
-  #     1. update_toggle  → sempre processado (tecla N + clique no botão)
-  #     2. guard          → sai se o minimap estiver oculto (@minimap_visible)
-  #     3. refresh        → só se o mapa trocou
-  #     4. coordenadas    → só se o jogador se moveu
-  #     5. relógio        → só se o segundo mudou
-  #     6. sprites        → posições do jogador e eventos
+  #     1. refresh      → só se o mapa trocou
+  #     2. coordenadas  → só se o jogador se moveu
+  #     3. relógio      → só se o segundo mudou
+  #     4. sprites      → posições do jogador e eventos
   #----------------------------------------------------------------------------
   def update
     super
-    # Passo 1: toggle sempre processado, inclusive com minimap oculto
-    update_toggle
-    # Passo 2: nada mais precisa rodar se o minimap estiver oculto
-    return unless @minimap_visible
-    # Passo 3: refresh completo apenas na troca de mapa
+    # Passo 1: refresh completo apenas na troca de mapa
     refresh if $game_map.map_id != @last_map_id
     # Atualiza opacidade (hover)
     change_opacity(Configs::MINIMAP_PADDING)
-    # Passo 4: coordenadas apenas quando o jogador se move
+    # Passo 2: coordenadas apenas quando o jogador se move
     if $game_player.x != @last_player_x || $game_player.y != @last_player_y
       draw_coordinates
     end
-    # Passo 5: relógio apenas quando o segundo muda
+    # Passo 3: relógio apenas quando o segundo muda
     current_time = Time.now.strftime(Configs::MINIMAP_CLOCK_FORMAT)
     draw_clock if current_time != @last_time
-    # Passo 6: posição do sprite do jogador no minimap
+    # Passo 4: posição do sprite do jogador no minimap
     @player_sprite.x = self.x + object_x($game_player)
     @player_sprite.y = self.y + object_y($game_player)
     # Posição e tooltip de cada evento
