@@ -459,4 +459,66 @@ module Configs
   # Se true, exibe logs de conexão/desconexão de clientes no console do servidor
   DEBUG_LOG = false
 
+  #==============================================================================
+# ── JANELA DE MISSÕES (Window_Quest) ──────────────────────────────────────────
+# Configurações de posição, dimensão, tipografia e layout das janelas de missão
+# (lista, detalhes e diálogo com NPC).
+#
+# Todos os valores hardcoded do script [VS] Window_Quest foram migrados aqui
+# para facilitar ajustes sem precisar editar o script diretamente.
+#==============================================================================
+
+  # -- Window_Quest (lista de missões) ----------------------------------------
+  # Posição (X, Y) e dimensões (largura, altura) da janela principal de
+  # listagem de missões disponíveis e em andamento do personagem.
+
+  QUEST_WINDOW_X = 173    # Posição horizontal da janela na tela
+  QUEST_WINDOW_Y = 170    # Posição vertical da janela na tela
+  QUEST_WINDOW_W = 235    # Largura da janela
+  QUEST_WINDOW_H = 212    # Altura da janela
+
+  # -- Window_QuestInfo (detalhes da missão) -----------------------------------
+  # Posição e dimensões da janela que exibe nome, descrição e recompensas
+  # da missão atualmente selecionada na lista.
+
+  QUEST_INFO_X = 415    # Posição horizontal
+  QUEST_INFO_Y = 151    # Posição vertical
+  QUEST_INFO_W = 245    # Largura
+  QUEST_INFO_H = 231    # Altura
+
+  # -- Window_QuestDialogue (diálogo com NPC) ----------------------------------
+  # Dimensões da janela centralizada que aparece quando um NPC oferece uma
+  # missão ao jogador. A posição X e Y são calculadas automaticamente pelo
+  # script para centralizar a janela na tela — apenas largura e altura são
+  # necessárias aqui.
+
+  QUEST_DIALOGUE_W = 250    # Largura total (usada para centralizar horizontalmente)
+  QUEST_DIALOGUE_H = 270    # Altura total (usada para centralizar verticalmente)
+
+  # -- Tipografia --------------------------------------------------------------
+  # Tamanhos de fonte para cada contexto nas janelas de missão.
+  # Valores separados permitem ajustar título, corpo e recompensas de forma
+  # independente, sem afetar o restante da interface.
+
+  QUEST_LINE_HEIGHT      = 20                 # Altura de cada linha nas janelas de missão
+  QUEST_FONT_SIZE        = Font.default_size  # Fonte geral (corpo, recompensas)
+  QUEST_TITLE_FONT_SIZE  = Font.default_size  # Fonte do título da missão (Window_QuestInfo)
+  QUEST_REWARD_FONT_SIZE = 14                 # Fonte das recompensas no diálogo com NPC
+
+  # -- Layout interno de Window_QuestInfo (posições Y dos elementos) -----------
+  # Posição vertical (Y) de cada elemento dentro dos `contents` da janela de
+  # detalhes. Todos os valores são relativos ao topo da área de conteúdo (y=0).
+  #
+  # Ajuste aqui se quiser reorganizar o layout da janela sem reescrever o
+  # script. Exemplo: aumentar QUEST_INFO_DESC_Y afasta a descrição do título.
+
+  QUEST_INFO_TITLE_Y    = 0     # Y do título da missão (linha superior)
+  QUEST_INFO_DESC_Y     = 21    # Y inicial da descrição (= QUEST_LINE_HEIGHT + 1)
+  QUEST_INFO_REWARDS_Y  = 115   # Y do label "Recompensas"
+  QUEST_INFO_EXP_Y      = 139   # Y da linha de EXP
+  QUEST_INFO_ITEM_Y     = 152   # Y da linha do item de recompensa (ícone + quantidade)
+  QUEST_INFO_GOLD_Y     = 162   # Y da linha de Ouro
+
+#==============================================================================
+
 end
