@@ -14,6 +14,7 @@
 #   - Linhas separadoras entre as seções de texto (nome / coords / relógio)
 #   - Posição FIXA: drag desabilitado (@dragable = false)
 #   - Minimap sempre visível (sem toggle)
+#   - Suporte a imagem de fundo customizada via Graphics/System/HUD_Minimap.png
 #
 # Inspirado em: Tibia Online, MU Online, Ragnarok Online
 #------------------------------------------------------------------------------
@@ -22,20 +23,8 @@
 #==============================================================================
 class Sprite_Minimap < Sprite2
 
-  # Struct para armazenar nome e largura do tooltip de cada evento no mapa
   Event_Data = Struct.new(:name, :width)
 
-  #----------------------------------------------------------------------------
-  # * Inicialização
-  #   Cria o bitmap (MINIMAP_SIZE × total_height), posiciona na tela
-  #   e inicializa sprites filhos.
-  #
-  #   Altura total do bitmap:
-  #     MINIMAP_SIZE        → quadrado do frame
-  #     MINIMAP_NAME_HEIGHT → nome do mapa
-  #     MINIMAP_COORD_HEIGHT→ coordenadas X/Y do jogador
-  #     MINIMAP_CLOCK_HEIGHT→ relógio em tempo real
-  #----------------------------------------------------------------------------
   def initialize
     super
     self.bitmap = Bitmap.new(
@@ -45,26 +34,19 @@ class Sprite_Minimap < Sprite2
       Configs::MINIMAP_COORD_HEIGHT +
       Configs::MINIMAP_CLOCK_HEIGHT
     )
-    # Posiciona no canto superior direito da tela
     self.x = Graphics.width - Configs::MINIMAP_SIZE - Configs::MINIMAP_X_MARGIN
     self.y = Configs::MINIMAP_Y
     self.z = Configs::MINIMAP_Z
-    # Fonte padrão para todos os textos do minimap
     self.bitmap.font.size = Configs::MINIMAP_FONT_SIZE
     self.bitmap.font.bold = Configs::MINIMAP_FONT_BOLD
-    # Spritesheet 'Minimap': usada apenas para ícones de player/eventos
     @bitmap = Cache.system('Minimap')
-    # Minimap fixo: jogador não pode arrastar
     @dragable      = false
     @event_sprites = {}
     @event_data    = {}
     @last_tip_name = ''
-    # Cache: detecta troca de mapa para disparar refresh completo
     @last_map_id   = nil
-    # Cache: detecta movimento do jogador para atualizar coordenadas
     @last_player_x = nil
     @last_player_y = nil
-    # Cache: detecta mudança de segundo para atualizar o relógio
     @last_time     = nil
     create_player_point
     create_tool_tip
@@ -73,30 +55,18 @@ class Sprite_Minimap < Sprite2
     update
   end
 
-  #----------------------------------------------------------------------------
-  # * Altura de uma linha de texto (usada pelo tooltip)
-  #----------------------------------------------------------------------------
   def line_height
     Configs::MINIMAP_FONT_SIZE + 4
   end
 
-  #----------------------------------------------------------------------------
-  # * Calcula a posição X do minimap na tela
-  #----------------------------------------------------------------------------
   def adjust_x
     Graphics.width - Configs::MINIMAP_SIZE - Configs::MINIMAP_X_MARGIN
   end
 
-  #----------------------------------------------------------------------------
-  # * Verifica se a posição (x, y) está dentro da área do mapa no minimap
-  #----------------------------------------------------------------------------
   def in_area?(x = 0, y = 0, w = Configs::MINIMAP_MAP_AREA, h = Configs::MINIMAP_MAP_AREA)
     super(x + Configs::MINIMAP_PADDING, y + Configs::MINIMAP_PADDING, w, h)
   end
 
-  #----------------------------------------------------------------------------
-  # * Atualiza opacidade do minimap e de todos os sprites filhos
-  #----------------------------------------------------------------------------
   def change_opacity(x = 0, y = 0)
     super()
     @player_sprite.opacity = self.opacity
@@ -104,9 +74,6 @@ class Sprite_Minimap < Sprite2
     @event_sprites.each_value { |sprite| sprite.opacity = self.opacity }
   end
 
-  #----------------------------------------------------------------------------
-  # * Cria o sprite do ponto do jogador sobre o mapa
-  #----------------------------------------------------------------------------
   def create_player_point
     @player_sprite        = Sprite.new
     @player_sprite.bitmap = Bitmap.new(16, 16)
@@ -114,19 +81,12 @@ class Sprite_Minimap < Sprite2
     @player_sprite.z      = self.z + 1
   end
 
-  #----------------------------------------------------------------------------
-  # * Cria o sprite do tooltip (nome do evento ao passar o mouse)
-  #----------------------------------------------------------------------------
   def create_tool_tip
     @tool_tip        = Sprite.new
     @tool_tip.bitmap = Bitmap.new(Configs::MINIMAP_SIZE, line_height)
     @tool_tip.z      = @player_sprite.z + 1
   end
 
-  #----------------------------------------------------------------------------
-  # * Cria o sprite do ícone PVP / Safe (sprite separado, fora do bitmap)
-  #   Como o minimap é fixo, a posição do ícone só precisa ser definida uma vez.
-  #----------------------------------------------------------------------------
   def create_pvp_icon
     @pvp_sprite        = Sprite.new
     @pvp_sprite.bitmap = Bitmap.new(24, 24)
@@ -134,9 +94,6 @@ class Sprite_Minimap < Sprite2
     refresh_pvp_icon
   end
 
-  #----------------------------------------------------------------------------
-  # * Atualiza o conteúdo do ícone PVP / Safe
-  #----------------------------------------------------------------------------
   def refresh_pvp_icon
     @pvp_sprite.bitmap.clear
     iconset    = Cache.system('Iconset')
@@ -146,28 +103,11 @@ class Sprite_Minimap < Sprite2
     update_pvp_position
   end
 
-  #----------------------------------------------------------------------------
-  # * Define a posição do sprite de ícone PVP / Safe
-  #   Como o minimap é fixo, basta chamar uma única vez (em refresh_pvp_icon).
-  #----------------------------------------------------------------------------
   def update_pvp_position
     @pvp_sprite.x = self.x + Configs::MINIMAP_PVP_X_OFFSET
     @pvp_sprite.y = self.y + Configs::MINIMAP_PVP_Y_OFFSET
   end
 
-  #----------------------------------------------------------------------------
-  # * Cria o sprite de um evento especial no mapa
-  #   event_id   : ID do evento ($game_map.events)
-  #   event_name : nome exibido no tooltip
-  #   rect_y     : linha do ícone na spritesheet 'Minimap'
-  #                  0  → Jogador
-  #                  16 → Loja
-  #                  32 → Missão
-  #                  48 → Banco
-  #                  64 → Teleporte
-  #                  80 → CheckPoint
-  #                  96 → Boss
-  #----------------------------------------------------------------------------
   def create_event(event_id, event_name, rect_y)
     event_sprite        = Sprite.new
     event_sprite.bitmap = Bitmap.new(16, 16)
@@ -179,9 +119,6 @@ class Sprite_Minimap < Sprite2
     @event_data[event_id]    = Event_Data.new(event_name, text_width(event_name) + 8)
   end
 
-  #----------------------------------------------------------------------------
-  # * Libera todos os bitmaps e sprites da memória
-  #----------------------------------------------------------------------------
   def dispose
     super
     @player_sprite.bitmap.dispose
@@ -193,9 +130,6 @@ class Sprite_Minimap < Sprite2
     dispose_events
   end
 
-  #----------------------------------------------------------------------------
-  # * Libera apenas os sprites de eventos (chamado no refresh)
-  #----------------------------------------------------------------------------
   def dispose_events
     @event_sprites.each_value do |event|
       event.bitmap.dispose
@@ -205,9 +139,6 @@ class Sprite_Minimap < Sprite2
     @event_data.clear
   end
 
-  #----------------------------------------------------------------------------
-  # * Converte posição X do objeto (tiles) para pixels na tela do minimap
-  #----------------------------------------------------------------------------
   def object_x(object)
     px     = Configs::MINIMAP_PADDING + object.x * Configs::MINIMAP_MAP_AREA / [$game_map.width,  1].max
     min_px = Configs::MINIMAP_PADDING
@@ -215,9 +146,6 @@ class Sprite_Minimap < Sprite2
     [[px, min_px].max, max_px].min
   end
 
-  #----------------------------------------------------------------------------
-  # * Converte posição Y do objeto (tiles) para pixels na tela do minimap
-  #----------------------------------------------------------------------------
   def object_y(object)
     py     = Configs::MINIMAP_PADDING + object.y * Configs::MINIMAP_MAP_AREA / [$game_map.height, 1].max
     min_py = Configs::MINIMAP_PADDING
@@ -225,16 +153,11 @@ class Sprite_Minimap < Sprite2
     [[py, min_py].max, max_py].min
   end
 
-  #----------------------------------------------------------------------------
-  # * Redesenha o minimap completo
-  #   Chamado na inicialização e quando o mapa muda (detectado em update)
-  #   Sequência: fundo → separadores → frame → nome → coords → relógio → PVP → eventos
-  #----------------------------------------------------------------------------
   def refresh
     @tool_tip.visible = false
     draw_background
     draw_separators
-    draw_frame
+    draw_frame if !Configs::MINIMAP_BG_IMAGE || Configs::MINIMAP_BG_IMAGE.empty? || Configs::MINIMAP_DRAW_FRAME_OVER_BG
     draw_map_name
     draw_coordinates
     draw_clock
@@ -249,34 +172,40 @@ class Sprite_Minimap < Sprite2
     @last_map_id = $game_map.map_id
   end
 
-  #----------------------------------------------------------------------------
-  # * Desenha o fundo do minimap
-  #   Cobre toda a altura do bitmap: frame + nome + coordenadas + relógio
-  #----------------------------------------------------------------------------
   def draw_background
     self.bitmap.clear
     total_h = Configs::MINIMAP_SIZE +
               Configs::MINIMAP_NAME_HEIGHT +
               Configs::MINIMAP_COORD_HEIGHT +
               Configs::MINIMAP_CLOCK_HEIGHT
-    self.bitmap.fill_rect(
-      Rect.new(0, 0, Configs::MINIMAP_SIZE, total_h),
-      Configs::MINIMAP_BG_COLOR
-    )
-    self.bitmap.fill_rect(
-      Rect.new(Configs::MINIMAP_PADDING, Configs::MINIMAP_PADDING,
-               Configs::MINIMAP_MAP_AREA, Configs::MINIMAP_MAP_AREA),
-      Configs::MINIMAP_MAP_BG
-    )
+
+    if Configs::MINIMAP_BG_IMAGE && !Configs::MINIMAP_BG_IMAGE.empty?
+      # ── Imagem customizada como fundo do frame quadrado ───────────────────
+      bg_bitmap = Cache.system(Configs::MINIMAP_BG_IMAGE)
+      dest_rect = Rect.new(0, 0, Configs::MINIMAP_SIZE, Configs::MINIMAP_SIZE)
+      self.bitmap.stretch_blt(dest_rect, bg_bitmap, bg_bitmap.rect)
+      # Fundo sólido apenas para a área de texto abaixo do frame
+      text_h = Configs::MINIMAP_NAME_HEIGHT +
+               Configs::MINIMAP_COORD_HEIGHT +
+               Configs::MINIMAP_CLOCK_HEIGHT
+      self.bitmap.fill_rect(
+        Rect.new(0, Configs::MINIMAP_SIZE, Configs::MINIMAP_SIZE, text_h),
+        Configs::MINIMAP_BG_COLOR
+      )
+    else
+      # ── Fundo padrão via fill_rect (sem imagem) ───────────────────────────
+      self.bitmap.fill_rect(
+        Rect.new(0, 0, Configs::MINIMAP_SIZE, total_h),
+        Configs::MINIMAP_BG_COLOR
+      )
+      self.bitmap.fill_rect(
+        Rect.new(Configs::MINIMAP_PADDING, Configs::MINIMAP_PADDING,
+                 Configs::MINIMAP_MAP_AREA, Configs::MINIMAP_MAP_AREA),
+        Configs::MINIMAP_MAP_BG
+      )
+    end
   end
 
-  #----------------------------------------------------------------------------
-  # * Desenha as linhas separadoras entre as seções de texto
-  #   Três linhas de 1px desenhadas nas bordas de cada seção:
-  #     1. Entre o frame do mapa e o nome do mapa
-  #     2. Entre o nome do mapa e as coordenadas
-  #     3. Entre as coordenadas e o relógio
-  #----------------------------------------------------------------------------
   def draw_separators
     sep    = Configs::MINIMAP_SEPARATOR_COLOR
     w      = Configs::MINIMAP_SIZE - 8
@@ -289,13 +218,6 @@ class Sprite_Minimap < Sprite2
     self.bitmap.fill_rect(Rect.new(x_left, y3, w, 1), sep)
   end
 
-  #----------------------------------------------------------------------------
-  # * Desenha o frame quadrado do minimap via Bitmap (sem Windowskin)
-  #   Estrutura de bordas (de fora para dentro):
-  #     1. Borda EXTERNA     → Configs::MINIMAP_FRAME_OUTER  (dourado)
-  #     2. Borda INTERNA     → Configs::MINIMAP_FRAME_INNER  (efeito 3D)
-  #     3. Cantos DECORATIVOS 4×4 → Configs::MINIMAP_FRAME_CORNER (ouro brilhante)
-  #----------------------------------------------------------------------------
   def draw_frame
     s      = Configs::MINIMAP_SIZE
     p      = Configs::MINIMAP_PADDING
@@ -303,19 +225,16 @@ class Sprite_Minimap < Sprite2
     outer  = Configs::MINIMAP_FRAME_OUTER
     inner  = Configs::MINIMAP_FRAME_INNER
     corner = Configs::MINIMAP_FRAME_CORNER
-    # ── Borda EXTERNA ─────────────────────────────────────────────────────────
-    self.bitmap.fill_rect(0,     0,     s, b, outer)  # Topo
-    self.bitmap.fill_rect(0,     s - b, s, b, outer)  # Base
-    self.bitmap.fill_rect(0,     0,     b, s, outer)  # Esquerda
-    self.bitmap.fill_rect(s - b, 0,     b, s, outer)  # Direita
-    # ── Borda INTERNA ─────────────────────────────────────────────────────────
+    self.bitmap.fill_rect(0,     0,     s, b, outer)
+    self.bitmap.fill_rect(0,     s - b, s, b, outer)
+    self.bitmap.fill_rect(0,     0,     b, s, outer)
+    self.bitmap.fill_rect(s - b, 0,     b, s, outer)
     m  = p - b
     ma = Configs::MINIMAP_MAP_AREA + b * 2
-    self.bitmap.fill_rect(m,          m,          ma, b,  inner)  # Topo interno
-    self.bitmap.fill_rect(m,          m + ma - b, ma, b,  inner)  # Base interna
-    self.bitmap.fill_rect(m,          m,          b,  ma, inner)  # Esquerda interna
-    self.bitmap.fill_rect(m + ma - b, m,          b,  ma, inner)  # Direita interna
-    # ── Cantos DECORATIVOS ────────────────────────────────────────────────────
+    self.bitmap.fill_rect(m,          m,          ma, b,  inner)
+    self.bitmap.fill_rect(m,          m + ma - b, ma, b,  inner)
+    self.bitmap.fill_rect(m,          m,          b,  ma, inner)
+    self.bitmap.fill_rect(m + ma - b, m,          b,  ma, inner)
     cs = 4
     self.bitmap.fill_rect(m,           m,           cs, cs, corner)
     self.bitmap.fill_rect(m + ma - cs, m,           cs, cs, corner)
@@ -323,9 +242,6 @@ class Sprite_Minimap < Sprite2
     self.bitmap.fill_rect(m + ma - cs, m + ma - cs, cs, cs, corner)
   end
 
-  #----------------------------------------------------------------------------
-  # * Desenha o nome do mapa centralizado abaixo do frame
-  #----------------------------------------------------------------------------
   def draw_map_name
     self.bitmap.draw_text(
       0, Configs::MINIMAP_SIZE + 2,
@@ -334,11 +250,6 @@ class Sprite_Minimap < Sprite2
     )
   end
 
-  #----------------------------------------------------------------------------
-  # * Desenha as coordenadas X/Y do jogador abaixo do nome do mapa
-  #   Otimização: só redesenha quando o jogador se move (@last_player_x/y)
-  #   Preservação do separador: fill_rect começa em y_pos + 1
-  #----------------------------------------------------------------------------
   def draw_coordinates
     y_pos = Configs::MINIMAP_SIZE + Configs::MINIMAP_NAME_HEIGHT
     self.bitmap.fill_rect(
@@ -355,11 +266,6 @@ class Sprite_Minimap < Sprite2
     @last_player_y = $game_player.y
   end
 
-  #----------------------------------------------------------------------------
-  # * Desenha o relógio em tempo real abaixo das coordenadas
-  #   Otimização: só redesenha quando o segundo muda (@last_time)
-  #   Preservação do separador: fill_rect começa em y_pos + 1
-  #----------------------------------------------------------------------------
   def draw_clock
     y_pos        = Configs::MINIMAP_SIZE + Configs::MINIMAP_NAME_HEIGHT + Configs::MINIMAP_COORD_HEIGHT
     current_time = Time.now.strftime(Configs::MINIMAP_CLOCK_FORMAT)
@@ -375,9 +281,6 @@ class Sprite_Minimap < Sprite2
     @last_time = current_time
   end
 
-  #----------------------------------------------------------------------------
-  # * Desenha a imagem PNG do mapa na área interna do frame
-  #----------------------------------------------------------------------------
   def draw_map
     bitmap = Cache.minimap($game_map.map_id.to_s)
     dest   = Rect.new(
@@ -387,9 +290,6 @@ class Sprite_Minimap < Sprite2
     self.bitmap.stretch_blt(dest, bitmap, bitmap.rect)
   end
 
-  #----------------------------------------------------------------------------
-  # * Atualiza o conteúdo do tooltip com o nome do evento
-  #----------------------------------------------------------------------------
   def refresh_tool_tip(event_name, width)
     @last_tip_name = event_name
     @tool_tip.bitmap.clear
@@ -398,9 +298,6 @@ class Sprite_Minimap < Sprite2
     @tool_tip.bitmap.draw_text(rect, event_name, 1)
   end
 
-  #----------------------------------------------------------------------------
-  # * Desenha os sprites de eventos especiais no minimap
-  #----------------------------------------------------------------------------
   def draw_events
     @player_sprite.visible = true
     $game_map.events.each do |event_id, event|
@@ -427,32 +324,17 @@ class Sprite_Minimap < Sprite2
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Update principal
-  #
-  #   Fluxo:
-  #     1. refresh      → só se o mapa trocou
-  #     2. coordenadas  → só se o jogador se moveu
-  #     3. relógio      → só se o segundo mudou
-  #     4. sprites      → posições do jogador e eventos
-  #----------------------------------------------------------------------------
   def update
     super
-    # Passo 1: refresh completo apenas na troca de mapa
     refresh if $game_map.map_id != @last_map_id
-    # Atualiza opacidade (hover)
     change_opacity(Configs::MINIMAP_PADDING)
-    # Passo 2: coordenadas apenas quando o jogador se move
     if $game_player.x != @last_player_x || $game_player.y != @last_player_y
       draw_coordinates
     end
-    # Passo 3: relógio apenas quando o segundo muda
     current_time = Time.now.strftime(Configs::MINIMAP_CLOCK_FORMAT)
     draw_clock if current_time != @last_time
-    # Passo 4: posição do sprite do jogador no minimap
     @player_sprite.x = self.x + object_x($game_player)
     @player_sprite.y = self.y + object_y($game_player)
-    # Posição e tooltip de cada evento
     @event_sprites.each do |event_id, event_sprite|
       event_sprite.x = self.x + object_x($game_map.events[event_id])
       event_sprite.y = self.y + object_y($game_map.events[event_id])
@@ -460,9 +342,6 @@ class Sprite_Minimap < Sprite2
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Atualiza o tooltip do evento sob o cursor do mouse
-  #----------------------------------------------------------------------------
   def update_tool_tip(event_id)
     return if @tool_tip.visible && @last_tip_name != @event_data[event_id].name
     @tool_tip.visible = in_area?(
