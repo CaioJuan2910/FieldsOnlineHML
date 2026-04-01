@@ -1,143 +1,152 @@
 #==============================================================================
-# [VS] Configs
+# ** Configs
 #------------------------------------------------------------------------------
-# Autor: Valentine
-# Descrição: Configurações globais do sistema VXA-OS.
-#            Todas as constantes do projeto são centralizadas aqui para
-#            facilitar manutenção, ajustes e personalização sem precisar
-#            editar scripts individuais.
+#  Este módulo lida com as configurações gerais. Ele também
+# é executado no servidor.
+#------------------------------------------------------------------------------
+#  Autor: Valentine
 #==============================================================================
+
 module Configs
-
-  #============================================================================
-  # ── FONTE PADRÃO ──────────────────────────────────────────────────────────
-  # Configurações globais de fonte aplicadas a todos os elementos do jogo.
-  #============================================================================
-  Font.default_name    = 'VL Gothic'
+  
+  # Nome, esboço, sombra, negrito e tamanho da fonte padrão
+  Font.default_name = 'VL Gothic'
   Font.default_outline = true
-  Font.default_shadow  = false
-  Font.default_bold    = false
-  Font.default_size    = 16
-
-  #============================================================================
-  # ── FONTE DO CHAT ─────────────────────────────────────────────────────────
-  # Configurações de fonte específicas para a janela de chat.
-  #============================================================================
-  CHAT_FONT_NAME    = 'VL Gothic'
+  Font.default_shadow = false
+  Font.default_bold = false
+  Font.default_size = 16
+  
+  # Nome, esboço, sombra, negrito e tamanho da fonte da
+  #janela do bate-papo
+  CHAT_FONT_NAME = 'VL Gothic'
   CHAT_FONT_OUTLINE = false
-  CHAT_FONT_SHADOW  = true
-  CHAT_FONT_BOLD    = true
-  CHAT_FONT_SIZE    = 17
-
-  #============================================================================
-  # ── REDE / SERVIDOR ───────────────────────────────────────────────────────
-  # Endereço do servidor, porta de conexão, versão do jogo e site da loja.
-  #============================================================================
-  HOST         = '127.0.0.1'
-  PORT         = 5000
+  CHAT_FONT_SHADOW = true
+  CHAT_FONT_BOLD = true
+  CHAT_FONT_SIZE = 17
+  
+  # Endereço da rede
+  HOST = '127.0.0.1'
+  
+  # Porta da rede
+  # Qualquer alteração na porta da rede deve ser repetida
+  #no arquivo configs.ini do servidor
+  PORT = 5000
+  
+  # Versão
   GAME_VERSION = 12983
+  
+  # Site da loja para comprar VIP
   SHOP_WEBSITE = 'www.aldeiarpg.com'
-
-  #============================================================================
-  # ── RESOLUÇÕES ────────────────────────────────────────────────────────────
-  # Lista de resoluções disponíveis para o jogador selecionar nas opções.
-  # Cada entrada é um hash com :width e :height.
-  #============================================================================
+  
+  # Resoluções
+  # As dimensões máximas da tela no executável
+  #sem DirectX é 640x480
   RESOLUTIONS = [
-    { :width => 800,  :height => 608 },
-    { :width => 1024, :height => 608 },
-    { :width => 1024, :height => 672 },
-    { :width => 1152, :height => 768 }
+    {:width => 800, :height => 608},
+    {:width => 1024, :height => 608},
+    {:width => 1024, :height => 672}
   ]
-
-  #============================================================================
-  # ── TELA DE CARREGAMENTO ──────────────────────────────────────────────────
-  # Tempo de exibição (em segundos) e lista de imagens de título usadas
-  # na tela de loading.
-  #============================================================================
-  LOADING_TIME   = 2
+  
+  # Tempo (em segundos) do carregamento (0 = desativado)
+  LOADING_TIME = 2
+  
+  # Imagens de fundo do carregamento que serão
+  #escolhidas aleatoriamente
   LOADING_TITLES = ['Title1', 'Title2']
-
-  #============================================================================
-  # ── PERSONAGENS ───────────────────────────────────────────────────────────
-  # Limites de caracteres no nome, nível mínimo para PVP e número máximo
-  # de personagens por conta.
-  #============================================================================
+  
+  # Quantidade mínima e máxima de caracteres
   MIN_CHARACTERS = 3
   MAX_CHARACTERS = 13
-  MIN_LEVEL_PVP  = 2
-
-  #============================================================================
-  # ── LIMITES GERAIS ────────────────────────────────────────────────────────
-  # Quantidade máxima de atores, slots de hotbar, classes padrão e VIP.
-  #============================================================================
-  MAX_ACTORS          = 3
-  MAX_HOTBAR          = 9
+  
+  # Nível mínimo para atacar e ser atacado por outros
+  #jogadores em mapas PvP
+  MIN_LEVEL_PVP = 2
+  
+  # Quantidade máxima de heróis por conta
+  MAX_ACTORS = 3
+  
+  # Quantidade máxima de atalhos
+  MAX_HOTBAR = 9
+  
+  # Quantidade máxima de classes na criação de personagem
+  #para jogadores comuns
   MAX_DEFAULT_CLASSES = 5
-  MAX_VIP_CLASSES     = 9
-
-  #============================================================================
-  # ── LIMITES DE VALORES ────────────────────────────────────────────────────
-  # Caps de itens, ouro, atributos e nível máximo do personagem.
-  #============================================================================
+  
+  # Quantidade máxima de classes na criação de personagem
+  #para VIPs
+  MAX_VIP_CLASSES = 9
+  
+  # Quantidade máxima de itens, armas, protetores,
+  #ouro, parâmetros e nível do jogador
   MAX_ITEMS  = 999
   MAX_GOLD   = 99_999_999
   MAX_PARAMS = 999_999
   MAX_LEVEL  = 99
-
-  #============================================================================
-  # ── LIMITES DE SISTEMAS ───────────────────────────────────────────────────
-  # Capacidade máxima de cada sistema: switches, variáveis, amigos, guilda,
-  # inventário, troca, banco, chat, grupo e equipamentos.
-  #============================================================================
-  MAX_PLAYER_SWITCHES  = 100
+  
+  # Quantidade máxima de switches do jogador
+  # Este valor deve ser definido antes do personagem ser criado
+  MAX_PLAYER_SWITCHES = 100
+  
+  # Quantidade máxima de variáveis do jogador
+  # Este valor deve ser definido antes do personagem ser criado
   MAX_PLAYER_VARIABLES = 100
-  MAX_FRIENDS          = 20
-  MAX_GUILD_MEMBERS    = 50
-  MAX_PLAYER_ITEMS     = 30
-  MAX_TRADE_ITEMS      = 12
-  MAX_BANK_ITEMS       = 42
-  MAX_CHAT_LINES       = 10
-  MAX_PARTY_MEMBERS    = 4
-  MAX_EQUIPS           = 9
-
-  #============================================================================
-  # ── PAPERDOLL (DIREÇÕES) ──────────────────────────────────────────────────
-  # Ordem dos frames do paperdoll para cada direção de movimento do personagem.
-  # Os índices correspondem às posições no spritesheet de equipamentos.
-  #============================================================================
-  PAPERDOLL_DOWN_DIR  = [3, 5, 2, 7, 6, 8, 1, 0, 4]
-  PAPERDOLL_LEFT_DIR  = [7, 0, 3, 5, 2, 6, 8, 1, 4]
+  
+  # Quantidade máxima de amigos
+  MAX_FRIENDS = 20
+  
+  # Quantidade máxima de membros da guilda
+  MAX_GUILD_MEMBERS = 50
+  
+  # Quantidade máxima de itens do inventário, da troca e do banco
+  MAX_PLAYER_ITEMS = 30
+  MAX_TRADE_ITEMS = 12
+  MAX_BANK_ITEMS = 42
+  
+  # Quantidade máxima de linhas do bate-papo
+  MAX_CHAT_LINES = 10 # Recomendável
+  
+  # Quantidade máxima de membros do grupo
+  MAX_PARTY_MEMBERS = 4
+  
+  # Quantidade máxima de equipamentos
+  # Este valor deve corresponder ao número de elementos da
+  #matriz da ordem do gráfico dos equipamentos abaixo,
+  #def equip_slots na [VS] Window_Equip e def draw_paperdolls
+  #na [VS] Window_Base. Ele deve ser definido antes
+  #do personagem ser criado
+  MAX_EQUIPS = 9
+  
+  # Ordem do gráfico dos equipamentos
+  # 0 = Arma, 1 = Escudo, 2 = Capacete, 3 = Armadura
+  #4 = Acessório, 5 = Amuleto, 6 = Capa, 7 = Luva, 8 = Bota
+  # Frente
+  PAPERDOLL_DOWN_DIR = [3, 5, 2, 7, 6, 8, 1, 0, 4]
+  # Esquerda
+  PAPERDOLL_LEFT_DIR = [7, 0, 3, 5, 2, 6, 8, 1, 4]
+  # Direita
   PAPERDOLL_RIGHT_DIR = [1, 3, 5, 2, 7, 6, 8, 0, 4]
-  PAPERDOLL_UP_DIR    = [7, 1, 0, 3, 5, 2, 8, 6, 4]
-
-  #============================================================================
-  # ── CORES DO CHAT ─────────────────────────────────────────────────────────
-  # Índices de cor usados nas mensagens do chat (referência à paleta do sistema).
-  #============================================================================
+  # Costas
+  PAPERDOLL_UP_DIR = [7, 1, 0, 3, 5, 2, 8, 6, 4]
+  
+  # Índice da cor das mensagens do bate-papo na
+  #Window.png da pasta System
   NORMAL_COLOR  = 0
   GLOBAL_COLOR  = 1
   SUCCESS_COLOR = 5
   ERROR_COLOR   = 10
   ALERT_COLOR   = 8
   ADM_MSG_COLOR = 17
-
-  #============================================================================
-  # ── CORES DE ENTIDADES ────────────────────────────────────────────────────
-  # Índices de cor para nomes de jogadores, NPCs, inimigos e guildas
-  # exibidos acima dos personagens no mapa.
-  #============================================================================
+  
+  # Índice da cor do nome dos jogadores, inimigos e guildas
+  #na Window.png da pasta System
   DEFAULT_COLOR = 0
   MONITOR_COLOR = 4
   ADMIN_COLOR   = 6
   ENEMY_COLOR   = 0
   BOSS_COLOR    = 10
   GUILD_COLOR   = 16
-
-  #============================================================================
-  # ── ÍCONES DE MENU ────────────────────────────────────────────────────────
-  # Índices dos ícones usados nos botões e abas do menu principal.
-  #============================================================================
+  
+  # Índice no IconSet dos ícones do menu
   ITEM_ICON   = 260
   SKILL_ICON  = 96
   STATUS_ICON = 121
@@ -145,23 +154,15 @@ module Configs
   FRIEND_ICON = 536
   GUILD_ICON  = 535
   MENU_ICON   = 117
-
-  #============================================================================
-  # ── ÍCONES DE AÇÃO (JOGADOR) ──────────────────────────────────────────────
-  # Ícones usados em menus de contexto e ações sobre outros jogadores
-  # (mensagem privada, bloquear, desbloquear, trocar, grupo).
-  #============================================================================
+  
+  # Índice no IconSet dos ícones do menu de interação
   PRIVATE_ICON = 4
   BLOCK_ICON   = 538
   UNLOCK_ICON  = 539
   TRADE_ICON   = 540
   PARTY_ICON   = 12
-
-  #============================================================================
-  # ── ÍCONES DE SISTEMA ─────────────────────────────────────────────────────
-  # Ícones usados em janelas de configuração, ouro, EXP, mapa, status
-  # de jogadores online/offline, missões e grupo.
-  #============================================================================
+  
+  # Índice no IconSet dos demais ícones
   CONFIG_ICON            = 532
   GOLD_ICON              = 262
   EXP_ICON               = 125
@@ -176,93 +177,100 @@ module Configs
   QUEST_IN_PROGRESS_ICON = 189
   LEAVE_PARTY_ICON       = 530
   EMOJI_ICON             = 541
-
-  #============================================================================
-  # ── ÍCONES DE BUFF / DEBUFF ───────────────────────────────────────────────
-  # Índice inicial dos ícones de buff e debuff no iconset.
-  # Os ícones são lidos sequencialmente a partir desses índices.
-  #============================================================================
-  ICON_BUFF_START   = 64
+  
+  # Índice no IconSet do início dos ícones de fortalecimento/buff
+  ICON_BUFF_START = 64
+  
+  # Índice no IconSet do início dos ícones de enfraquecimento/debuff
   ICON_DEBUFF_START = 80
-
-  #============================================================================
-  # ── PONTOS INICIAIS / INTERFACE ───────────────────────────────────────────
-  # Pontos de atributo disponíveis ao criar um personagem e altura da
-  # barra de título das janelas.
-  #============================================================================
-  START_POINTS     = 10
+  
+  # Quantidade de pontos iniciais na criação de personagem
+  START_POINTS = 10
+  
+  # Altura de barra de título da janela
   TITLE_BAR_HEIGHT = 20
-
-  #============================================================================
-  # ── TELEPORTES ────────────────────────────────────────────────────────────
-  # Lista de destinos de teleporte disponíveis no jogo.
-  # Cada entrada contém: mapa de destino, coordenadas X/Y e custo em ouro.
-  #============================================================================
+  
+  # Teletransportes
   TELEPORTS = []
   TELEPORTS << [
-    { :map_id => 1, :x => 21, :y => 12, :gold => 10 },
-    { :map_id => 2, :x => 4,  :y => 20, :gold => 20 }
+    {:map_id => 1, :x => 21, :y => 12, :gold => 10},
+    {:map_id => 2, :x => 4, :y => 20, :gold => 20}
   ]
-
-  #============================================================================
-  # ── ARMAS DE ALCANCE ──────────────────────────────────────────────────────
-  # Define quais armas (por ID) disparam projéteis.
-  # Chave: ID da arma no banco de dados.
-  # Valores:
-  #   :projectile_name => nome do arquivo de animação do projétil
-  #   :range           => alcance máximo em tiles
-  #   :item_id         => ID do item consumido por disparo (0 = nenhum)
-  #   :step_anime      => anima o projétil passo a passo (opcional)
-  #   :mp_cost         => custo de MP por disparo (opcional)
-  #============================================================================
+  
+  # Armas de longo alcance
   RANGE_WEAPONS = {}
-  RANGE_WEAPONS[31] = { :projectile_name => 'Arrow', :range => 10, :item_id => 18 }
-  RANGE_WEAPONS[49] = { :projectile_name => 'Fire',  :range => 10, :item_id => 0,
-                        :step_anime => false, :mp_cost => 3 }
-
-  #============================================================================
-  # ── HABILIDADES DE ALCANCE ────────────────────────────────────────────────
-  # Define quais habilidades (por ID) disparam projéteis.
-  # Chave: ID da habilidade no banco de dados.
-  # Valores:
-  #   :projectile_name => nome do arquivo de animação do projétil
-  #   :step_anime      => anima o projétil passo a passo (opcional)
-  #============================================================================
+  # Arma: Arco Curto (ID 31)
+  RANGE_WEAPONS[31] = {
+    # Gráfico
+    :projectile_name => 'Arrow',
+    # Alcance em tiles
+    :range           => 10,
+    # ID da munição (0 = infinito)
+    :item_id         => 18
+  }
+  # Arma: Cajado de Madeira (ID 49)
+  RANGE_WEAPONS[49] = {
+    # Gráfico
+    :projectile_name => 'Fire',
+    # Alcance em tiles
+    :range           => 10, 
+    # ID da munição (0 = infinito)
+    :item_id         => 0,
+    # Animação (opcional)
+    :step_anime      => false,
+    # Custo de MP (opcional)
+    :mp_cost         => 3
+  }
+  
+  # Habilidades de longo alcance
   RANGE_SKILLS = {}
+  # Habilidade: Fogo (ID 51)
   RANGE_SKILLS[51] = { :projectile_name => 'Fire' }
-  RANGE_SKILLS[70] = { :projectile_name => 'Light', :step_anime => true }
-
-  #============================================================================
-  # ── NOMES PROIBIDOS ───────────────────────────────────────────────────────
-  # Lista de prefixos de nomes que não podem ser usados por jogadores comuns.
-  # Impede que jogadores se passem por administradores ou moderadores.
-  #============================================================================
+  # Habilidade: Luz das Estrelas (ID 70)
+  RANGE_SKILLS[70] = {
+    # Gráfico
+    :projectile_name => 'Light',
+    # Animação (opcional)
+    :step_anime      => true
+  }
+  
+  # Termos proibidos no nome dos jogadores comuns
   FORBIDDEN_NAMES = ['adm ', 'admin ', 'gm ', 'god ', 'mod ']
-
-  #============================================================================
-  # ── TEMPOS E ANIMAÇÕES ────────────────────────────────────────────────────
-  # Intervalos de tempo (em segundos ou frames) para ações de combate,
-  # cooldowns, antispam e animações especiais.
-  #============================================================================
-  ATTACK_TIME            = 0.8   # Intervalo entre ataques normais (segundos)
-  COOLDOWN_SKILL_TIME    = 1     # Cooldown padrão de habilidades (segundos)
-  GLOBAL_ANTISPAM_TIME   = 1     # Intervalo mínimo entre mensagens no chat (segundos)
-  ATTACK_ANIMATION_TIME  = 30    # Duração da animação de ataque (frames)
-  LEVEL_UP_ANIMATION_ID  = 40    # ID da animação exibida ao subir de nível
-  MAX_MAP_DROPS          = 20    # Número máximo de drops simultâneos no mapa
-
-  #============================================================================
-  # ── TECLAS DE AÇÃO ────────────────────────────────────────────────────────
-  # Mapeamento das teclas de atalho para ações principais do jogador.
-  #============================================================================
-  ATTACK_KEY       = :CTRL
-  GET_DROP_KEY     = :SPACE
+  
+  # Emojis do bate-papo
+  # Cada emoji deve ter 2 caracteres
+  #CHAT_EMOJIS = [':P', '8)', ':v', '-)', ':o', ':(', ':@', '-(']
+  
+  # Tempo (em segundos) para o herói e inimigos atacarem novamente
+  #O tempo mínimo para os inimigos é 0.8 (800 milissegundos)
+  ATTACK_TIME = 0.8
+  
+  # Tempo (em segundos) para a habilidade ser utilizada novamente
+  COOLDOWN_SKILL_TIME = 1
+  
+  # Tempo (em segundos) para o jogador conversar novamente
+  #no bate-papo global
+  GLOBAL_ANTISPAM_TIME = 1
+  
+  # Tempo (em frames) da animação de ataque
+  ATTACK_ANIMATION_TIME = 30
+  
+  # ID da animação que será executada ao subir nível
+  LEVEL_UP_ANIMATION_ID = 40
+  
+  # Quantidade máxima de drops por mapa
+  MAX_MAP_DROPS = 20
+  
+  # Tecla de ataque
+  ATTACK_KEY = :CTRL
+  
+  # Tecla usada para pegar drop
+  GET_DROP_KEY = :SPACE
+  
+  # Tecla usada para selecionar o inimigo mais próximo
   SELECT_ENEMY_KEY = :TAB
-
-  #============================================================================
-  # ── TECLAS DE MENU ────────────────────────────────────────────────────────
-  # Teclas de atalho para abrir cada janela/aba do menu principal.
-  #============================================================================
+  
+  # Teclas de atalho do menu
   ITEM_KEY   = :LETTER_I
   SKILL_KEY  = :LETTER_H
   STATUS_KEY = :LETTER_C
@@ -270,255 +278,11 @@ module Configs
   FRIEND_KEY = :LETTER_F
   GUILD_KEY  = :LETTER_G
   MENU_KEY   = :LETTER_M
-
-  #============================================================================
-  # ── HOTKEYS DA HOTBAR ─────────────────────────────────────────────────────
-  # Teclas numéricas associadas aos slots da hotbar (1 a 9).
-  #============================================================================
-  HOTKEYS = [:KEY_1, :KEY_2, :KEY_3, :KEY_4, :KEY_5,
-             :KEY_6, :KEY_7, :KEY_8, :KEY_9]
-
-  #============================================================================
-  # ── TECLAS DE BALÕES (EMOTES) ─────────────────────────────────────────────
-  # Teclas de função (F3–F12) usadas para exibir balões de emote no mapa.
-  #============================================================================
+  
+  # Teclas de atalho usadas para lançar habilidades/itens
+  HOTKEYS = [:KEY_1, :KEY_2, :KEY_3, :KEY_4, :KEY_5, :KEY_6, :KEY_7, :KEY_8, :KEY_9]
+  
+  # Teclas usadas para exibir balões
   BALLOONS_KEYS = [:F3, :F4, :F5, :F6, :F7, :F8, :F9, :F10, :F11, :F12]
-
-  #============================================================================
-  # ── HUD (Sprite_HUD) ──────────────────────────────────────────────────────
-  # Configurações da HUD principal (barras de HP, MP, EXP, face e nível).
-  # Todas as posições e dimensões podem ser ajustadas aqui sem precisar
-  # editar o Sprite_HUD diretamente.
-  #============================================================================
-
-  # Índice do ator principal exibido na HUD (padrão: 1)
-  HUD_ACTOR_INDEX = 1
-
-  # Posição da HUD na tela (canto superior esquerdo)
-  HUD_X = 11
-  HUD_Y = 9
-  HUD_Z = 50
-
-  # Dimensões do bitmap principal da HUD
-  HUD_WIDTH  = 255
-  HUD_HEIGHT = 107
-
-  # Fonte da HUD
-  HUD_FONT_SIZE = 18
-  HUD_FONT_BOLD = true
-
-  # Dimensões do recorte do fundo (HUDBase)
-  HUD_BG_RECT_W = 248
-  HUD_BG_RECT_H = 98
-
-  # Posição da face do personagem dentro da HUD
-  HUD_FACE_X = 8
-  HUD_FACE_Y = 1
-
-  # Configurações das barras de HP e MP
-  HUD_BAR_MAX_WIDTH = 123
-  HUD_HP_BAR_X      = 107
-  HUD_HP_BAR_Y      = 2
-  HUD_HP_LABEL_X    = 111
-  HUD_HP_LABEL_Y    = 7
-  HUD_HP_TEXT_Y     = 7
-  HUD_MP_BAR_X      = 107
-  HUD_MP_BAR_Y      = 30
-  HUD_MP_LABEL_X    = 111
-  HUD_MP_LABEL_Y    = 35
-  HUD_MP_TEXT_Y     = 35
-
-  # Configurações da barra de EXP (sprite separado, centralizado na base da tela)
-  HUD_EXP_WIDTH    = 308
-  HUD_EXP_HEIGHT   = 22
-  HUD_EXP_OFFSET_X = -109
-  HUD_EXP_OFFSET_Y = -28
-
-  # Se true, exibe o percentual de EXP restante (ex: "72.4%") no estilo MU Online
-  # Se false, exibe o valor numérico de EXP faltante (comportamento original)
-  HUD_EXP_SHOW_PERCENT = true
-
-  # Configurações do nível exibido na HUD
-  HUD_LEVEL_X      = 0
-  HUD_LEVEL_Y      = 77
-  HUD_LEVEL_TEXT_Y = 83
-
-  #============================================================================
-  # ── COMBATE (game_battle) ─────────────────────────────────────────────────
-  # Configurações do sistema de combate em tempo real.
-  #============================================================================
-
-  # Multiplicador de dano crítico
-  CRITICAL_MULTIPLIER  = 3.0
-
-  # Número máximo de passos do loop de trajetória de projétil
-  MAX_PROJECTILE_STEPS = 50
-
-  #============================================================================
-  # ── DROPS (Sprite_Drop) ───────────────────────────────────────────────────
-  # Configurações visuais dos drops no mapa.
-  #============================================================================
-
-  # Tamanho da fonte do nome do item exibido ao passar o mouse
-  DROP_FONT_SIZE = 15
-
-  # Distância vertical (em pixels) do nome acima do ícone do drop
-  DROP_NAME_OFFSET_Y = 18
-
-  #============================================================================
-  # ── MINIMAP (Sprite_Minimap) ──────────────────────────────────────────────
-  # Configurações do Minimap QUADRADO com frame desenhado via Bitmap.
-  # Inspirado em Tibia Online, MU Online e Ragnarok Online.
-  #============================================================================
-
-  # ── Dimensões ─────────────────────────────────────────────────────────────
-  # Tamanho total do minimap (largura = altura = quadrado)
-  MINIMAP_SIZE = 160
-
-  # Tamanho da área de mapa interna (dentro do frame)
-  # Regra: MINIMAP_SIZE - 2 * MINIMAP_PADDING = 160 - 2*16 = 128
-  MINIMAP_MAP_AREA = 128
-
-  # Espaço entre a borda do frame e a borda da área do mapa (em pixels)
-  MINIMAP_PADDING = 16
-
-  # Espessura das linhas do frame (bordas externa e interna), em pixels
-  MINIMAP_BORDER = 2
-
-  # Altura da área do nome do mapa abaixo do quadrado do frame (em pixels)
-  MINIMAP_NAME_HEIGHT = 20
-
-  # Altura da linha de coordenadas (X/Y do jogador) abaixo do nome do mapa
-  MINIMAP_COORD_HEIGHT = 16
-
-  # Formato do texto de coordenadas — %d é substituído por X e Y respectivamente
-  MINIMAP_COORD_FORMAT = 'X: %d  Y: %d'
-
-  # Altura da linha do relógio em tempo real abaixo das coordenadas
-  MINIMAP_CLOCK_HEIGHT = 16
-
-  # Formato do relógio — padrão strftime do Ruby
-  # '%H:%M:%S' → 14:32:07 (com segundos)
-  # '%H:%M'    → 14:32    (sem segundos)
-  MINIMAP_CLOCK_FORMAT = '%H:%M:%S'
-
-  # ── Posição na tela ────────────────────────────────────────────────────────
-  # Margem em pixels entre o minimap e a borda direita da tela
-  MINIMAP_X_MARGIN = 10
-
-  # Posição Y do minimap (pixels a partir do topo da tela)
-  MINIMAP_Y = 8
-
-  # Z index do minimap
-  MINIMAP_Z = 50
-
-  # ── Fonte ─────────────────────────────────────────────────────────────────
-  # Tamanho da fonte para o nome do mapa, coordenadas, relógio e tooltips
-  MINIMAP_FONT_SIZE = 14
-
-  # Negrito para os textos do minimap
-  MINIMAP_FONT_BOLD = false
-
-  # ── Cores do fundo ────────────────────────────────────────────────────────
-  # Cor de fundo do bitmap completo do minimap
-  MINIMAP_BG_COLOR = Color.new(0, 0, 0, 200)
-
-  # Cor de fundo específica da área do mapa interno
-  MINIMAP_MAP_BG = Color.new(20, 20, 40, 200)
-
-  # ── Cores do frame ────────────────────────────────────────────────────────
-  # Frame desenhado via fill_rect — sem Windowskin
-  # Inspirado nos frames dourados de Tibia Online e MU Online
-
-  # Borda EXTERNA ao redor de todo o minimap
-  MINIMAP_FRAME_OUTER  = Color.new(180, 150, 80, 255)
-
-  # Borda INTERNA ao redor da área de mapa
-  MINIMAP_FRAME_INNER  = Color.new(80, 60, 20, 220)
-
-  # Cantos DECORATIVOS (4×4 px) nos 4 cantos da borda interna
-  MINIMAP_FRAME_CORNER = Color.new(255, 220, 120, 255)
-
-  # ── Separadores de seção ──────────────────────────────────────────────────
-  # Linhas horizontais de 1px que dividem visualmente as seções de texto
-  # abaixo do frame do mapa (nome → coordenadas → relógio).
-  MINIMAP_SEPARATOR_COLOR = Color.new(180, 150, 80, 160)
-
-  # ── Ícone PVP / Safe ──────────────────────────────────────────────────────
-  # Sprite separado posicionado ao lado esquerdo do minimap.
-  # Ajuste MINIMAP_PVP_X_OFFSET para mover horizontalmente (negativo = esquerda).
-  # Ajuste MINIMAP_PVP_Y_OFFSET para mover verticalmente.
-  MINIMAP_PVP_X_OFFSET = -28   # 28px à esquerda da borda esquerda do minimap
-  MINIMAP_PVP_Y_OFFSET = 0     # Alinhado ao topo do minimap
-
-  #============================================================================
-  # ── DEBUG ─────────────────────────────────────────────────────────────────
-  # Flags de debug para desenvolvimento. Desative em produção.
-  #============================================================================
-
-  # Se true, exibe logs de conexão/desconexão de clientes no console do servidor
-  DEBUG_LOG = false
-
-  #==============================================================================
-# ── JANELA DE MISSÕES (Window_Quest) ──────────────────────────────────────────
-# Configurações de posição, dimensão, tipografia e layout das janelas de missão
-# (lista, detalhes e diálogo com NPC).
-#
-# Todos os valores hardcoded do script [VS] Window_Quest foram migrados aqui
-# para facilitar ajustes sem precisar editar o script diretamente.
-#==============================================================================
-
-  # -- Window_Quest (lista de missões) ----------------------------------------
-  # Posição (X, Y) e dimensões (largura, altura) da janela principal de
-  # listagem de missões disponíveis e em andamento do personagem.
-
-  QUEST_WINDOW_X = 173    # Posição horizontal da janela na tela
-  QUEST_WINDOW_Y = 170    # Posição vertical da janela na tela
-  QUEST_WINDOW_W = 235    # Largura da janela
-  QUEST_WINDOW_H = 212    # Altura da janela
-
-  # -- Window_QuestInfo (detalhes da missão) -----------------------------------
-  # Posição e dimensões da janela que exibe nome, descrição e recompensas
-  # da missão atualmente selecionada na lista.
-
-  QUEST_INFO_X = 415    # Posição horizontal
-  QUEST_INFO_Y = 151    # Posição vertical
-  QUEST_INFO_W = 245    # Largura
-  QUEST_INFO_H = 231    # Altura
-
-  # -- Window_QuestDialogue (diálogo com NPC) ----------------------------------
-  # Dimensões da janela centralizada que aparece quando um NPC oferece uma
-  # missão ao jogador. A posição X e Y são calculadas automaticamente pelo
-  # script para centralizar a janela na tela — apenas largura e altura são
-  # necessárias aqui.
-
-  QUEST_DIALOGUE_W = 250    # Largura total (usada para centralizar horizontalmente)
-  QUEST_DIALOGUE_H = 270    # Altura total (usada para centralizar verticalmente)
-
-  # -- Tipografia --------------------------------------------------------------
-  # Tamanhos de fonte para cada contexto nas janelas de missão.
-  # Valores separados permitem ajustar título, corpo e recompensas de forma
-  # independente, sem afetar o restante da interface.
-
-  QUEST_LINE_HEIGHT      = 20                 # Altura de cada linha nas janelas de missão
-  QUEST_FONT_SIZE        = Font.default_size  # Fonte geral (corpo, recompensas)
-  QUEST_TITLE_FONT_SIZE  = Font.default_size  # Fonte do título da missão (Window_QuestInfo)
-  QUEST_REWARD_FONT_SIZE = 14                 # Fonte das recompensas no diálogo com NPC
-
-  # -- Layout interno de Window_QuestInfo (posições Y dos elementos) -----------
-  # Posição vertical (Y) de cada elemento dentro dos `contents` da janela de
-  # detalhes. Todos os valores são relativos ao topo da área de conteúdo (y=0).
-  #
-  # Ajuste aqui se quiser reorganizar o layout da janela sem reescrever o
-  # script. Exemplo: aumentar QUEST_INFO_DESC_Y afasta a descrição do título.
-
-  QUEST_INFO_TITLE_Y    = 0     # Y do título da missão (linha superior)
-  QUEST_INFO_DESC_Y     = 21    # Y inicial da descrição (= QUEST_LINE_HEIGHT + 1)
-  QUEST_INFO_REWARDS_Y  = 115   # Y do label "Recompensas"
-  QUEST_INFO_EXP_Y      = 139   # Y da linha de EXP
-  QUEST_INFO_ITEM_Y     = 152   # Y da linha do item de recompensa (ícone + quantidade)
-  QUEST_INFO_GOLD_Y     = 162   # Y da linha de Ouro
-
-#==============================================================================
-
+  
 end
