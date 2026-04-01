@@ -12,6 +12,10 @@ class Network
 	
 	attr_reader   :clients, :parties, :party_ids_available, :maps, :switches, :guilds, :log, :ban_list
 
+	# ============================================================
+	# Inicialização
+	# ============================================================
+
 	def initialize
 		puts('Iniciando servidor...')
 		@clients = []
@@ -38,7 +42,11 @@ class Network
 		@ban_list = {}
 		@guilds = {}
 	end
-	
+
+	# ============================================================
+	# Update
+	# ============================================================
+
 	def update
 		update_clients
 		update_maps
@@ -47,31 +55,54 @@ class Network
 	def update_clients
 		@clients.each do |client|
 			next unless client
-			if client.in_game?
-				client.update_game
-			else
-				client.update_menu
+			begin
+				if client.in_game?
+					client.update_game
+				else
+					client.update_menu
+				end
+			rescue => e
+				@log.error('Erro ao atualizar cliente', client, e)
+				client.close_connection rescue nil
 			end
 		end
 	end
 
 	def update_maps
-		@maps.each_value(&:update)
+		@maps.each_value do |map|
+			begin
+				map.update
+			rescue => e
+				map_id = map.respond_to?(:id) ? map.id : '?'
+				@log.error("Erro ao atualizar mapa ##{map_id}", nil, e)
+			end
+		end
 	end
+
+	# ============================================================
+	# Conexão
+	# ============================================================
 
 	def connect_client(client)
 		@clients[client.id] = client
-		#puts("Cliente #{client.id} conectado com o IP #{client.ip}.")
+		@log.info("Cliente ##{client.id} conectado | IP: #{client.ip}")
 	end
 
 	def disconnect_client(id)
+		client = @clients[id]
+		if client
+			name = (client.name.nil? || client.name.empty?) ? 'não autenticado' : client.name
+			@log.info("Cliente ##{id} desconectado | Jogador: #{name} | IP: #{client.ip rescue 'N/A'}")
+		end
 		@clients[id] = nil
 		@client_ids_available << id
-		#puts("Cliente #{id} desconectado.")
 	end
 
+	# ============================================================
+	# Utilitários
+	# ============================================================
+
 	def find_empty_client_id
-		# Remove o primeiro elemento da matriz e o retorna
 		return @client_ids_available.shift unless @client_ids_available.empty?
 		index = @client_high_id
 		@client_high_id += 1

@@ -9,6 +9,7 @@
 module Handle_Data
 
 	def handle_messages(client, buffer)
+		header = nil
 		begin
 			header = buffer.read_byte
 			if client.in_game?
@@ -18,7 +19,7 @@ module Handle_Data
 			end
 		rescue => e
 			client.close_connection
-			@log.add('Error', :red, "Erro: #{e}\n#{e.backtrace.join("\n")}")
+			@log.error("Erro ao processar pacote [header: #{header.inspect}]", client, e)
 		end
 	end
 
@@ -35,8 +36,6 @@ module Handle_Data
 		when Enums::Packet::USE_ACTOR
 			handle_use_actor(client, buffer)
 		end
-		# Chama a variável inactivity_time em vez do método comm_inactivity_timeout do EventMachine
-		#para que o jogador inativo saiba o motivo pelo qual ele foi expulso do jogo
 		client.inactivity_time = Time.now + INACTIVITY_TIME
 	end
 
@@ -122,9 +121,6 @@ module Handle_Data
 	end
 	
 	def handle_login(client, buffer)
-		# Altera a codificação padrão do nome de usuário recebido pela Socket do Ruby (ASCII-8BIT)
-		#para UTF-8, evitando erro ao exibir a mensagem no console do Server.exe. Impede
-		#que uma mesma conta seja utilizada mais de uma vez
 		user = buffer.read_string.force_encoding('UTF-8').delete('[/\\\]')
 		pass = buffer.read_string
 		version = buffer.read_short
@@ -133,7 +129,6 @@ module Handle_Data
 			return
 		elsif version != Configs::GAME_VERSION
 			send_failed_login(client, Enums::Login::OLD_VERSION)
-			# Fecha a conexão somente após a mensagem ser enviada
 			client.close_connection_after_writing
 			return
 		elsif ip_blocked?(client.ip)
@@ -163,8 +158,6 @@ module Handle_Data
 		end
 		client.user = user
 		client.account_id_db = account.id_db
-		# Salva a senha, já que, ao excluir personagem, é necessário verificar
-		#se a senha que o usuário digitou está correta
 		client.pass = account.pass
 		client.group = account.group
 		client.vip_time = account.vip_time
@@ -174,13 +167,10 @@ module Handle_Data
 		Database.load_bank(client)
 		send_login(client)
 		@blocked_ips.delete(client.ip)
-		puts("#{user} logou com o IP #{client.ip}.")
+		@log.info("Login: #{user} | IP: #{client.ip}")
 	end
 
 	def handle_create_account(client, buffer)
-		# Altera a codificação padrão do nome de usuário recebido pela Socket do Ruby (ASCII-8BIT)
-		#para UTF-8, evitando erro ao exibir a mensagem no console do Server.exe. Evita
-		#mais de um cadastro com o mesmo usuário
 		user = buffer.read_string.strip.force_encoding('UTF-8')
 		pass = buffer.read_string
 		email = buffer.read_string
@@ -207,7 +197,7 @@ module Handle_Data
 		Database.create_account(user, pass, email)
 		send_create_account(client, Enums::Register::SUCCESSFUL)
 		client.close_connection_after_writing
-		puts("Conta #{user} criada.")
+		@log.info("Conta criada: #{user} | IP: #{client.ip}")
 	end
 	
 	def handle_create_actor(client, buffer)
@@ -258,14 +248,10 @@ module Handle_Data
 	def handle_use_actor(client, buffer)
 		actor_id = buffer.read_byte
 		return unless client.actors.has_key?(actor_id)
-		# Define os dados
 		client.load_data(actor_id)
-		# Envia os dados para os jogadores que estão no mapa, exceto para o próprio
-		#jogador que ainda não está conectado
 		send_player_data(client, client.map_id)
 		@maps[client.map_id].total_players += 1
 		Database.change_whos_online(client.id_db, :insert)
-		# Conecta ao jogo
 		client.join_game(actor_id)
 		send_use_actor(client)
 		send_global_switches(client)
@@ -277,16 +263,9 @@ module Handle_Data
 	
 	def handle_player_movement(client, buffer)
 		d = buffer.read_byte
-		# Anti-speed hack
-		#return unless client.movable?
 		return if d < Enums::Dir::DOWN_LEFT || d > Enums::Dir::UP_RIGHT
-		#return if client.has_text?
 		client.stop_count = Time.now + 0.170
-		#if d.odd?
-			#client.move_diagonal(d)
-		#else
-			client.move_straight(d)
-		#end
+		client.move_straight(d)
 		if client.move_succeed
 			client.check_floor_effect
 			client.check_touch_event
@@ -295,7 +274,6 @@ module Handle_Data
 	end
 	
 	def handle_chat_message(client, buffer)
-		# Altera a codificação padrão da mensagem recebida pela Socket do Ruby (ASCII-8BIT) para UTF-8
 		message = buffer.read_string.force_encoding('UTF-8')
 		talk_type = buffer.read_byte
 		name = buffer.read_string
@@ -331,8 +309,6 @@ module Handle_Data
 		elsif client.using_normal_weapon?
 			client.attack_normal
 		end
-		# Interage com evento embaixo e em frente independentemente de
-		#o jogador ter atacado algum inimigo
 		if client.movable?
 			client.check_event_trigger_here([0])
 			client.check_event_trigger_there([0, 1, 2])
@@ -342,7 +318,6 @@ module Handle_Data
 	def handle_use_item(client, buffer)
 		item_id = buffer.read_short
 		return if client.using_item?
-		# Usa se o item existe, o jogador o tiver e for usável
 		client.use_item($data_items[item_id])
 	end
 
@@ -374,7 +349,6 @@ module Handle_Data
 		kind = buffer.read_byte
 		amount = buffer.read_short
 		item = client.item_object(kind, item_id)
-		# Impede que o item da troca, que não é removido do inventário, seja dropado
 		return if client.in_trade?
 		return if @maps[client.map_id].full_drops?
 		return if amount < 1 || amount > client.item_number(item)
@@ -390,7 +364,6 @@ module Handle_Data
 		drop = @maps[client.map_id].drops[drop_id]
 		return unless drop
 		return unless client.pos?(drop.x, drop.y)
-		#return unless client.in_range?(drop, 1)
 		unless pick_up_drop?(drop, client)
 			alert_message(client, Enums::Alert::NOT_PICK_UP_DROP)
 			return
@@ -461,7 +434,6 @@ module Handle_Data
 		return if client.spawning?
 		return if name.size < Configs::MIN_CHARACTERS || name.size > Configs::MAX_CHARACTERS
 		return if invalid_name?(name)
-		# Se o brasão tiver menos de 64 índices de cor
 		return if flag.include?(nil)
 		client.antispam_time = Time.now + 0.5
 		create_guild(client, name, flag)
@@ -479,7 +451,6 @@ module Handle_Data
 	end
 
 	def handle_guild_notice(client, buffer)
-		# Altera a codificação padrão da mensagem recebida pela Socket do Ruby (ASCII-8BIT) para UTF-8
 		notice = buffer.read_string.force_encoding('UTF-8')
 		return unless client.in_guild?
 		return unless client.guild_leader?
@@ -520,8 +491,6 @@ module Handle_Data
 	def handle_leave_guild(client)
 		return unless client.in_guild?
 		if client.guild_leader?
-			# Possibilita que a guilda seja deletada e que o texto da variável guild dos membros que
-			#logaram posteriormente ao líder seja apagado, mesmo após a string guild do líder ficar vazia
 			remove_guild(client.guild_name.clone)
 		else
 			client.leave_guild
@@ -529,12 +498,10 @@ module Handle_Data
 	end
 
 	def handle_leave_party(client)
-		# Sai do grupo se o jogador estiver em um
 		client.leave_party
 	end
 
 	def handle_choice(client, buffer)
-		# Recebe um valor entre 0 a 99.999.999 (8 dígitos do comando de evento Armazenar Número)
 		index = buffer.read_int
 		return unless client.has_text?
 		client.choice = index
@@ -549,7 +516,6 @@ module Handle_Data
 		container = client.bank_item_container(kind)
 		return unless client.in_bank?
 		return unless container
-		# Se o item que está sendo adicionado não existe ou a quantidade é maior que a do inventário
 		return if amount > 0 && client.item_number(item) < amount
 		return if amount < 0 && client.bank_item_number(container[item_id]) < amount.abs
 		return if amount > 0 && client.full_bank?(container[item_id], kind)
@@ -616,8 +582,6 @@ module Handle_Data
 	def handle_next_event_command(client)
 		return unless client.has_text?
 		interpreter = client.message_interpreter
-		# Limpa o message_interpreter, o qual poderá ser eventualmente preenchido, após a
-		#execução do resume, se houver outro Mostrar Mensagem no restante da lista
 		client.message_interpreter = nil
 		interpreter.fiber.resume
 	end
@@ -703,13 +667,10 @@ module Handle_Data
 		container = client.trade_item_container(kind)
 		return unless client.in_trade?
 		return unless container
-		# Se o item que está sendo adicionado não existe ou a quantidade é maior que a do inventário
 		return if amount > 0 && client.item_number(item) < client.trade_item_number(container[item_id]) + amount
 		return if amount < 0 && client.trade_item_number(container[item_id]) < amount
 		return if amount > 0 && client.full_trade?(container[item_id])
 		return if item.soulbound?
-		# O item é removido da troca sem precisar verificar se o inventário está cheio, pois a
-		#quantidade de itens do inventário não é verdadeiramente alterada na troca
 		client.gain_trade_item(item_id, kind, amount)
 		client.close_trade_request
 	end
@@ -733,7 +694,6 @@ module Handle_Data
 
 	def handle_admin_command(client, buffer)
 		command = buffer.read_byte
-		# Altera a codificação padrão da mensagem recebida pela Socket do Ruby (ASCII-8BIT) para UTF-8
 		str = buffer.read_string.force_encoding('UTF-8')
 		int1 = buffer.read_int
 		int2 = buffer.read_int

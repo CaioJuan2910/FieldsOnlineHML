@@ -41,21 +41,26 @@ class SocketLib
   def initialize(ip, port)
     _port = port.to_s
     @socket_id = [0, 0, 0, 0].pack('L')
+    $log.info("Tentando conectar ao servidor #{ip}:#{port}...") if $log
     err = SocketLib__connect.call(ip, _port, @socket_id)
     unless err == 0
       if err == -1
+        $log.error("Conexão recusada: host não encontrado (#{ip}:#{port})") if $log
         SocketError.raise_no_assoc_host
       else
+        $log.error("Conexão recusada: erro de socket (#{ip}:#{port})") if $log
         SocketError.raise
       end
     end
     @socket_id = @socket_id.unpack('L')[0]
+    $log.info("Conectado com sucesso ao servidor #{ip}:#{port}") if $log
   end
   
   def send(data)
     data = data.to_s
     return 0 if data.empty?
     if (ss = SocketLib__send.call(@socket_id, data, data.bytesize)) < 0
+      $log.error("Falha ao enviar dados para o servidor") if $log
       SocketError.raise
     end
     ss
@@ -64,7 +69,10 @@ class SocketLib
   def recv(maxlen)
     buff = "\0" * (maxlen.to_i + 4)
     r_len = SocketLib__recv.call(@socket_id, buff, maxlen)
-    SocketError.raise if r_len < 0
+    if r_len < 0
+      $log.error("Falha ao receber dados do servidor (recv)") if $log
+      SocketError.raise
+    end
     if r_len == maxlen
       buff
     else
@@ -88,6 +96,7 @@ class SocketLib
   end
   
   def close
+    $log.info("Conexão com o servidor encerrada") if $log
     SocketLib__close.call(@socket_id)
   end
   

@@ -9,12 +9,17 @@
 module Handle_Data
   
   def handle_messages(message)
-    buffer = Buffer_Reader.new(message)
-    header = buffer.read_byte
-    if @in_game
-      handle_messages_game(header, buffer)
-    else
-      handle_messages_menu(header, buffer)
+    header = nil
+    begin
+      buffer = Buffer_Reader.new(message)
+      header = buffer.read_byte
+      if @in_game
+        handle_messages_game(header, buffer)
+      else
+        handle_messages_menu(header, buffer)
+      end
+    rescue => e
+      $log.error("Erro ao processar pacote [header: #{header.inspect}]", e) if $log
     end
   end
   
@@ -249,8 +254,6 @@ module Handle_Data
   end
   
   def handle_use_actor(buffer)
-    # Reseta as informações caso o usuário já tenha
-    #entrado anteriormente
     DataManager.create_game_objects
     $game_party.setup_starting_members
     @player_id = buffer.read_short
@@ -284,15 +287,6 @@ module Handle_Data
     end
     Configs::MAX_HOTBAR.times { |id| $game_actors[1].change_hotbar(id, buffer.read_byte, buffer.read_short)} 
     Configs::MAX_PLAYER_SWITCHES.times { |switch_id| $game_switches[switch_id + 1] = buffer.read_boolean}
-    # O valor máximo das variáveis, em razão do comando de
-    #evento Armazenar Número, que possibilita até 8 dígitos,
-    #é 99.999.999, o que ultrapassa o limite do tipo short,
-    #porém, para evitar desperídico desnecessário de bytes,
-    #com o tamanho do tipo int, e partindo da ideia de que
-    #ninguém vai precisar de um limite tão alto, o short é
-    #utilizado para receber o valor das variáveis, em vez de
-    #int. Na tabela actor_variables do Database.sql, o tipo
-    #smallint é utilizado na coluna value em vez de int
     Configs::MAX_PLAYER_VARIABLES.times { |variable_id| $game_variables[variable_id + 1] = buffer.read_short }
     size = buffer.read_short
     size.times do
@@ -309,8 +303,6 @@ module Handle_Data
     RPG::ME.stop
     $game_map.autoplay
     @in_game = true
-    # Limpa o typing da caixa de texto de senha da
-    #janela de entrada, caso esteja ativa
     $typing = nil
     $wait_player_move = false
     SceneManager.goto(Scene_Map)
@@ -367,7 +359,6 @@ module Handle_Data
     player_id = buffer.read_short
     color_id = buffer.read_byte
     message = buffer.read_string
-    # Se a scene não já foi inteiramente carregada
     return unless $windows.has_key?(:chat)
     index = message.index(': ')
     name = message[0, index]
@@ -383,7 +374,6 @@ module Handle_Data
     color_id = buffer.read_byte
     message = buffer.read_string
     return unless $windows.has_key?(:chat)
-    # Garante que o índice não seja nulo
     name = message[0, message.index(': ').to_i]
     $windows[:chat].write_message(message, color_id) unless $game_player.blocked.include?(name)
   end
@@ -451,7 +441,6 @@ module Handle_Data
         $game_player.change_damage(hp_damage, mp_damage, critical, animation_id, not_show_missed)
         $game_map.screen.start_shake(4, 4, 20) if critical
       end
-      # Se o jogador for atacado logo após entrar no jogo
       if $windows.has_key?(:hud)
         $windows[:hud].refresh
         $windows[:status].refresh if $windows[:status].visible
@@ -479,7 +468,6 @@ module Handle_Data
     $game_map.events[event_id].actor.mp += mp_damage
     $game_map.events[event_id].change_damage(hp_damage, mp_damage, critical, animation_id) if $game_map.in_screen?($game_map.events[event_id])
     $game_map.events[event_id].erase if $game_map.events[event_id].actor.dead?
-    # Se o inimigo é o alvo e ele não morreu
     $windows[:target_hud].refresh if $game_map.events[event_id] == $game_player.target && $game_map.events[event_id].actor?
   end
   
@@ -518,8 +506,6 @@ module Handle_Data
     event_id = buffer.read_short
     $game_map.events[event_id].erased = false
     $game_map.events[event_id].refresh
-    # Cancela a animação de ataque do inimigo que foi morto
-    #por outro jogador enquanto a janela estava minimizada
     $game_map.events[event_id].animation_id = 0
   end
   
@@ -533,11 +519,7 @@ module Handle_Data
       msgbox("Os dados dos mapas do servidor estão desatualizados! O evento #{event_id} não existe mais neste mapa, embora ainda conste no servidor.")
       exit
     end
-    # Evita alinhamento dos eventos fixos
     $game_map.events[event_id].moveto(x, y) unless $game_map.events[event_id].x == x && $game_map.events[event_id].y == y
-    # Evita que a direção da página global do evento no
-    #servidor prevaleça sobre a direção da página atual
-    #do evento com movimento fixo
     $game_map.events[event_id].set_direction(d) unless $game_map.events[event_id].fixed_movement?
     if $game_map.events[event_id].actor
       $game_map.events[event_id].actor.hp = hp
@@ -596,8 +578,6 @@ module Handle_Data
       $game_actors[1].hp = hp
       $game_actors[1].mp = mp
       $game_player.change_damage(dif_hp, dif_mp) unless dif_hp == 0 && dif_mp <= 0
-      # Se a conexão estiver muito lenta e o personagem
-      #recuperar HP ou MP antes da Scene_Map ser carregada
       if $windows.has_key?(:hud)
         $windows[:hud].refresh
         $windows[:status].refresh if $windows[:status].visible
@@ -617,10 +597,7 @@ module Handle_Data
     player_id = buffer.read_short
     exp = buffer.read_int
     if @player_id == player_id
-      # Mostra apenas quando o herói ganha experiência e
-      #não quando morre e a perde
       $game_actors[1].result.exp = exp if exp > 0
-      # Aumenta ou diminui experiência
       $game_actors[1].change_exp($game_actors[1].exp + exp, true)
       $windows[:hud].refresh
     else
@@ -641,8 +618,6 @@ module Handle_Data
     else
       $game_actors[1].remove_state(state_id)
     end
-    # Se um evento comum em processo paralelo mudar o
-    #estado do jogador antes da Scene_Map ser carregada
     if $windows.has_key?(:states)
       $windows[:states].visible = $game_actors[1].result.status_affected?
       $windows[:states].refresh if $windows[:states].visible
@@ -659,12 +634,9 @@ module Handle_Data
     else
       $game_actors[1].remove_buff(param_id)
     end
-    # Se um evento comum em processo paralelo mudar
-    #buff do jogador antes da Scene_Map ser carregada
     if $windows.has_key?(:states)
       $windows[:states].visible = $game_actors[1].result.status_affected?
       $windows[:states].refresh if $windows[:states].visible
-      # Se alterou o HP ou o MP máximo
       $windows[:hud].refresh if param_id < 2
       $windows[:status].refresh if $windows[:status].visible
     end
@@ -702,7 +674,6 @@ module Handle_Data
     if @player_id == player_id
       $game_actors[1].add_param(param_id, value)
       $windows[:status].refresh if $windows[:status].visible
-      # Se alterou o HP ou o MP máximo
       $windows[:hud].refresh if param_id < 2
     else
       $game_map.players[player_id].actor.add_param(param_id, value)
@@ -721,12 +692,8 @@ module Handle_Data
     if @player_id == player_id
       $game_actors[1].change_equip_by_id(slot_id, item_id)
       $windows[:equip].refresh
-      # Se o equipamento que aumentava HP e/ou MP
-      #máximo foi removido
       $windows[:hud].refresh
-      # Se alterou algum parâmetro
       $windows[:status].refresh if $windows[:status].visible
-      # Se ganhou ou perdeu alguma habilidade
       $windows[:skill].refresh if $windows[:skill].visible
       $windows[:hotbar].refresh
       Sound.play_equip
@@ -749,7 +716,6 @@ module Handle_Data
       $game_actors[1].forget_skill(skill_id)
     end
     $windows[:skill].refresh if $windows[:skill].visible
-    # Se ganhou ou perdeu alguma habilidade que estava na hotbar
     $windows[:hotbar].refresh if $game_actors[1].hotbar.include?($data_skills[skill_id])
   end
   
@@ -807,8 +773,6 @@ module Handle_Data
     target_type = buffer.read_byte
     target_id = buffer.read_short
     $game_player.target = target_type == Enums::Target::PLAYER ? $game_map.players[target_id] :$game_map.events[target_id]
-    # Se o inimigo não é um boss, que já tem uma HUD
-    #própria fixada no centro da tela
     $windows[:target_hud].visible = ($game_player.has_target? && $game_player.target.actor? && !$game_player.target.boss?)
     $windows[:target_hud].refresh if $windows[:target_hud].visible
   end
@@ -879,8 +843,6 @@ module Handle_Data
     player_id = buffer.read_short
     if @player_id == player_id
       $game_actors[1].guild_name = name
-      # Se o membro foi expulso da guilda ou ela foi
-      #deletada e estava com a janela aberta
       if name.empty?
         $windows[:guild].hide
         $windows[:guild].disable_buttons
@@ -987,9 +949,6 @@ module Handle_Data
     event_id = buffer.read_short
     initial_index = buffer.read_short
     final_index = buffer.read_short
-    # Se é um evento com condição de início processo paralelo,
-    #os comandos são executados no interpretador do próprio
-    #evento, que não trava o movimento do jogador
     if event_id > 0 && $game_map.events[event_id].trigger == 4
       $game_map.events[event_id].interpreter.setup($game_map.events[event_id].list[initial_index..final_index] + [$game_map.events[event_id].list.last], event_id)
     elsif event_id > 0
@@ -1109,7 +1068,6 @@ module Handle_Data
   def handle_switch(buffer)
     switch_id = buffer.read_short
     value = buffer.read_boolean
-    # Muda o switche e chama o need_refresh
     $game_switches[switch_id] = value
   end
   

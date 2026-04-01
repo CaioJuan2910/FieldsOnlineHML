@@ -13,6 +13,7 @@ class Network
   attr_reader   :motd, :actors, :vip_time 
   
   def initialize
+    $log = VS_Logger.new
     @group = Enums::Group::STANDARD
     @in_game = false
     @socket = nil
@@ -57,10 +58,12 @@ class Network
       begin
         connect
         successful = true
-      rescue
+      rescue => e
         retry_count += 1
+        $log.warn("Falha ao conectar ao servidor (tentativa #{retry_count}/2): #{e.message}") if $log
       end
     end
+    $log.info(successful ? "Servidor online. Conexão estabelecida." : "Servidor offline após #{retry_count} tentativas.") if $log
     successful
   end
   
@@ -78,6 +81,7 @@ class Network
   def receive_full_message
     b_size = @socket.recv_non_block(2)
     if connection_lost?(b_size) || b_size.size < 2
+      $log.warn("Conexão perdida ou header inválido recebido (b_size: #{b_size.inspect}).") if $log
       $alert_msg ||= Vocab::ConnectionFailed
       DataManager.back_login
       return
@@ -87,6 +91,7 @@ class Network
     if message.size - 4 == size
       handle_messages(message)
     else
+      $log.info("Pacote fragmentado recebido (#{message.size - 4}/#{size} bytes). Aguardando restante...") if $log
       @message = message
       @m_size = size
     end
@@ -96,6 +101,7 @@ class Network
     message = @socket.recv_non_block(@m_size - @message.size)
     @message << message
     if @message.size - 4 == @m_size
+      $log.info("Pacote fragmentado concluído (#{@m_size} bytes). Processando...") if $log
       handle_messages(@message)
       @message = nil
     end
