@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚔️ Fields Online — Base de Conhecimento & Ponto de Partida</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0d0d1a;
+    --bg-secondary: #111122;
+    --bg-card: #13132a;
+    --bg-card-hover: #1a1a35;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --gold-dark: #9a7a30;
+    --gold-glow: rgba(201,168,76,0.15);
+    --blue: #4a9eff;
+    --blue-dark: #1a5fa8;
+    --green: #4caf50;
+    --green-dark: #2e7d32;
+    --purple: #9b59b6;
+    --purple-dark: #6c3483;
+    --red: #e74c3c;
+    --red-dark: #922b21;
+    --orange: #e67e22;
+    --orange-dark: #a04000;
+    --text-primary: #e8e8f0;
+    --text-secondary: #a0a0c0;
+    --text-muted: #606080;
+    --border: rgba(201,168,76,0.2);
+    --border-strong: rgba(201,168,76,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg-primary);
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(74,158,255,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(155,89,182,0.03) 0%, transparent 70%);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+  ::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(180deg, #0a0a14 0%, var(--bg-primary) 100%);
+    border-bottom: 1px solid var(--border-strong);
+    padding: 60px 20px 50px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .header-ornament {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+    filter: drop-shadow(0 0 20px rgba(201,168,76,0.5));
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(24px, 4vw, 42px);
+    font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 30px rgba(201,168,76,0.4), 0 2px 4px rgba(0,0,0,0.8);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .header-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    position: relative;
+  }
+
+  .header-subtitle span {
+    color: var(--gold-dark);
+    margin: 0 8px;
+  }
+
+  .header-line {
+    width: 200px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 20px auto;
+  }
+
+  /* ===== NAV ===== */
+  .nav-bar {
+    background: rgba(13,13,26,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .nav-bar a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 12px 14px;
+    letter-spacing: 0.5px;
+    transition: color 0.2s, border-bottom 0.2s;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .nav-bar a:hover {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  /* ===== CONTAINER ===== */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ===== SECTIONS ===== */
+  .section {
+    padding: 60px 0;
+  }
+
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .section-divider::before,
+  .section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-strong));
+  }
+
+  .section-divider::after {
+    background: linear-gradient(90deg, var(--border-strong), transparent);
+  }
+
+  .section-number {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--gold-dark);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(18px, 2.5vw, 26px);
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 8px;
+    text-shadow: 0 0 20px rgba(201,168,76,0.2);
+  }
+
+  .section-desc {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px var(--gold-glow);
+    border-color: var(--border-strong);
+    background: var(--bg-card-hover);
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  .card-title {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-icon {
+    font-size: 20px;
+    filter: drop-shadow(0 0 8px rgba(201,168,76,0.4));
+  }
+
+  /* ===== GRID ===== */
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  @media (max-width: 900px) {
+    .grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  }
+
+  /* ===== FEATURE LIST ===== */
+  .feature-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .feature-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .feature-list li::before {
+    content: '◆';
+    color: var(--gold-dark);
+    font-size: 8px;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .feature-list li strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* ===== BADGES ===== */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge-gold { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+  .badge-blue { background: rgba(74,158,255,0.15); color: var(--blue); border: 1px solid rgba(74,158,255,0.3); }
+  .badge-green { background: rgba(76,175,80,0.15); color: var(--green); border: 1px solid rgba(76,175,80,0.3); }
+  .badge-purple { background: rgba(155,89,182,0.15); color: var(--purple); border: 1px solid rgba(155,89,182,0.3); }
+  .badge-red { background: rgba(231,76,60,0.15); color: var(--red); border: 1px solid rgba(231,76,60,0.3); }
+  .badge-orange { background: rgba(230,126,34,0.15); color: var(--orange); border: 1px solid rgba(230,126,34,0.3); }
+
+  /* ===== TABLES ===== */
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  thead tr {
+    background: linear-gradient(90deg, rgba(201,168,76,0.12), rgba(201,168,76,0.06));
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  thead th {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold);
+    padding: 14px 16px;
+    text-align: left;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid rgba(201,168,76,0.06);
+    transition: background 0.2s;
+  }
+
+  tbody tr:hover { background: rgba(201,168,76,0.04); }
+  tbody tr:last-child { border-bottom: none; }
+
+  tbody td {
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    vertical-align: top;
+  }
+
+  tbody td:first-child {
+    color: var(--gold-dark);
+    font-weight: 700;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+  }
+
+  tbody td code {
+    background: rgba(201,168,76,0.08);
+    color: var(--gold-light);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    border: 1px solid rgba(201,168,76,0.15);
+  }
+
+  /* ===== MMO CARDS ===== */
+  .mmo-card {
+    border-radius: 14px;
+    padding: 28px;
+    border: 1px solid;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mmo-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    opacity: 0.04;
+    pointer-events: none;
+  }
+
+  .mmo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 50px rgba(0,0,0,0.6);
+  }
+
+  .mmo-tibia { background: linear-gradient(135deg, #1a1208 0%, #13130a 100%); border-color: rgba(201,168,76,0.35); }
+  .mmo-tibia::after { background: var(--gold); }
+  .mmo-mu { background: linear-gradient(135deg, #0d1a2a 0%, #0a1020 100%); border-color: rgba(74,158,255,0.35); }
+  .mmo-mu::after { background: var(--blue); }
+  .mmo-ragnarok { background: linear-gradient(135deg, #1a0d1a 0%, #130a13 100%); border-color: rgba(155,89,182,0.35); }
+  .mmo-ragnarok::after { background: var(--purple); }
+  .mmo-diablo { background: linear-gradient(135deg, #1a0808 0%, #130505 100%); border-color: rgba(231,76,60,0.35); }
+  .mmo-diablo::after { background: var(--red); }
+  .mmo-wow { background: linear-gradient(135deg, #0d1a0d 0%, #0a130a 100%); border-color: rgba(76,175,80,0.35); }
+  .mmo-wow::after { background: var(--green); }
+
+  .mmo-title {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mmo-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+
+  .mmo-tibia .mmo-title { color: var(--gold); }
+  .mmo-mu .mmo-title { color: var(--blue); }
+  .mmo-ragnarok .mmo-title { color: var(--purple); }
+  .mmo-diablo .mmo-title { color: var(--red); }
+  .mmo-wow .mmo-title { color: var(--green); }
+
+  .mmo-section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    margin-top: 16px;
+    opacity: 0.7;
+  }
+
+  .mmo-tibia .mmo-section-label { color: var(--gold); }
+  .mmo-mu .mmo-section-label { color: var(--blue); }
+  .mmo-ragnarok .mmo-section-label { color: var(--purple); }
+  .mmo-diablo .mmo-section-label { color: var(--red); }
+  .mmo-wow .mmo-section-label { color: var(--green); }
+
+  .bring-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    margin: 3px 3px 3px 0;
+  }
+
+  .mmo-tibia .bring-tag { background: rgba(201,168,76,0.12); color: var(--gold-light); border: 1px solid rgba(201,168,76,0.2); }
+  .mmo-mu .bring-tag { background: rgba(74,158,255,0.12); color: #7ab8ff; border: 1px solid rgba(74,158,255,0.2); }
+  .mmo-ragnarok .bring-tag { background: rgba(155,89,182,0.12); color: #c39bd3; border: 1px solid rgba(155,89,182,0.2); }
+  .mmo-diablo .bring-tag { background: rgba(231,76,60,0.12); color: #f1948a; border: 1px solid rgba(231,76,60,0.2); }
+  .mmo-wow .bring-tag { background: rgba(76,175,80,0.12); color: #81c784; border: 1px solid rgba(76,175,80,0.2); }
+
+  /* ===== FILE TREE ===== */
+  .file-tree {
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .file-tree .folder {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .file-tree .file {
+    color: var(--text-secondary);
+  }
+
+  .file-tree .file-special {
+    color: var(--blue);
+  }
+
+  .file-tree .indent { padding-left: 20px; }
+  .file-tree .indent2 { padding-left: 40px; }
+
+  /* ===== DOC CARDS ===== */
+  .doc-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .doc-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    border-color: var(--border-strong);
+  }
+
+  .doc-number {
+    font-family: 'Cinzel', serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--gold-dark);
+    opacity: 0.6;
+    min-width: 36px;
+    line-height: 1;
+    padding-top: 2px;
+  }
+
+  .doc-info h4 {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .doc-info p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .doc-stats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  /* ===== TIMELINE ===== */
+  .timeline {
+    position: relative;
+    padding-left: 60px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 22px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--gold), var(--blue), var(--purple), var(--green), var(--orange), var(--red));
+    opacity: 0.4;
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 32px;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    left: -49px;
+    top: 16px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 700;
+    border: 2px solid;
+    z-index: 1;
+  }
+
+  .phase-gold .timeline-dot { background: rgba(201,168,76,0.15); border-color: var(--gold); color: var(--gold); box-shadow: 0 0 15px rgba(201,168,76,0.3); }
+  .phase-blue .timeline-dot { background: rgba(74,158,255,0.15); border-color: var(--blue); color: var(--blue); box-shadow: 0 0 15px rgba(74,158,255,0.3); }
+  .phase-purple .timeline-dot { background: rgba(155,89,182,0.15); border-color: var(--purple); color: var(--purple); box-shadow: 0 0 15px rgba(155,89,182,0.3); }
+  .phase-green .timeline-dot { background: rgba(76,175,80,0.15); border-color: var(--green); color: var(--green); box-shadow: 0 0 15px rgba(76,175,80,0.3); }
+  .phase-orange .timeline-dot { background: rgba(230,126,34,0.15); border-color: var(--orange); color: var(--orange); box-shadow: 0 0 15px rgba(230,126,34,0.3); }
+  .phase-red .timeline-dot { background: rgba(231,76,60,0.15); border-color: var(--red); color: var(--red); box-shadow: 0 0 15px rgba(231,76,60,0.3); }
+
+  .timeline-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: box-shadow 0.25s, border-color 0.25s;
+  }
+
+  .phase-gold .timeline-card { border-left: 3px solid var(--gold); }
+  .phase-blue .timeline-card { border-left: 3px solid var(--blue); }
+  .phase-purple .timeline-card { border-left: 3px solid var(--purple); }
+  .phase-green .timeline-card { border-left: 3px solid var(--green); }
+  .phase-orange .timeline-card { border-left: 3px solid var(--orange); }
+  .phase-red .timeline-card { border-left: 3px solid var(--red); }
+
+  .timeline-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    border-color: var(--border-strong);
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .phase-title {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .phase-gold .phase-title { color: var(--gold); }
+  .phase-blue .phase-title { color: var(--blue); }
+  .phase-purple .phase-title { color: var(--purple); }
+  .phase-green .phase-title { color: var(--green); }
+  .phase-orange .phase-title { color: var(--orange); }
+  .phase-red .phase-title { color: var(--red); }
+
+  .phase-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .phase-weeks {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.04);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .phase-progress {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .phase-gold .phase-progress { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.2); }
+  .phase-blue .phase-progress { background: rgba(74,158,255,0.1); color: var(--blue); border: 1px solid rgba(74,158,255,0.2); }
+  .phase-purple .phase-progress { background: rgba(155,89,182,0.1); color: var(--purple); border: 1px solid rgba(155,89,182,0.2); }
+  .phase-green .phase-progress { background: rgba(76,175,80,0.1); color: var(--green); border: 1px solid rgba(76,175,80,0.2); }
+  .phase-orange .phase-progress { background: rgba(230,126,34,0.1); color: var(--orange); border: 1px solid rgba(230,126,34,0.2); }
+  .phase-red .phase-progress { background: rgba(231,76,60,0.1); color: var(--red); border: 1px solid rgba(231,76,60,0.2); }
+
+  .phase-objective {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  .task-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 8px;
+  }
+
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.2s;
+  }
+
+  .task-item:hover { background: rgba(255,255,255,0.04); }
+
+  .task-checkbox {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1.5px solid;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .phase-gold .task-checkbox { border-color: var(--gold-dark); }
+  .phase-blue .task-checkbox { border-color: var(--blue-dark); }
+  .phase-purple .task-checkbox { border-color: var(--purple-dark); }
+  .phase-green .task-checkbox { border-color: var(--green-dark); }
+  .phase-orange .task-checkbox { border-color: var(--orange-dark); }
+  .phase-red .task-checkbox { border-color: var(--red-dark); }
+
+  /* ===== START HERE BADGE ===== */
+  .start-here {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(90deg, rgba(201,168,76,0.2), rgba(201,168,76,0.1));
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    animation: pulse-gold 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 8px rgba(201,168,76,0.3); }
+    50% { box-shadow: 0 0 20px rgba(201,168,76,0.6); }
+  }
+
+  /* ===== STACK CARDS ===== */
+  .stack-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  }
+
+  .stack-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    border-color: var(--border-strong);
+  }
+
+  .stack-icon {
+    font-size: 28px;
+    filter: drop-shadow(0 0 8px rgba(201,168,76,0.3));
+    flex-shrink: 0;
+  }
+
+  .stack-info h4 {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold);
+    margin-bottom: 3px;
+  }
+
+  .stack-info p {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ===== ARCH CARD ===== */
+  .arch-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .arch-header {
+    padding: 16px 24px;
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .arch-client .arch-header { background: linear-gradient(90deg, rgba(74,158,255,0.15), transparent); color: var(--blue); border-bottom: 1px solid rgba(74,158,255,0.2); }
+  .arch-server .arch-header { background: linear-gradient(90deg, rgba(76,175,80,0.15), transparent); color: var(--green); border-bottom: 1px solid rgba(76,175,80,0.2); }
+
+  .arch-body { padding: 20px 24px; }
+
+  /* ===== RISK BADGES ===== */
+  .risk-high { color: var(--red); font-size: 16px; }
+  .risk-med { color: var(--orange); font-size: 16px; }
+  .risk-low { color: var(--green); font-size: 16px; }
+
+  /* ===== PRIORITY BADGES ===== */
+  .prio-high { background: rgba(231,76,60,0.12); color: var(--red); border: 1px solid rgba(231,76,60,0.25); padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .prio-med { background: rgba(230,126,34,0.12); color: var(--orange); border: 1px solid rgba(230,126,34,0.25); padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .prio-low { background: rgba(76,175,80,0.12); color: var(--green); border: 1px solid rgba(76,175,80,0.25); padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+
+  /* ===== INFO BOX ===== */
+  .info-box {
+    background: rgba(201,168,76,0.06);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-left: 3px solid var(--gold);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    color: var(--text-secondary);
+  }
+
+  .info-box strong { color: var(--gold); }
+
+  /* ===== LANG BAR ===== */
+  .lang-bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 12px 0;
+    gap: 2px;
+  }
+
+  .lang-segment {
+    height: 100%;
+    border-radius: 2px;
+    transition: transform 0.2s;
+  }
+
+  .lang-segment:hover { transform: scaleY(1.5); }
+
+  .lang-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .lang-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .lang-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    background: linear-gradient(180deg, var(--bg-primary) 0%, #080810 100%);
+    border-top: 1px solid var(--border);
+    padding: 40px 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  footer::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .footer-ornament {
+    font-size: 24px;
+    margin-bottom: 16px;
+    display: block;
+    opacity: 0.6;
+  }
+
+  .footer-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.8;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .footer-text strong { color: var(--gold-dark); }
+
+  .footer-divider {
+    width: 60px;
+    height: 1px;
+    background: var(--border-strong);
+    margin: 16px auto;
+  }
+
+  /* ===== MISC ===== */
+  .highlight { color: var(--gold); font-weight: 600; }
+  .text-muted { color: var(--text-muted); }
+  .text-sm { font-size: 13px; }
+
+  .two-col-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+
+  @media (max-width: 700px) {
+    .two-col-info { grid-template-columns: 1fr; }
+    .timeline { padding-left: 50px; }
+    .timeline-dot { left: -40px; width: 28px; height: 28px; font-size: 11px; }
+    .timeline::before { left: 18px; }
+  }
+
+  .section-intro {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 32px;
+  }
+
+  .section-intro p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+  }
+
+  .inline-code {
+    background: rgba(201,168,76,0.08);
+    color: var(--gold-light);
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    border: 1px solid rgba(201,168,76,0.15);
+  }
+
+  .mmo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .mmo-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <span class="header-ornament">⚔️</span>
+  <h1>Fields Online — Base de Conhecimento & Ponto de Partida</h1>
+  <div class="header-line"></div>
+  <p class="header-subtitle">
+    Pesquisa Técnica <span>·</span> Referências <span>·</span> Diagnóstico <span>·</span> Roadmap
+  </p>
+</header>
+
+<!-- ===== NAV ===== -->
+<nav class="nav-bar">
+  <a href="#sec1">1. VX Ace</a>
+  <a href="#sec2">2. VXA-OS</a>
+  <a href="#sec3">3. Referências MMO</a>
+  <a href="#sec4">4. Estrutura</a>
+  <a href="#sec5">5. Documentos</a>
+  <a href="#sec6">6. Diagnóstico</a>
+  <a href="#sec7">7. Sistemas Ausentes</a>
+  <a href="#sec8">8. Roadmap</a>
+  <a href="#sec9">9. Stack</a>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main>
+
+<!-- ===== SECTION 1 ===== -->
+<section class="section" id="sec1">
+  <div class="container">
+    <div class="section-divider">
+      <span class="section-number">Seção 01</span>
+    </div>
+    <h2 class="section-title">🎮 RPG Maker VX Ace — Visão Geral</h2>
+    <p class="section-desc">Engine de criação de RPGs 2D da Enterbrain/Kadokawa · Lançado em 2011 (JP) / 2012 (Global) · Versão definitiva do VX</p>
+
+    <div class="two-col-info" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-title"><span class="card-icon">⚙️</span> Principais Características</div>
+        <ul class="feature-list">
+          <li><strong>Linguagem:</strong> RGSS3 (Ruby Game Scripting System 3), baseado em Ruby 1.9.2 — mais rápido que RGSS2</li>
+          <li><strong>8 atributos padrão:</strong> MHP, MMP, ATK, DEF, MAT, MDF, AGI, LUK</li>
+          <li><strong>Multiple tilesets</strong> — retorno ao VX que não tinha</li>
+          <li><strong>3 camadas de tiles</strong> por mapa</li>
+          <li><strong>Character Generator</strong> embutido para sprites e faces</li>
+          <li><strong>Sistema de Traits</strong> — características especiais de personagens</li>
+          <li><strong>Region IDs</strong> para mapas</li>
+          <li><strong>Suporte a vídeo</strong> Ogg Theora</li>
+          <li><strong>Gauge de TP</strong> além de HP e MP</li>
+          <li><strong>Tiles de 32×32 pixels</strong>, resolução customizável via script</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-icon">🌐</span> Por que VX Ace para MMORPG?</div>
+        <ul class="feature-list">
+          <li>A flexibilidade do <strong>RGSS3</strong> permite modificação total do engine via Ruby</li>
+          <li><strong>VXA-OS</strong> foi construído exatamente sobre essa base</li>
+          <li>Visual <strong>2D top-down</strong> perfeito para MMOs estilo Tibia/Ragnarok</li>
+          <li>Scripts inseridos via <strong>Script Editor (F11)</strong> em camadas sequenciais</li>
+          <li>Sistema de batalha <strong>front-view</strong> com battlebacks</li>
+          <li>Evento e <strong>Mapeamento melhorado</strong></li>
+          <li>Compatível com VX para arquivos de mapa (mudando extensão)</li>
+          <li>Comunidade ativa com <strong>scripts públicos</strong> no GitHub</li>
+        </ul>
+        <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
+          <span class="badge badge-gold">Ruby 1.9.2</span>
+          <span class="badge badge-blue">RGSS3</span>
+          <span class="badge badge-purple">2D Top-Down</span>
+          <span class="badge badge-green">32×32 Tiles</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <strong>💡 Nota:</strong> Scripts são inseridos via Script Editor (F11) em camadas sequenciais. A ordem dos scripts importa — scripts [RM] primeiro, depois [VS]. Compatível com VX para arquivos de mapa mudando a extensão.
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 2 ===== -->
+<section class="section" id="sec2" style="background: linear-gradient(180deg, transparent, rgba(74,158,255,0.02), transparent);">
+  <div class="container">
+    <div class="section-divider">
+      <span class="section-number">Seção 02</span>
+    </div>
+    <h2 class="section-title">🛡️ VXA-OS — Valentine's Online System</h2>
+    <p class="section-desc">A ferramenta mais completa e segura para criação de jogos online 2D com RPG Maker · MIT License · v2.1.6 (Jan 2022)</p>
+
+    <div class="section-intro">
+      <p>Em desenvolvimento ativo desde outubro de 2017, o VXA-OS é construído sobre o RPG Maker VX Ace e oferece uma arquitetura cliente-servidor completa para criação de MMORPGs 2D. Utiliza <strong style="color:var(--gold)">EventMachine</strong> para I/O assíncrono não-bloqueante no servidor e <strong style="color:var(--gold)">Sequel ORM</strong> sobre SQLite (dev) ou PostgreSQL (prod).</p>
+    </div>
+
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title"><span class="card-icon">📊</span> Composição de Linguagens</div>
+      <div class="lang-bar">
+        <div class="lang-segment" style="width:62.9%; background: linear-gradient(90deg, #e74c3c, #c0392b);"></div>
+        <div class="lang-segment" style="width:12.7%; background: linear-gradient(90deg, #f39c12, #e67e22);"></div>
+        <div class="lang-segment" style="width:9.7%; background: linear-gradient(90deg, #e67e22, #d35400);"></div>
+        <div class="lang-segment" style="width:9.3%; background: linear-gradient(90deg, #3498db, #2980b9);"></div>
+        <div class="lang-segment" style="width:2.9%; background: linear-gradient(90deg, #9b59b6, #8e44ad);"></div>
+        <div class="lang-segment" style="width:1.9%; background: linear-gradient(90deg, #1abc9c, #16a085);"></div>
+      </div>
+      <div class="lang-legend">
+        <div class="lang-item"><div class="lang-dot" style="background:#e74c3c;"></div> Ruby 62.9%</div>
+        <div class="lang-item"><div class="lang-dot" style="background:#f39c12;"></div> JavaScript 12.7%</div>
+        <div class="lang-item"><div class="lang-dot" style="background:#e67e22;"></div> HTML 9.7%</div>
+        <div class="lang-item"><div class="lang-dot" style="background:#3498db;"></div> PHP 9.3%</div>
+        <div class="lang-item"><div class="lang-dot" style="background:#9b59b6;"></div> CSS 2.9%</div>
+        <div class="lang-item"><div class="lang-dot" style="background:#1abc9c;"></div> C 1.9%</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div class="arch-card arch-client">
+        <div class="arch-header">💻 CLIENT — RPG Maker VX Ace</div>
+        <div class="arch-body">
+          <div class="file-tree">
+            <div style="margin-bottom:8px;"><span class="badge badge-blue" style="font-size:10px;">Prefixo [RM]</span> <span style="color:var(--text-muted); font-size:12px;">Base do engine com modificações</span></div>
+            <div style="margin-bottom:8px;"><span class="badge badge-gold" style="font-size:10px;">Prefixo [VS]</span> <span style="color:var(--text-muted); font-size:12px;">Lógica MMO completa</span></div>
+          </div>
+          <ul class="feature-list" style="margin-top:12px;">
+            <li><strong>Sprite_HUD</strong> — Barras de HP/MP/EXP, status</li>
+            <li><strong>Sprite_Drop</strong> — Itens no chão, animações</li>
+            <li><strong>Sprite_Minimap</strong> — Minimapa do mundo</li>
+            <li><strong>Sprite_Desc</strong> — Descrição de entidades</li>
+            <li><strong>Sprite_States</strong> — Buffs e debuffs visuais</li>
+            <li><strong>Sprite_Cursor</strong> — Cursor personalizado</li>
+            <li><strong>Mouse</strong> — Input do mouse</li>
+            <li><strong>Window_Chat</strong> — Chat do jogo</li>
+            <li><strong>Sprite2</strong> — Sprites avançados</li>
+            <li><strong>Scene_Login / Scene_Map / Scene_Char</strong></li>
+          </ul>
+        </div>
+      </div>
+      <div class="arch-card arch-server">
+        <div class="arch-header">🖥️ SERVER — Ruby puro + EventMachine</div>
+        <div class="arch-body">
+          <ul class="feature-list">
+            <li><strong>Network:</strong> EventMachine I/O assíncrono não-bloqueante TCP</li>
+            <li><strong>Database:</strong> Sequel ORM sobre SQLite (dev) / PostgreSQL (prod)</li>
+            <li><strong>Loop:</strong> Timer de 80ms (0.08s) de update</li>
+            <li><strong>Shutdown:</strong> Gracioso com salvamento ao receber SIGINT/SIGTERM</li>
+            <li><strong>Combat/</strong> — game_battle.rb, game_projectile.rb</li>
+            <li><strong>Network/</strong> — network.rb, handle_data.rb, send_data.rb</li>
+            <li><strong>Guild/</strong> — guild.rb, guild_manager.rb</li>
+            <li><strong>Trade/</strong> — trade.rb</li>
+            <li><strong>Party/</strong> — party.rb</li>
+            <li><strong>Map/</strong> — game_map.rb, map_manager.rb</li>
+            <li><strong>Database/</strong> — database.rb, queries.rb</li>
+            <li><strong>Kernel/</strong> — main.rb, configs.rb, enums.rb, structs.rb</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="card-icon">✨</span> Features Nativas do VXA-OS</div>
+      <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:8px; margin-top:4px;">
+        <span class="badge badge-gold" style="justify-content:center; padding:6px 12px;">⚔️ Batalha em tempo real</span>
+        <span class="badge badge-blue" style="justify-content:center; padding:6px 12px;">🗺️ Minimap</span>
+        <span class="badge badge-purple" style="justify-content:center; padding:6px 12px;">👥 Party System</span>
+        <span class="badge badge-green" style="justify-content:center; padding:6px 12px;">🏰 Guild System</span>
+        <span class="badge badge-orange" style="justify-content:center; padding:6px 12px;">💰 Bank System</span>
+        <span class="badge badge-red" style="justify-content:center; padding:6px 12px;">⚔️ PvP System</span>
+        <span class="badge badge-gold" style="justify-content:center; padding:6px 12px;">📜 Quest System</span>
+        <span class="badge badge-blue" style="justify-content:center; padding:6px 12px;">🔄 Trade System</span>
+        <span class="badge badge-purple" style="justify-content:center; padding:6px 12px;">👗 Paperdolls</span>
+        <span class="badge badge-green" style="justify-content:center; padding:6px 12px;">🌐 Switches Globais</span>
+        <span class="badge badge-orange" style="justify-content:center; padding:6px 12px;">💎 VIP System</span>
+        <span class="badge badge-red" style="justify-content:center; padding:6px 12px;">📡 99% Eventos no Server</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 3 ===== -->
+<section class="section" id="sec3">
+  <div class="container">
+    <div class="section-divider">
+      <span class="section-number">Seção 03</span>
+    </div>
+    <h2 class="section-title">🏆 MMORPGs de Referência — Análise e O que Trazer</h2>
+    <p class="section-desc">Os jogos que definem a identidade de Fields Online — mecânicas, sistemas e inspirações diretas</p>
+
+    <div class="mmo-grid">
+
+      <!-- TIBIA -->
+      <div class="mmo-card mmo-tibia">
+        <div class="mmo-title">🗡️ Tibia Online</div>
+        <div class="mmo-subtitle">CipSoft · 1997 · Top-Down 2D · Referência Principal</div>
+        <ul class="feature-list">
+          <li><strong>Mecânica:</strong> Top-down 2D, movimentação por tiles, controle por mouse</li>
+          <li><strong>Vocações:</strong> Knight, Paladin, Sorcerer, Druid (cada com promoção)</li>
+          <li><strong>Combate:</strong> Turn-based em tiles, magias com mana, ataques físicos</li>
+          <li><strong>Skills:</strong> Sword, Axe, Club, Shielding, Fist, Distance, Magic Level</li>
+          <li><strong>PvP:</strong> Skull System — branco, amarelo, vermelho, preto</li>
+          <li><strong>Morte:</strong> Perda de EXP + possibilidade de drop de itens</li>
+          <li><strong>Minimap:</strong> Quadrado, canto superior direito ← referência direta</li>
+          <li><strong>Drops:</strong> Timer ~1 minuto, loot visível no chão para todos</li>
+        </ul>
+        <div class="mmo-section-label">O que trazer para Fields Online</div>
+        <div>
+          <span class="bring-tag">💀 Skull System PvP</span>
+          <span class="bring-tag">📉 Morte com perda de EXP</span>
+          <span class="bring-tag">🗺️ Minimap quadrado</span>
+          <span class="bring-tag">🖱️ Movimentação por mouse</span>
+          <span class="bring-tag">⚔️ Skills independentes</span>
+          <span class="bring-tag">😰 Sensação de perigo</span>
+        </div>
+      </div>
+
+      <!-- MU ONLINE -->
+      <div class="mmo-card mmo-mu">
+        <div class="mmo-title">⚔️ MU Online</div>
+        <div class="mmo-subtitle">Webzen · 2003 · Isométrico 2D · Hack-and-Slash</div>
+        <ul class="feature-list">
+          <li><strong>Mecânica:</strong> Isométrico 2D, combate hack-and-slash, drop abundante</li>
+          <li><strong>Classes:</strong> Dark Wizard, Dark Knight, Elf, Summoner, Rage Fighter, Magic Gladiator, Dark Lord</li>
+          <li><strong>Progressão:</strong> Level + Master Level + Grand Master Level</li>
+          <li><strong>Wings:</strong> Asas nível 1, 2, 3 — sinal de prestígio</li>
+          <li><strong>Eventos:</strong> Chaos Castle, Blood Castle, Devil Square</li>
+          <li><strong>EXP:</strong> Barra em percentual (X.X%) ← já implementado!</li>
+          <li><strong>Itens:</strong> +luck, +skill, +excellent options, Chaos Machine</li>
+          <li><strong>PvP:</strong> Murder system com penalidade de itens</li>
+        </ul>
+        <div class="mmo-section-label">O que trazer para Fields Online</div>
+        <div>
+          <span class="bring-tag">📊 Barra EXP em %</span>
+          <span class="bring-tag">🌍 Eventos de mundo</span>
+          <span class="bring-tag">✨ Excellent options</span>
+          <span class="bring-tag">⚗️ Chaos Machine</span>
+          <span class="bring-tag">🏰 Devil Square/Blood Castle</span>
+          <span class="bring-tag">🏆 Prestígio visual</span>
+        </div>
+      </div>
+
+      <!-- RAGNAROK -->
+      <div class="mmo-card mmo-ragnarok">
+        <div class="mmo-title">🌸 Ragnarok Online</div>
+        <div class="mmo-subtitle">Gravity · 2002 · 2D Sprites / 3D Ambiente · Job System</div>
+        <ul class="feature-list">
+          <li><strong>Mecânica:</strong> 2D sprites em ambiente 3D, Job System complexo</li>
+          <li><strong>Jobs:</strong> Novice → 1st → 2nd → Transcendent → 3rd Job</li>
+          <li><strong>AoE:</strong> Storm Gust, Lord of Vermilion, Meteor Storm, knockback</li>
+          <li><strong>Debuffs:</strong> Freeze, Stone, Silence, Blind, Poison, Curse, etc.</li>
+          <li><strong>Elemental:</strong> Fire, Water, Wind, Earth, Ghost, Undead, Holy, Shadow</li>
+          <li><strong>Craft:</strong> Blacksmith e Alchemist como classes de craft</li>
+          <li><strong>Guild Wars:</strong> WoE — War of Emperium</li>
+          <li><strong>Social:</strong> Party com bônus de EXP, lojas de jogadores</li>
+        </ul>
+        <div class="mmo-section-label">O que trazer para Fields Online</div>
+        <div>
+          <span class="bring-tag">🎭 Sistema de Jobs</span>
+          <span class="bring-tag">💥 AoE em habilidades</span>
+          <span class="bring-tag">🌊 Resistência elemental</span>
+          <span class="bring-tag">🧊 Debuffs ricos</span>
+          <span class="bring-tag">⚔️ War of Emperium</span>
+          <span class="bring-tag">🏪 Lojas de jogadores</span>
+        </div>
+      </div>
+
+      <!-- DIABLO -->
+      <div class="mmo-card mmo-diablo">
+        <div class="mmo-title">💀 Saga Diablo</div>
+        <div class="mmo-subtitle">Blizzard · 1996–2023 · Hack-and-Slash · Loot System</div>
+        <ul class="feature-list">
+          <li><strong>Mecânica:</strong> Hack-and-slash isométrico, dungeons procedurais</li>
+          <li><strong>Raridade:</strong> Normal → Magic (azul) → Rare (amarelo) → Set (verde) → Legendary (dourado)</li>
+          <li><strong>Loot:</strong> Drop físico, proteção temporária (D4), bounce animation</li>
+          <li><strong>Morte:</strong> Drop do corpo (D2), perda de EXP e durabilidade</li>
+          <li><strong>Craft:</strong> Horadric Cube (D2), Kanai's Cube (D3)</li>
+          <li><strong>Dungeons:</strong> Instanciadas por grupo, aleatoriedade, dificuldade escalonável</li>
+          <li><strong>Progressão:</strong> Skill trees (D2), Paragon/Seasonal (D3/D4)</li>
+        </ul>
+        <div class="mmo-section-label">O que trazer para Fields Online</div>
+        <div>
+          <span class="bring-tag">💎 Raridade de itens</span>
+          <span class="bring-tag">🔒 Proteção de loot</span>
+          <span class="bring-tag">🎯 Bounce animation</span>
+          <span class="bring-tag">🏰 Dungeons instanciadas</span>
+          <span class="bring-tag">💥 Knockback</span>
+          <span class="bring-tag">⚗️ Craft com receitas</span>
+        </div>
+      </div>
+
+      <!-- WOW -->
+      <div class="mmo-card mmo-wow">
+        <div class="mmo-title">🌍 World of Warcraft</div>
+        <div class="mmo-subtitle">Blizzard · 2004 · 3D · Polimento Extremo · Referência de UI</div>
+        <ul class="feature-list">
+          <li><strong>Mecânica:</strong> 3D, questing, endgame raids, polimento extremo</li>
+          <li><strong>Classes:</strong> 13 classes com especialização — árvore de talentos</li>
+          <li><strong>Loot:</strong> Bag system, tooltips ricos, Need/Greed roll, Auction House</li>
+          <li><strong>Social:</strong> Guilds com banco, conquistas, títulos, montarias</li>
+          <li><strong>Interface:</strong> Frames modulares, buffs/debuffs em ícones claros</li>
+          <li><strong>Quest System:</strong> Quest log, rastreamento, objetivos no mapa, chains</li>
+          <li><strong>Ciclo:</strong> Dia/noite com eventos temporais</li>
+          <li><strong>Minimap:</strong> Circular ← Fields usará quadrado (Tibia style)</li>
+        </ul>
+        <div class="mmo-section-label">O que trazer para Fields Online</div>
+        <div>
+          <span class="bring-tag">🌳 Árvore de talentos</span>
+          <span class="bring-tag">🏆 Conquistas</span>
+          <span class="bring-tag">🌙 Ciclo dia/noite</span>
+          <span class="bring-tag">🏪 Auction House</span>
+          <span class="bring-tag">📜 Quest chains</span>
+          <span class="bring-tag">🎲 Need/Greed</span>
+          <span class="bring-tag">⭐ Reputação</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 4 ===== -->
+<section class="section" id="sec4" style="background: linear-gradient(180deg, transparent, rgba(76,175,80,0.02), transparent);">
+  <div class="container">
+    <div class="section-divider">
+      <span class="section-number">Seção 04</span>
+    </div>
+    <h2 class="section-title">📁 Estrutura do Projeto — Fields Online HML</h2>
+    <p class="section-desc">Organização de arquivos e pastas do cliente e servidor</p>
+
+    <div class="grid-2">
+      <div class="arch-card arch-client">
+        <div class="arch-header">💻 CLIENT — RPG Maker VX Ace</div>
+        <div class="arch-body">
+          <div class="file-tree">
+            <div class="folder">📁 /Client/</div>
+            <div class="indent">
+              <div class="folder">📁 Data/</div>
+              <div class="indent2 file text-sm">→ dados do RPG Maker (.rvdata2)</div>
+              <div class="folder">📁 Graphics/</div>
+              <div class="indent2 file text-sm">→ sprites, tilesets, faces, icons</div>
+              <div class="folder">📁 Scripts/</div>
+              <div class="indent2 file text-sm">→ [RM] e [VS] scripts Ruby</div>
+              <div class="folder">📁 System/</div>
+              <div class="indent2 file text-sm">→ arquivos de sistema</div>
+            </div>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:4px;">
+              <div class="file-special">⚙️ Game.exe</div>
+              <div class="file-special">⚙️ Game.ini</div>
+              <div class="file-special">⚙️ Game.rvproj2</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="arch-card arch-server">
+        <div class="arch-header">🖥️ SERVER — Ruby + EventMachine</div>
+        <div class="arch-body">
+          <div class="file-tree">
+            <div class="folder">📁 /Server/Scripts/</div>
+            <div class="indent">
+              <div class="folder">📁 Combat/</div>
+              <div class="indent2 file text-sm">→ game_battle.rb, game_projectile.rb</div>
+              <div class="folder">📁 Network/</div>
+              <div class="indent2 file text-sm">→ network.rb, handle_data.rb, send_data.rb, game_commands.rb</div>
+              <div class="folder">📁 Guild/</div>
+              <div class="indent2 file text-sm">→ guild.rb, guild_manager.rb</div>
+              <div class="folder">📁 Trade/</div>
+              <div class="indent2 file text-sm">→ trade.rb</div>
+              <div class="folder">📁 Party/</div>
+              <div class="indent2 file text-sm">→ party.rb</div>
+              <div class="folder">📁 Map/</div>
+              <div class="indent2 file text-sm">→ game_map.rb, map_manager.rb</div>
+              <div class="folder">📁 Client/</div>
+              <div class="indent2 file text-sm">→ game_client.rb, game_player.rb</div>
+              <div class="folder">📁 Database/</div>
+              <div class="indent2 file text-sm">→ database.rb, queries.rb</div>
+              <div class="folder">📁 Kernel/</div>
+              <div class="indent2 file text-sm">→ main.rb, configs.rb, enums.rb, structs.rb, scripts.rb</div>
+            </div>
+            <div style="margin-top:12px; display:flex; flex-direction:column; gap:4px;">
+              <div class="file-special">🗄️ Database.sql</div>
+              <div class="file-special">⚙️ configs.ini · vocab.ini · motd.txt</div>
+              <div class="file-special">▶️ Server.bat · Editor.bat</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 5 ===== -->
+<section class="section" id="sec5">
+  <div class="container">
+    <div class="section-divider">
+      <span class="section-number">Seção 05</span>
+    </div>
+    <h2 class="section-title">📚 Documentações Existentes</h2>
+    <p class="section-desc">Documentos técnicos já produzidos para o projeto Fields Online</p>
+
+    <div class="grid-2">
+
+      <div class="doc-card">
+        <div class="doc-number">01</div>
+        <div class="doc-info">
+          <h4>📋 Plano de Desenvolvimento — Fields Online MMORPG.html</h4>
+          <p>Roadmap completo do projeto com fases, tarefas e estimativas de tempo.</p>
+          <div class="doc-stats">
+            <span class="badge badge-gold">6 Fases</span>
+            <span class="badge badge-blue">42 Tarefas</span>
+            <span class="badge badge-purple">~18 Semanas</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-number">02</div>
+        <div class="doc-info">
+          <h4>🔍 Análise Técnica & Sugestões de Melhoria — Fields Online HML.md</h4>
+          <p>Diagnóstico completo do codebase com problemas identificados por severidade.</p>
+          <div class="doc-stats">
+            <span class="badge badge-red">11 Críticos</span>
+            <span class="badge badge-orange">18 Médios</span>
+            <span class="badge badge-green">10 Baixos</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-number">03</div>
+        <div class="doc-info">
+          <h4>🖥️ Diagnóstico — Server_Kernel.md</h4>
+          <p>Análise detalhada dos arquivos do kernel do servidor com problemas identificados.</p>
+          <div class="doc-stats">
+            <span class="badge badge-blue">10 Arquivos</span>
+            <span class="badge badge-purple">~1.972 Linhas</span>
+            <span class="badge badge-red">9 Críticos</span>
+            <span class="badge badge-orange">14 Médios</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-number">04</div>
+        <div class="doc-info">
+          <h4>📜 Análise [VS] Window_Quest — Fields Online.md</h4>
+          <p>Análise completa do script de janela de quests com sugestões de melhoria e modernização.</p>
+          <div class="doc-stats">
+            <span class="badge badge-gold">Window_Quest</span>
+            <span class="badge badge-blue">UI/UX</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-number">05</div>
+        <div class="doc-info">
+          <h4>⚗️ Plano de Implementação — Sistema de Quests v2.0.md</h4>
+          <p>Plano detalhado para refatoração e modernização do sistema de quests do VXA-OS.</p>
+          <div class="doc-stats">
+            <span class="badge badge-purple">Quest System</span>
+            <span class="badge badge-green">v2.0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-card">
+        <div class="doc-number">06</div>
+        <div class="doc-info">
+          <h4>🖼️ Guia de Dimensões — Moldura do Minimap (Photoshop).html</h4>
+          <p>Guia visual completo para criação da moldura do minimap quadrado no Photoshop.</p>
+          <div class="doc-stats">
+            <span class="badge badge-gold">Minimap</span>
+            <span class="badge badge-blue">Photoshop</span>
+            <span class="badge badge-purple">Assets</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 6 ===== -->
+<section class="section" id="sec6" style="background: linear-gradient(180deg, transparent, rgba(231,76,60,0.02), transparent);">
+  <div class="container">
+    <div class="section-divider">
+      <span class="section-number">Seção 06</span>
+    </div>
+    <h2 class="section-title">🚨 Diagnóstico Crítico — O que PRECISA ser resolvido primeiro</h2>
+    <p class="section-desc">11 problemas críticos identificados nos documentos de análise — resolver antes de qualquer feature nova</p>
+
+    <div class="info-box">
+      <strong>⚠️ Atenção:</strong> Todos os itens abaixo são classificados como <strong>🔴 Críticos</strong>. Nenhuma feature nova deve ser implementada antes de resolver estes problemas, especialmente os de segurança.
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Arquivo</th>
+            <th>Problema Crítico</th>
+            <th>Categoria</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>01</td>
+            <td><code>handle_data.rb</code></td>
+            <td style="color:var(--text-primary);">Senhas armazenadas e comparadas em <strong style="color:var(--red);">TEXTO PURO</strong></td>
+            <td><span class="badge badge-red">🔴 Segurança</span></td>
+          </tr>
+          <tr>
+            <td>02</td>
+            <td><code>handle_data.rb</code></td>
+            <td style="color:var(--text-primary);">Verificação de alcance de drop <strong style="color:var(--red);">DESATIVADA</strong> (comentada)</td>
+            <td><span class="badge badge-red">🔴 Segurança</span></td>
+          </tr>
+          <tr>
+            <td>03</td>
+            <td><code>handle_data.rb</code></td>
+            <td style="color:var(--text-primary);">Anti-speed hack <strong style="color:var(--red);">DESATIVADO</strong> (comentado)</td>
+            <td><span class="badge badge-red">🔴 Segurança</span></td>
+          </tr>
+          <tr>
+            <td>04</td>
+            <td><code>game_commands.rb</code></td>
+            <td style="color:var(--text-primary);"><code>change_global_switch</code> não propaga para clientes conectados</td>
+            <td><span class="badge badge-red">🔴 Lógica</span></td>
+          </tr>
+          <tr>
+            <td>05</td>
+            <td><code>database.rb</code></td>
+            <td style="color:var(--text-primary);">Sem connection pool — nova conexão TCP por operação</td>
+            <td><span class="badge badge-red">🔴 Performance</span></td>
+          </tr>
+          <tr>
+            <td>06</td>
+            <td><code>database.rb</code></td>
+            <td style="color:var(--text-primary);"><code>save_player</code> sem transação — dados ficam inconsistentes em crash</td>
+            <td><span class="badge badge-red">🔴 Estabilidade</span></td>
+          </tr>
+          <tr>
+            <td>07</td>
+            <td><code>game_data.rb</code></td>
+            <td style="color:var(--text-primary);"><code>save_all_players_online</code>: erro em 1 jogador cancela save de todos</td>
+            <td><span class="badge badge-red">🔴 Estabilidade</span></td>
+          </tr>
+          <tr>
+            <td>08</td>
+            <td><code>scripts.rb</code></td>
+            <td style="color:var(--text-primary);">Índices hardcoded no bootstrap — carrega scripts errados silenciosamente</td>
+            <td><span class="badge badge-red">🔴 Estabilidade</span></td>
+          </tr>
+          <tr>
+            <td>09</td>
+            <td><code>game_battle.rb</code></td>
+            <td style="color:var(--text-primary);"><code>max_passage</code> com loop <code>while true</code> sem guard — risco de loop infinito</td>
+            <td><span class="badge badge-red">🔴 Estabilidade</span></td>
+          </tr>
+          <tr>
+            <td>10</td>
+            <td><code>[VS] Configs.rb</code></td>
+            <td style="color:var(--text-primary);"><code>HOST = '127.0.0.1'</code> hardcoded + ausência de constantes essenciais</td>
+            <td><span class="badge badge-red">🔴 Produção</span></td>
+          </tr>
+          <tr>
+            <td>11</td>
+            <td><code>[VS] Sprite_HUD</code></td>
+            <td style="color:var(--text-primary);"><code>$game_actors[1]</code> hardcoded em 6+ métodos</td>
+            <td><span class="badge badge-red">🔴 Fragilidade</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 7 ===== -->
+<section class="section" id="sec7">
+  <div class="container">
+    <div class="section-divider">
+      <span class="section-number">Seção 07</span>
+    </div>
+    <h2 class="section-title">🎯 Sistemas Ausentes Prioritários</h2>
+    <p class="section-desc">Funcionalidades dos MMORPGs de referência ainda não implementadas em Fields Online</p>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Sistema</th>
+            <th>Referência</th>
+            <th>Prioridade</th>
+            <th>Impacto no Jogo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🗺️ Minimap quadrado</td>
+            <td><span class="badge badge-gold" style="font-size:10px;">Tibia</span> <span class="badge badge-blue" style="font-size:10px;">MU</span> <span class="badge badge-purple" style="font-size:10px;">Ragnarok</span></td>
+            <td><span class="prio-high">🔴 Alta</span></td>
+            <td style="color:var(--text-secondary);">Navegação e orientação no mundo</td>
+          </tr>
+          <tr>
+            <td>💀 Penalidade de morte (EXP/drop)</td>
+            <td><span class="badge badge-gold" style="font-size:10px;">Tibia</span> <span class="badge badge-red" style="font-size:10px;">Diablo</span> <span class="badge badge-purple" style="font-size:10px;">Ragnarok</span></td>
+            <td><span class="prio-high">🔴 Alta</span></td>
+            <td style="color:var(--text-secondary);">Tensão e risco no gameplay</td>
+          </tr>
+          <tr>
+            <td>💎 Sistema de raridade de itens</td>
+            <td><span class="badge badge-red" style="font-size:10px;">Diablo</span> <span class="badge badge-green" style="font-size:10px;">WoW</span> <span class="badge badge-blue" style="font-size:10px;">MU</span></td>
+            <td><span class="prio-high">🔴 Alta</span></td>
+            <td style="color:var(--text-secondary);">Progressão e motivação de loot</td>
+          </tr>
+          <tr>
+            <td>💥 AoE em habilidades</td>
+            <td><span class="badge badge-purple" style="font-size:10px;">Ragnarok</span> <span class="badge badge-green" style="font-size:10px;">WoW</span> <span class="badge badge-red" style="font-size:10px;">Diablo</span></td>
+            <td><span class="prio-high">🔴 Alta</span></td>
+            <td style="color:var(--text-secondary);">Variedade e profundidade de combate</td>
+          </tr>
+          <tr>
+            <td>⏱️ Timer de desaparecimento de drops</td>
+            <td><span class="badge badge-gold" style="font-size:10px;">Tibia</span> <span class="badge badge-green" style="font-size:10px;">WoW</span></td>
+            <td><span class="prio-high">🔴 Alta</span></td>
+            <td style="color:var(--text-secondary);">Urgência e limpeza do mapa</td>
+          </tr>
+          <tr>
+            <td>🖱️ Clique em drops com mouse</td>
+            <td><span class="badge badge-gold" style="font-size:10px;">Tibia</span> <span class="badge badge-red" style="font-size:10px;">Diablo</span></td>
+            <td><span class="prio-high">🔴 Alta</span></td>
+            <td style="color:var(--text-secondary);">Usabilidade e fluidez (range: 2 tiles)</td>
+          </tr>
+          <tr>
+            <td>🔐 Hash de senha (BCrypt/SHA256)</td>
+            <td><span style="color:var(--text-muted); font-size:12px;">Segurança geral</span></td>
+            <td><span class="prio-high">🔴 Urgente</span></td>
+            <td style="color:var(--text-secondary);">Proteção de dados dos jogadores</td>
+          </tr>
+          <tr>
+            <td>⚗️ Sistema de Craft</td>
+            <td><span class="badge badge-red" style="font-size:10px;">Diablo</span> <span class="badge badge-green" style="font-size:10px;">WoW</span> <span class="badge badge-purple" style="font-size:10px;">Ragnarok</span></td>
+            <td><span class="prio-med">🟡 Média</span></td>
+            <td style="color:var(--text-secondary);">Economia e progressão de itens</td>
+          </tr>
+          <tr>
+            <td>🌙 Ciclo dia/noite</td>
+            <td><span class="badge badge-green" style="font-size:10px;">WoW</span> <span class="badge badge-gold" style="font-size:10px;">Tibia</span></td>
+            <td><span class="prio-med">🟡 Média</span></td>
+            <td style="color:var(--text-secondary);">Imersão e eventos temporais</td>
+          </tr>
+          <tr>
+            <td>💀 Sistema de karma/skull PvP</td>
+            <td><span class="badge badge-gold" style="font-size:10px;">Tibia</span> <span class="badge badge-blue" style="font-size:10px;">MU</span></td>
+            <td><span class="prio-med">🟡 Média</span></td>
+            <td style="color:var(--text-secondary);">Equilíbrio e punição de PKs</td>
+          </tr>
+          <tr>
+            <td>🌳 Árvore de habilidades/talentos</td>
+            <td><span class="badge badge-green" style="font-size:10px;">WoW</span> <span class="badge badge-red" style="font-size:10px;">Diablo</span></td>
+            <td><span class="prio-med">🟡 Média</span></td>
+            <td style="color:var(--text-secondary);">Customização e builds de personagem</td>
+          </tr>
+          <tr>
+            <td>🏰 Dungeon/Instância</td>
+            <td><span class="badge badge-green" style="font-size:10px;">WoW</span> <span class="badge badge-red" style="font-size:10px;">Diablo</span></td>
+            <td><span class="prio-med">🟡 Média</span></td>
+            <td style="color:var(--text-secondary);">Conteúdo endgame em grupo</td>
+          </tr>
+          <tr>
+            <td>🏆 Sistema de conquistas</td>
+            <td><span class="badge badge-green" style="font-size:10px;">WoW</span></td>
+            <td><span class="prio-low">🟢 Baixa</span></td>
+            <td style="color:var(--text-secondary);">Retenção e metas de longo prazo</td>
+          </tr>
+          <tr>
+            <td>🌍 Eventos de mundo (boss, invasão)</td>
+            <td><span class="badge badge-blue" style="font-size:10px;">MU</span> <span class="badge badge-purple" style="font-size:10px;">Ragnarok</span></td>
+            <td><span class="prio-low">🟢 Baixa</span></td>
+            <td style="color:var(--text-secondary);">Engajamento e comunidade</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 8 ===== -->
+<section class="section" id="sec8" style="background: linear-gradient(180deg, transparent, rgba(201,168,76,0.02), transparent);">
+  <div class="container">
+    <div class="section-divider">
+      <span class="section-number">Seção 08</span>
+    </div>
+    <h2 class="section-title">🎯 Por Onde Começar — Ordem Sugerida de Trabalho</h2>
+    <p class="section-desc">Roadmap em 6 fases baseado no Plano de Desenvolvimento existente · ~18 semanas estimadas</p>
+
+    <div class="timeline">
+
+      <!-- FASE 1 -->
+      <div class="timeline-item phase-gold">
+        <div class="timeline-dot">1</div>
+        <div class="timeline-card">
+          <div class="phase-header">
+            <div>
+              <div class="phase-title">⚔️ FASE 1 — Fundação Sólida</div>
+              <div class="phase-objective">Objetivo: Corrigir todos os problemas críticos antes de qualquer feature nova</div>
+            </div>
+            <div class="phase-meta">
+              <span class="phase-weeks">⏱️ 1–2 semanas</span>
+              <span class="phase-progress">0/8 tarefas</span>
+              <span class="start-here">▶ COMEÇAR AQUI</span>
+            </div>
+          </div>
+          <div class="task-list">
+            <div class="task-item"><div class="task-checkbox"></div> Implementar hash de senha BCrypt em handle_data.rb</div>
+            <div class="task-item"><div class="task-checkbox"></div> Reativar verificação de alcance em handle_remove_drop</div>
+            <div class="task-item"><div class="task-checkbox"></div> Reativar anti-speed hack em handle_player_movement</div>
+            <div class="task-item"><div class="task-checkbox"></div> Adicionar send_global_switch em change_global_switch</div>
+            <div class="task-item"><div class="task-checkbox"></div> Implementar connection pool no database.rb</div>
+            <div class="task-item"><div class="task-checkbox"></div> Envolver save_player em transação (DB.transaction)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Isolar erros em save_all_players_online com begin/rescue por jogador</div>
+            <div class="task-item"><div class="task-checkbox"></div> Substituir índices hardcoded no scripts.rb por busca dinâmica por nome</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 2 -->
+      <div class="timeline-item phase-blue">
+        <div class="timeline-dot">2</div>
+        <div class="timeline-card">
+          <div class="phase-header">
+            <div>
+              <div class="phase-title">🖥️ FASE 2 — Interface e HUD</div>
+              <div class="phase-objective">Objetivo: Interface profissional inspirada nos MMORPGs de referência</div>
+            </div>
+            <div class="phase-meta">
+              <span class="phase-weeks">⏱️ 2–3 semanas</span>
+              <span class="phase-progress">0/9 tarefas</span>
+            </div>
+          </div>
+          <div class="task-list">
+            <div class="task-item"><div class="task-checkbox"></div> Minimap quadrado com frame via Bitmap (inspirado em Tibia/MU)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Refatorar [VS] Sprite_HUD (centralizar configs, $game_actors[1] → constante)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Melhorar [VS] Sprite_Desc</div>
+            <div class="task-item"><div class="task-checkbox"></div> Melhorar [VS] Sprite_States (buffs/debuffs)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Melhorar [VS] Sprite_Drop (raridade, timer, bounce animation)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Popup de drops empilhados verticalmente</div>
+            <div class="task-item"><div class="task-checkbox"></div> Cursor personalizado com efeito de rotação</div>
+            <div class="task-item"><div class="task-checkbox"></div> Refatorar [VS] Window_Chat</div>
+            <div class="task-item"><div class="task-checkbox"></div> Garantir que UI não sobreponha a HUD principal</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 3 -->
+      <div class="timeline-item phase-purple">
+        <div class="timeline-dot">3</div>
+        <div class="timeline-card">
+          <div class="phase-header">
+            <div>
+              <div class="phase-title">⚔️ FASE 3 — Sistemas de Gameplay</div>
+              <div class="phase-objective">Objetivo: Mecânicas sólidas e divertidas</div>
+            </div>
+            <div class="phase-meta">
+              <span class="phase-weeks">⏱️ 3–4 semanas</span>
+              <span class="phase-progress">0/8 tarefas</span>
+            </div>
+          </div>
+          <div class="task-list">
+            <div class="task-item"><div class="task-checkbox"></div> Revisar sistema de combate (Combat/)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Coletar itens com clique do mouse (range: 2 tiles)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Sistema de Debuffs e Buffs completo</div>
+            <div class="task-item"><div class="task-checkbox"></div> Revisar sistema de Quests</div>
+            <div class="task-item"><div class="task-checkbox"></div> Revisar projéteis</div>
+            <div class="task-item"><div class="task-checkbox"></div> Melhorar [VS] Mouse</div>
+            <div class="task-item"><div class="task-checkbox"></div> Refinar movimentação e colisão</div>
+            <div class="task-item"><div class="task-checkbox"></div> Sistema de respawn e loot de inimigos</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 4 -->
+      <div class="timeline-item phase-green">
+        <div class="timeline-dot">4</div>
+        <div class="timeline-card">
+          <div class="phase-header">
+            <div>
+              <div class="phase-title">👥 FASE 4 — Sistemas Sociais</div>
+              <div class="phase-objective">Objetivo: Mecânicas multiplayer essenciais</div>
+            </div>
+            <div class="phase-meta">
+              <span class="phase-weeks">⏱️ 2–3 semanas</span>
+              <span class="phase-progress">0/6 tarefas</span>
+            </div>
+          </div>
+          <div class="task-list">
+            <div class="task-item"><div class="task-checkbox"></div> Party (client + server)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Guild (criação, membros, permissões)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Trade (troca entre jogadores)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Bank (depósito/retirada)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Chat por canais (global, party, guild, sussurro)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Exibição de outros jogadores</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 5 -->
+      <div class="timeline-item phase-orange">
+        <div class="timeline-dot">5</div>
+        <div class="timeline-card">
+          <div class="phase-header">
+            <div>
+              <div class="phase-title">🌍 FASE 5 — Conteúdo e Mundo</div>
+              <div class="phase-objective">Objetivo: Mundo com conteúdo jogável</div>
+            </div>
+            <div class="phase-meta">
+              <span class="phase-weeks">⏱️ 4–6 semanas</span>
+              <span class="phase-progress">0/6 tarefas</span>
+            </div>
+          </div>
+          <div class="task-list">
+            <div class="task-item"><div class="task-checkbox"></div> Criação de mapas (zonas iniciais, dungeons)</div>
+            <div class="task-item"><div class="task-checkbox"></div> NPCs, diálogos, lojas, quests</div>
+            <div class="task-item"><div class="task-checkbox"></div> Monstros, loot tables, spawn points</div>
+            <div class="task-item"><div class="task-checkbox"></div> Itens, armas, armaduras configuradas</div>
+            <div class="task-item"><div class="task-checkbox"></div> Sistema de raridade de itens (Diablo/WoW style)</div>
+            <div class="task-item"><div class="task-checkbox"></div> Eventos de mundo (boss spawn, invasões)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FASE 6 -->
+      <div class="timeline-item phase-red">
+        <div class="timeline-dot">6</div>
+        <div class="timeline-card">
+          <div class="phase-header">
+            <div>
+              <div class="phase-title">🚀 FASE 6 — Polimento e Alpha</div>
+              <div class="phase-objective">Objetivo: Estabilidade e primeiro playtest</div>
+            </div>
+            <div class="phase-meta">
+              <span class="phase-weeks">⏱️ 2–3 semanas</span>
+              <span class="phase-progress">0/6 tarefas</span>
+            </div>
+          </div>
+          <div class="task-list">
+            <div class="task-item"><div class="task-checkbox"></div> Testes de estabilidade e carga</div>
+            <div class="task-item"><div class="task-checkbox"></div> Correção de bugs identificados</div>
+            <div class="task-item"><div class="task-checkbox"></div> Penalidade de morte configurável</div>
+            <div class="task-item"><div class="task-checkbox"></div> Sistema de conquistas básico</div>
+            <div class="task-item"><div class="task-checkbox"></div> Documentação final</div>
+            <div class="task-item"><div class="task-checkbox"></div> Deploy em servidor de teste (Alpha)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TOTAL -->
+    <div class="card" style="margin-top:32px; text-align:center;">
+      <div style="display:flex; justify-content:center; gap:24px; flex-wrap:wrap;">
+        <div>
+          <div style="font-family:'Cinzel',serif; font-size:32px; font-weight:900; color:var(--gold);">42</div>
+          <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Tarefas Totais</div>
+        </div>
+        <div style="width:1px; background:var(--border);"></div>
+        <div>
+          <div style="font-family:'Cinzel',serif; font-size:32px; font-weight:900; color:var(--blue);">6</div>
+          <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Fases</div>
+        </div>
+        <div style="width:1px; background:var(--border);"></div>
+        <div>
+          <div style="font-family:'Cinzel',serif; font-size:32px; font-weight:900; color:var(--purple);">~18</div>
+          <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Semanas Estimadas</div>
+        </div>
+        <div style="width:1px; background:var(--border);"></div>
+        <div>
+          <div style="font-family:'Cinzel',serif; font-size:32px; font-weight:900; color:var(--red);">0%</div>
+          <div style="font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Concluído</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SECTION 9 ===== -->
+<section class="section" id="sec9">
+  <div class="container">
+    <div class="section-divider">
+      <span class="section-number">Seção 09</span>
+    </div>
+    <h2 class="section-title">🔧 Stack Tecnológica do Projeto</h2>
+    <p class="section-desc">Tecnologias utilizadas no desenvolvimento de Fields Online</p>
+
+    <div class="grid-4">
+
+      <div class="stack-card">
+        <div class="stack-icon">🎮</div>
+        <div class="stack-info">
+          <h4>RPG Maker VX Ace</h4>
+          <p>Engine + Editor de mapas e eventos</p>
+        </div>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-icon">💎</div>
+        <div class="stack-info">
+          <h4>Ruby / RGSS3</h4>
+          <p>Scripts do cliente — Ruby 1.9.2</p>
+        </div>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-icon">🖥️</div>
+        <div class="stack-info">
+          <h4>Ruby puro</h4>
+          <p>Scripts do servidor — lógica MMO</p>
+        </div>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-icon">⚡</div>
+        <div class="stack-info">
+          <h4>EventMachine</h4>
+          <p>Network I/O assíncrono não-bloqueante</p>
+        </div>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-icon">🗄️</div>
+        <div class="stack-info">
+          <h4>Sequel ORM</h4>
+          <p>Abstração de banco de dados</p>
+        </div>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-icon">🔵</div>
+        <div class="stack-info">
+          <h4>SQLite / PostgreSQL</h4>
+          <p>SQLite (dev) · PostgreSQL (prod)</p>
+        </div>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-icon">🐙</div>
+        <div class="stack-info">
+          <h4>GitHub</h4>
+          <p>Controle de versão e colaboração</p>
+        </div>
+      </div>
+
+      <div class="stack-card">
+        <div class="stack-icon">🎨</div>
+        <div class="stack-info">
+          <h4>Photoshop</h4>
+          <p>Assets gráficos e molduras</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <span class="footer-ornament">⚔️ 🛡️ ⚔️</span>
+  <div class="header-line"></div>
+  <p class="footer-text">
+    <strong>Fields Online HML</strong> · Desenvolvido por <strong>Caio Juan De Lima Silva</strong><br>
+    Baseado em <strong>VXA-OS</strong> de Valentine90 · MIT License · v2.1.6<br>
+    Inspirado em <strong>Tibia Online</strong>, <strong>MU Online</strong>, <strong>Ragnarok Online</strong>, <strong>Saga Diablo</strong> e <strong>World of Warcraft</strong>
+  </p>
+  <div class="footer-divider"></div>
+  <p style="font-size:11px; color:var(--text-muted);">Base de Conhecimento gerada em 02/04/2026 · RPG Maker VX Ace + RGSS3 + Ruby</p>
+</footer>
+
+</body>
+</html>
