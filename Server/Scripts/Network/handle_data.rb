@@ -119,7 +119,7 @@ module Handle_Data
 			handle_admin_command(client, buffer)
 		end
 	end
-	
+
 	def handle_login(client, buffer)
 		user = buffer.read_string.force_encoding('UTF-8').delete('[/\\\]')
 		pass = buffer.read_string
@@ -199,7 +199,7 @@ module Handle_Data
 		client.close_connection_after_writing
 		@log.info("Conta criada: #{user} | IP: #{client.ip}")
 	end
-	
+
 	def handle_create_actor(client, buffer)
 		actor_id = buffer.read_byte
 		name = titleize(buffer.read_string.strip)
@@ -229,7 +229,7 @@ module Handle_Data
 		Database.create_player(client, actor_id, name, character_index, class_id, sex, params, points)
 		send_create_actor(client, actor_id, client.actors[actor_id])
 	end
-	
+
 	def handle_remove_actor(client, buffer)
 		actor_id = buffer.read_byte
 		pass = buffer.read_string
@@ -260,19 +260,27 @@ module Handle_Data
 		send_map_drops(client)
 		send_motd(client)
 	end
-	
+
 	def handle_player_movement(client, buffer)
 		d = buffer.read_byte
+		# Aceita todas as 8 direções: retas (2,4,6,8) e diagonais (1,3,7,9)
 		return if d < Enums::Dir::DOWN_LEFT || d > Enums::Dir::UP_RIGHT
 		client.stop_count = Time.now + 0.170
-		client.move_straight(d)
+		# ALTERADO: move_straight → case/when para suporte a diagonais
+		case d
+		when 1 then client.move_diagonal(4, 2)  # DOWN_LEFT  → LEFT(4) + DOWN(2)
+		when 3 then client.move_diagonal(6, 2)  # DOWN_RIGHT → RIGHT(6) + DOWN(2)
+		when 7 then client.move_diagonal(4, 8)  # UP_LEFT    → LEFT(4) + UP(8)
+		when 9 then client.move_diagonal(6, 8)  # UP_RIGHT   → RIGHT(6) + UP(8)
+		else        client.move_straight(d)     # DOWN(2), LEFT(4), RIGHT(6), UP(8)
+		end
 		if client.move_succeed
 			client.check_floor_effect
 			client.check_touch_event
 			client.close_windows
 		end
 	end
-	
+
 	def handle_chat_message(client, buffer)
 		message = buffer.read_string.force_encoding('UTF-8')
 		talk_type = buffer.read_byte
@@ -326,7 +334,7 @@ module Handle_Data
 		return if client.using_item?
 		client.use_item($data_skills[skill_id])
 	end
-	
+
 	def handle_balloon(client, buffer)
 		balloon_id = buffer.read_byte
 		return if balloon_id > 10
@@ -334,7 +342,7 @@ module Handle_Data
 		client.antispam_time = Time.now + 0.5
 		send_balloon(client, Enums::Target::PLAYER, balloon_id)
 	end
-	
+
 	def handle_use_hotbar(client, buffer)
 		id = buffer.read_byte
 		return unless client.hotbar[id]
@@ -358,7 +366,7 @@ module Handle_Data
 		client.lose_item(item, amount)
 		@maps[client.map_id].add_drop(item_id, kind, amount, client.x, client.y)
 	end
-	
+
 	def handle_remove_drop(client, buffer)
 		drop_id = buffer.read_byte
 		drop = @maps[client.map_id].drops[drop_id]
@@ -374,7 +382,7 @@ module Handle_Data
 			@maps[client.map_id].remove_drop(drop_id)
 		end
 	end
-	
+
 	def handle_player_param(client, buffer)
 		param_id = buffer.read_byte
 		return if client.points == 0
@@ -417,7 +425,7 @@ module Handle_Data
 		client.online_friends_size = online_friends.size
 		send_open_friends(client, online_friends)
 	end
-	
+
 	def handle_remove_friend(client, buffer)
 		index = buffer.read_byte
 		client.friends.delete_at(index)
@@ -459,7 +467,7 @@ module Handle_Data
 		client.antispam_time = Time.now + 0.5
 		change_guild_notice(client, notice)
 	end
-	
+
 	def handle_remove_guild_member(client, buffer)
 		name = buffer.read_string
 		return unless client.in_guild? && client.guild_leader?
@@ -487,7 +495,7 @@ module Handle_Data
 		player.request.type = Enums::Request::GUILD
 		send_request(player, Enums::Request::GUILD, client)
 	end
-	
+
 	def handle_leave_guild(client)
 		return unless client.in_guild?
 		if client.guild_leader?
@@ -507,7 +515,7 @@ module Handle_Data
 		client.choice = index
 		client.message_interpreter.fiber.resume
 	end
-	
+
 	def handle_bank_item(client, buffer)
 		item_id = buffer.read_short
 		kind = buffer.read_byte
@@ -556,7 +564,7 @@ module Handle_Data
 			client.lose_gold(price * amount, true)
 		end
 	end
-	
+
 	def handle_sell_item(client, buffer)
 		item_id = buffer.read_short
 		kind = buffer.read_byte
@@ -585,7 +593,7 @@ module Handle_Data
 		client.message_interpreter = nil
 		interpreter.fiber.resume
 	end
-	
+
 	def handle_request(client, buffer)
 		type = buffer.read_byte
 		player_id = buffer.read_short
@@ -648,7 +656,7 @@ module Handle_Data
 		end
 		client.clear_request
 	end
-	
+
 	def handle_decline_request(client)
 		case client.request.type
 		when Enums::Request::TRADE, Enums::Request::PARTY, Enums::Request::FRIEND, Enums::Request::GUILD
