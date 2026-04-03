@@ -261,25 +261,21 @@ module Handle_Data
 		send_motd(client)
 	end
 
-	def handle_player_movement(client, buffer)
-		d = buffer.read_byte
-		# Aceita todas as 8 direções: retas (2,4,6,8) e diagonais (1,3,7,9)
-		return if d < Enums::Dir::DOWN_LEFT || d > Enums::Dir::UP_RIGHT
-		client.stop_count = Time.now + 0.170
-		# ALTERADO: move_straight → case/when para suporte a diagonais
-		case d
-		when 1 then client.move_diagonal(4, 2)  # DOWN_LEFT  → LEFT(4) + DOWN(2)
-		when 3 then client.move_diagonal(6, 2)  # DOWN_RIGHT → RIGHT(6) + DOWN(2)
-		when 7 then client.move_diagonal(4, 8)  # UP_LEFT    → LEFT(4) + UP(8)
-		when 9 then client.move_diagonal(6, 8)  # UP_RIGHT   → RIGHT(6) + UP(8)
-		else        client.move_straight(d)     # DOWN(2), LEFT(4), RIGHT(6), UP(8)
-		end
-		if client.move_succeed
-			client.check_floor_effect
-			client.check_touch_event
-			client.close_windows
-		end
-	end
+def handle_player_movement(client, buffer)
+  d = buffer.read_byte
+  return if d < Enums::Dir::DOWN_LEFT || d > Enums::Dir::UP_RIGHT
+  client.stop_count = Time.now + 0.170
+  # move_diagonal no servidor aceita apenas 1 argumento (a direção)
+  case d
+  when 1, 3, 7, 9 then client.move_diagonal(d)  # diagonais
+  else                  client.move_straight(d)  # retas: 2, 4, 6, 8
+  end
+  if client.move_succeed
+    client.check_floor_effect
+    client.check_touch_event
+    client.close_windows
+  end
+end
 
 	def handle_chat_message(client, buffer)
 		message = buffer.read_string.force_encoding('UTF-8')
