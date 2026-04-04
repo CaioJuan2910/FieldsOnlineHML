@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fields Online — Game Design Reference</title>
+<style>
+  :root {
+    --bg: #0d0f1a;
+    --card: #1a1d2e;
+    --card2: #141624;
+    --gold: #e8c97a;
+    --gold-dark: #c4a84a;
+    --blue: #7eb8f7;
+    --green: #a3e4b0;
+    --red: #f07070;
+    --purple: #c084fc;
+    --orange: #fb923c;
+    --text: #d1d5e8;
+    --text-muted: #7a7f9a;
+    --border: #2a2d42;
+    --border-bright: #3a3d5a;
+    --tibia: #a3e4b0;
+    --mu: #c084fc;
+    --ro: #7eb8f7;
+    --diablo: #f07070;
+    --wow: #e8c97a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #2a2d42; border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold-dark); }
+
+  /* ─── NAV ─── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(13, 15, 26, 0.97);
+    border-bottom: 1px solid var(--border-bright);
+    backdrop-filter: blur(12px);
+    padding: 0 24px;
+  }
+
+  .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 10px 0;
+  }
+
+  .nav-logo {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1px;
+    margin-right: 12px;
+    text-shadow: 0 0 10px rgba(232, 201, 122, 0.5);
+    white-space: nowrap;
+  }
+
+  nav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: all 0.2s;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+
+  nav a:hover {
+    color: var(--gold);
+    background: rgba(232, 201, 122, 0.08);
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: linear-gradient(180deg, #0a0c18 0%, #0d0f1a 60%, transparent 100%);
+    text-align: center;
+    padding: 80px 24px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 0%, rgba(232, 201, 122, 0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 30% at 20% 50%, rgba(126, 184, 247, 0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 30% at 80% 50%, rgba(192, 132, 252, 0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .header-badge {
+    display: inline-block;
+    background: rgba(232, 201, 122, 0.1);
+    border: 1px solid rgba(232, 201, 122, 0.3);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 20px;
+    margin-bottom: 20px;
+  }
+
+  .header-title {
+    font-size: clamp(42px, 8vw, 80px);
+    font-weight: 900;
+    color: var(--gold);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    text-shadow:
+      0 0 20px rgba(232, 201, 122, 0.6),
+      0 0 40px rgba(232, 201, 122, 0.3),
+      0 0 80px rgba(232, 201, 122, 0.15);
+    line-height: 1.1;
+    margin-bottom: 8px;
+    position: relative;
+  }
+
+  .header-title span {
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
+  }
+
+  .header-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .header-tags {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .header-tag {
+    background: rgba(126, 184, 247, 0.08);
+    border: 1px solid rgba(126, 184, 247, 0.2);
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(163, 228, 176, 0.08);
+    border: 1px solid rgba(163, 228, 176, 0.25);
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  /* ─── MAIN ─── */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ─── SECTION ─── */
+  .section {
+    margin-bottom: 64px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-bright);
+    position: relative;
+  }
+
+  .section-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+
+  .section-number {
+    background: rgba(232, 201, 122, 0.1);
+    border: 1px solid rgba(232, 201, 122, 0.3);
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 700;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+  }
+
+  .section-icon {
+    font-size: 22px;
+  }
+
+  /* ─── OVERVIEW GRID ─── */
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .overview-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .overview-card:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-2px);
+  }
+
+  .overview-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .overview-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .overview-value.gold { color: var(--gold); }
+  .overview-value.blue { color: var(--blue); }
+  .overview-value.green { color: var(--green); }
+
+  .inspiration-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .insp-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 12px;
+    border: 1px solid;
+  }
+
+  .insp-tibia { color: var(--tibia); border-color: rgba(163,228,176,0.3); background: rgba(163,228,176,0.07); }
+  .insp-mu { color: var(--mu); border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.07); }
+  .insp-ro { color: var(--ro); border-color: rgba(126,184,247,0.3); background: rgba(126,184,247,0.07); }
+  .insp-diablo { color: var(--diablo); border-color: rgba(240,112,112,0.3); background: rgba(240,112,112,0.07); }
+  .insp-wow { color: var(--wow); border-color: rgba(232,201,122,0.3); background: rgba(232,201,122,0.07); }
+
+  /* ─── TOOLS GRID ─── */
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 20px;
+  }
+
+  .tool-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .tool-card:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-2px);
+  }
+
+  .tool-header {
+    padding: 18px 22px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .tool-icon {
+    font-size: 24px;
+  }
+
+  .tool-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .tool-version {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 1px;
+  }
+
+  .tool-body {
+    padding: 18px 22px;
+  }
+
+  .tool-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+
+  .tool-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .tool-list li {
+    font-size: 13px;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .tool-list li::before {
+    content: '▸';
+    color: var(--blue);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .lang-bar {
+    margin-top: 16px;
+  }
+
+  .lang-bar-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  .lang-bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+  }
+
+  .lang-seg {
+    height: 100%;
+    transition: width 0.3s;
+  }
+
+  .lang-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .lang-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .lang-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text);
+    background: rgba(163, 228, 176, 0.04);
+    border: 1px solid rgba(163, 228, 176, 0.1);
+    border-radius: 6px;
+    padding: 7px 10px;
+  }
+
+  .feature-check {
+    color: var(--green);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  /* ─── REFERENCE CARDS ─── */
+  .ref-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .ref-card {
+    background: var(--card);
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: transform 0.2s;
+  }
+
+  .ref-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .ref-card.tibia { border-left: 4px solid var(--tibia); }
+  .ref-card.mu { border-left: 4px solid var(--mu); }
+  .ref-card.ro { border-left: 4px solid var(--ro); }
+  .ref-card.diablo { border-left: 4px solid var(--diablo); }
+  .ref-card.wow { border-left: 4px solid var(--wow); }
+
+  .ref-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .ref-title-group {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .ref-emoji {
+    font-size: 28px;
+  }
+
+  .ref-name {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+
+  .tibia .ref-name { color: var(--tibia); }
+  .mu .ref-name { color: var(--mu); }
+  .ro .ref-name { color: var(--ro); }
+  .diablo .ref-name { color: var(--diablo); }
+  .wow .ref-name { color: var(--wow); }
+
+  .ref-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .ref-year-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .tibia .ref-year-badge { color: var(--tibia); border-color: rgba(163,228,176,0.3); background: rgba(163,228,176,0.07); }
+  .mu .ref-year-badge { color: var(--mu); border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.07); }
+  .ro .ref-year-badge { color: var(--ro); border-color: rgba(126,184,247,0.3); background: rgba(126,184,247,0.07); }
+  .diablo .ref-year-badge { color: var(--diablo); border-color: rgba(240,112,112,0.3); background: rgba(240,112,112,0.07); }
+  .wow .ref-year-badge { color: var(--wow); border-color: rgba(232,201,122,0.3); background: rgba(232,201,122,0.07); }
+
+  .ref-body {
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 700px) {
+    .ref-body { grid-template-columns: 1fr; }
+  }
+
+  .ref-overview {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 14px;
+    grid-column: 1 / -1;
+  }
+
+  .ref-col-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .ref-mechanics-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .ref-mechanics-list li {
+    font-size: 13px;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+  }
+
+  .ref-mechanics-list li::before {
+    content: '◆';
+    font-size: 8px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  .tibia .ref-mechanics-list li::before { color: var(--tibia); }
+  .mu .ref-mechanics-list li::before { color: var(--mu); }
+  .ro .ref-mechanics-list li::before { color: var(--ro); }
+  .diablo .ref-mechanics-list li::before { color: var(--diablo); }
+  .wow .ref-mechanics-list li::before { color: var(--wow); }
+
+  .ref-bring-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .ref-bring-list li {
+    font-size: 13px;
+    color: var(--text);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+    background: rgba(163, 228, 176, 0.04);
+    border-radius: 6px;
+    padding: 6px 8px;
+    border: 1px solid rgba(163, 228, 176, 0.08);
+  }
+
+  .ref-bring-list li .check {
+    color: var(--green);
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+
+  /* ─── TABLE ─── */
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead tr {
+    background: #12142a;
+  }
+
+  thead th {
+    padding: 14px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-bright);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background: rgba(255,255,255,0.02);
+  }
+
+  tbody tr:nth-child(even) {
+    background: rgba(255,255,255,0.01);
+  }
+
+  tbody tr:nth-child(even):hover {
+    background: rgba(255,255,255,0.025);
+  }
+
+  td {
+    padding: 11px 16px;
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  td:first-child {
+    font-weight: 500;
+  }
+
+  .origin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 12px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .origin-tibia { color: var(--tibia); border-color: rgba(163,228,176,0.3); background: rgba(163,228,176,0.07); }
+  .origin-mu { color: var(--mu); border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.07); }
+  .origin-ro { color: var(--ro); border-color: rgba(126,184,247,0.3); background: rgba(126,184,247,0.07); }
+  .origin-diablo { color: var(--diablo); border-color: rgba(240,112,112,0.3); background: rgba(240,112,112,0.07); }
+  .origin-wow { color: var(--wow); border-color: rgba(232,201,122,0.3); background: rgba(232,201,122,0.07); }
+  .origin-multi { color: #d1d5e8; border-color: rgba(209,213,232,0.2); background: rgba(209,213,232,0.05); }
+
+  .priority-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+    letter-spacing: 0.3px;
+  }
+
+  .priority-alta { color: var(--green); background: rgba(163,228,176,0.1); border: 1px solid rgba(163,228,176,0.25); }
+  .priority-media { color: var(--gold); background: rgba(232,201,122,0.1); border: 1px solid rgba(232,201,122,0.25); }
+  .priority-baixa { color: var(--text-muted); background: rgba(122,127,154,0.1); border: 1px solid rgba(122,127,154,0.2); }
+
+  .viab-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+
+  .viab-alta { color: var(--blue); background: rgba(126,184,247,0.1); border: 1px solid rgba(126,184,247,0.2); }
+  .viab-media { color: var(--orange); background: rgba(251,146,60,0.1); border: 1px solid rgba(251,146,60,0.2); }
+  .viab-baixa { color: var(--red); background: rgba(240,112,112,0.1); border: 1px solid rgba(240,112,112,0.2); }
+
+  /* ─── REPO SECTION ─── */
+  .repo-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .repo-header {
+    background: linear-gradient(135deg, #12142a 0%, #1a1d2e 100%);
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .repo-icon {
+    font-size: 32px;
+  }
+
+  .repo-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+  }
+
+  .repo-link {
+    font-size: 13px;
+    color: var(--blue);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 3px;
+    transition: color 0.2s;
+  }
+
+  .repo-link:hover { color: var(--gold); }
+
+  .repo-body {
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .repo-item {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    transition: border-color 0.2s;
+  }
+
+  .repo-item:hover {
+    border-color: var(--border-bright);
+  }
+
+  .repo-item-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .repo-item-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 4px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .repo-item-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* ─── NEXT STEPS ─── */
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .step-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .step-item:hover {
+    border-color: var(--border-bright);
+    transform: translateX(4px);
+  }
+
+  .step-num {
+    background: rgba(232, 201, 122, 0.1);
+    border: 1px solid rgba(232, 201, 122, 0.25);
+    color: var(--gold);
+    font-size: 12px;
+    font-weight: 700;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-icon {
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .step-content {
+    flex: 1;
+  }
+
+  .step-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .step-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .step-priority {
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+    margin: 48px 0;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    background: var(--card2);
+    border-top: 1px solid var(--border);
+    text-align: center;
+    padding: 32px 24px;
+  }
+
+  .footer-logo {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(232, 201, 122, 0.3);
+    margin-bottom: 8px;
+  }
+
+  .footer-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+
+  .footer-powered {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  .footer-tech {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--border-bright);
+    color: var(--text-muted);
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 768px) {
+    .tools-grid { grid-template-columns: 1fr; }
+    .overview-grid { grid-template-columns: 1fr 1fr; }
+    .ref-body { grid-template-columns: 1fr; }
+    .repo-body { grid-template-columns: 1fr 1fr; }
+    .features-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 480px) {
+    .overview-grid { grid-template-columns: 1fr; }
+    .repo-body { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    header { padding: 50px 16px 40px; }
+    main { padding: 0 16px 60px; }
+  }
+
+  /* ─── GLOW ACCENTS ─── */
+  .glow-gold { text-shadow: 0 0 8px rgba(232,201,122,0.4); }
+  .glow-blue { text-shadow: 0 0 8px rgba(126,184,247,0.4); }
+  .glow-green { text-shadow: 0 0 8px rgba(163,228,176,0.4); }
+
+  /* ─── INLINE HIGHLIGHT ─── */
+  .hl-gold { color: var(--gold); font-weight: 600; }
+  .hl-blue { color: var(--blue); font-weight: 600; }
+  .hl-green { color: var(--green); font-weight: 600; }
+  .hl-red { color: var(--red); font-weight: 600; }
+
+  code {
+    background: rgba(126,184,247,0.08);
+    border: 1px solid rgba(126,184,247,0.15);
+    color: var(--blue);
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  /* ─── TABLE FILTER STATS ─── */
+  .table-stats {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .table-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .table-stat-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ NAV -->
+<nav>
+  <div class="nav-inner">
+    <span class="nav-logo">⚔ FIELDS ONLINE</span>
+    <a href="#overview">📋 Visão Geral</a>
+    <a href="#tools">🛠️ Ferramentas</a>
+    <a href="#references">🎮 Referências</a>
+    <a href="#features-table">📊 Features</a>
+    <a href="#repo">📁 Repositório</a>
+    <a href="#next-steps">🚀 Próximos Passos</a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════ HEADER -->
+<header>
+  <div class="header-badge">⚔ GAME DESIGN REFERENCE DOCUMENT</div>
+  <h1 class="header-title"><span>Fields</span> Online</h1>
+  <p class="header-subtitle">Game Design Reference Document — v0.1</p>
+  <div class="header-tags">
+    <span class="header-tag">MMORPG 2D</span>
+    <span class="header-tag">RPG Maker VX Ace</span>
+    <span class="header-tag">VXA-OS</span>
+    <span class="header-tag">RGSS3 / Ruby</span>
+    <span class="header-tag">Top-Down</span>
+  </div>
+  <div style="margin-top:16px;">
+    <span class="status-badge"><span class="status-dot"></span>Em Desenvolvimento Ativo</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════ MAIN -->
+<main>
+
+  <!-- ─── SECTION 1: VISÃO GERAL ─── -->
+  <section class="section" id="overview">
+    <div class="section-header">
+      <span class="section-number">1</span>
+      <span class="section-icon">📋</span>
+      <h2 class="section-title">Visão Geral do Projeto</h2>
+    </div>
+
+    <div class="overview-grid">
+      <div class="overview-card">
+        <div class="overview-label">Nome do Projeto</div>
+        <div class="overview-value gold glow-gold" style="font-size:18px; font-weight:800; letter-spacing:1px;">Fields Online</div>
+      </div>
+      <div class="overview-card">
+        <div class="overview-label">Gênero</div>
+        <div class="overview-value blue">MMORPG 2D Top-Down</div>
+      </div>
+      <div class="overview-card">
+        <div class="overview-label">Engine</div>
+        <div class="overview-value">
+          <span class="hl-gold">RPG Maker VX Ace</span>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:3px;">RGSS3 — Ruby Game Scripting System 3</div>
+        </div>
+      </div>
+      <div class="overview-card">
+        <div class="overview-label">Plataforma Multiplayer</div>
+        <div class="overview-value">
+          <span class="hl-blue">VXA-OS</span>
+          <div style="font-size:12px; color:var(--text-muted); margin-top:3px;">by Valentine90 — v2.1.6 (Jan 2022)</div>
+        </div>
+      </div>
+      <div class="overview-card">
+        <div class="overview-label">Status</div>
+        <div class="overview-value green glow-green">
+          <span class="status-dot" style="display:inline-block; margin-right:6px;"></span>Em Desenvolvimento
+        </div>
+      </div>
+      <div class="overview-card">
+        <div class="overview-label">Inspirações</div>
+        <div class="inspiration-list">
+          <span class="insp-tag insp-tibia">🗡️ Tibia</span>
+          <span class="insp-tag insp-mu">⚔️ MU Online</span>
+          <span class="insp-tag insp-ro">🌸 Ragnarok</span>
+          <span class="insp-tag insp-diablo">💀 Diablo</span>
+          <span class="insp-tag insp-wow">🏰 WoW</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECTION 2: FERRAMENTAS ─── -->
+  <section class="section" id="tools">
+    <div class="section-header">
+      <span class="section-number">2</span>
+      <span class="section-icon">🛠️</span>
+      <h2 class="section-title">Ferramentas e Tecnologias</h2>
+    </div>
+
+    <div class="tools-grid">
+
+      <!-- RPG Maker VX Ace -->
+      <div class="tool-card">
+        <div class="tool-header">
+          <span class="tool-icon">🎮</span>
+          <div>
+            <div class="tool-name">RPG Maker VX Ace</div>
+            <div class="tool-version">Enterbrain / Kadokawa — RGSS3</div>
+          </div>
+        </div>
+        <div class="tool-body">
+          <p class="tool-desc">Engine de criação de RPGs 2D da Enterbrain/Kadokawa. Scripting via <code>RGSS3</code> baseado em <code>Ruby 1.9.2</code>. Ideal para jogos 2D top-down como Tibia.</p>
+          <ul class="tool-list">
+            <li>Suporte a múltiplos tilesets (mapas em tiles <strong>32×32</strong>)</li>
+            <li>Character Generator embutido</li>
+            <li>Editor de eventos visual (sem código para eventos simples)</li>
+            <li>Editor de batalha (sistema frontal e lateral)</li>
+            <li>Compatível com resources do RPG Maker VX</li>
+            <li>Biblioteca enorme de scripts da comunidade</li>
+            <li>Perspectiva top-down perfeita para estilo Tibia</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- VXA-OS -->
+      <div class="tool-card">
+        <div class="tool-header">
+          <span class="tool-icon">🌐</span>
+          <div>
+            <div class="tool-name">VXA-OS</div>
+            <div class="tool-version">Valentine90 — v2.1.6 (Jan 2022) — Open Source</div>
+          </div>
+        </div>
+        <div class="tool-body">
+          <p class="tool-desc">Plataforma open-source para criar MMOs 2D com RPG Maker VX Ace. Em desenvolvimento ativo desde outubro de 2017. Repositório: <code>github.com/Valentine90/vxa-os</code></p>
+
+          <div class="lang-bar">
+            <div class="lang-bar-label">Composição de Linguagens</div>
+            <div class="lang-bar-track">
+              <div class="lang-seg" style="width:62.9%; background:#e8c97a;"></div>
+              <div class="lang-seg" style="width:12.7%; background:#7eb8f7;"></div>
+              <div class="lang-seg" style="width:9.7%; background:#f07070;"></div>
+              <div class="lang-seg" style="width:9.3%; background:#a3e4b0;"></div>
+              <div class="lang-seg" style="width:1.9%; background:#c084fc;"></div>
+              <div class="lang-seg" style="width:3.5%; background:#3a3d5a;"></div>
+            </div>
+            <div class="lang-legend">
+              <span class="lang-item"><span class="lang-dot" style="background:#e8c97a;"></span>Ruby 62.9%</span>
+              <span class="lang-item"><span class="lang-dot" style="background:#7eb8f7;"></span>JavaScript 12.7%</span>
+              <span class="lang-item"><span class="lang-dot" style="background:#f07070;"></span>HTML 9.7%</span>
+              <span class="lang-item"><span class="lang-dot" style="background:#a3e4b0;"></span>PHP 9.3%</span>
+              <span class="lang-item"><span class="lang-dot" style="background:#c084fc;"></span>C 1.9%</span>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;">
+            <div class="ref-col-title">🗄️ Banco de Dados</div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <span class="origin-badge origin-multi">SQL</span>
+              <span class="origin-badge origin-multi">MySQL</span>
+              <span class="origin-badge origin-multi">EventMachine</span>
+            </div>
+          </div>
+
+          <div class="features-grid" style="margin-top:14px;">
+            <div class="feature-item"><span class="feature-check">✅</span>Batalha em tempo real</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Eventos no servidor</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Resolução configurável</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Switches globais</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Sistema de Quests</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Sistema de Guildas</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Sistema de Party</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Minimap</div>
+            <div class="feature-item"><span class="feature-check">✅</span>PvP nativo</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Paperdolls</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Sistema VIP</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Sistema de Amigos</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Teleporte</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Banco (Bank)</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Account Editor</div>
+            <div class="feature-item"><span class="feature-check">✅</span>Website integrado</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECTION 3: REFERÊNCIAS ─── -->
+  <section class="section" id="references">
+    <div class="section-header">
+      <span class="section-number">3</span>
+      <span class="section-icon">🎮</span>
+      <h2 class="section-title">MMORPGs de Referência — Análise e Features</h2>
+    </div>
+
+    <div class="ref-grid">
+
+      <!-- TIBIA -->
+      <div class="ref-card tibia">
+        <div class="ref-header">
+          <div class="ref-title-group">
+            <span class="ref-emoji">🗡️</span>
+            <div>
+              <div class="ref-name">Tibia Online</div>
+              <div class="ref-meta">CipSoft · MMORPG 2D Top-Down · Um dos mais longevos do mundo</div>
+            </div>
+          </div>
+          <span class="ref-year-badge">1997 — Presente</span>
+        </div>
+        <div class="ref-body">
+          <p class="ref-overview">MMORPG 2D top-down lançado em 1997 pela CipSoft. Um dos MMORPGs mais longevos do mundo, com mundo aberto e sem level cap. Jogadores chegam ao level 3000+. Referência direta para a perspectiva e atmosfera de Fields Online.</p>
+          <div>
+            <div class="ref-col-title">⚙️ Mecânicas Principais</div>
+            <ul class="ref-mechanics-list">
+              <li>Mundo aberto com exploração livre e mínima tutorialização</li>
+              <li>4 Vocações: Knight, Paladin, Sorcerer, Druid</li>
+              <li>PvP open — jogadores podem atacar outros livremente</li>
+              <li>Penalidade severa de morte: perda de EXP e itens (bless system)</li>
+              <li>Loot no chão — corpo do monstro com itens</li>
+              <li>Sem level cap — progressão infinita</li>
+              <li>Skill system: fighting skills aumentam com uso</li>
+              <li>Sistema de runes (magias consumíveis crafteadas)</li>
+            </ul>
+          </div>
+          <div>
+            <div class="ref-col-title" style="color:var(--green);">✅ O que trazer para Fields Online</div>
+            <ul class="ref-bring-list">
+              <li><span class="check">✅</span>Mundo aberto com exploração recompensadora (segredos, dungeons escondidas)</li>
+              <li><span class="check">✅</span>Vocações/classes com papéis bem definidos (tank, DPS, healer, ranger)</li>
+              <li><span class="check">✅</span>PvP com penalidades — morte punitiva dá profundidade</li>
+              <li><span class="check">✅</span>Loot no chão com proteção temporária para o dono</li>
+              <li><span class="check">✅</span>Skill system baseado em uso (quanto mais usa, mais evolui)</li>
+              <li><span class="check">✅</span>Atmosfera de exploração e descoberta</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- MU ONLINE -->
+      <div class="ref-card mu">
+        <div class="ref-header">
+          <div class="ref-title-group">
+            <span class="ref-emoji">⚔️</span>
+            <div>
+              <div class="ref-name">MU Online</div>
+              <div class="ref-meta">Webzen · MMORPG 3D Isométrico Coreano · Chaos Machine icônica</div>
+            </div>
+          </div>
+          <span class="ref-year-badge">2001 — Presente</span>
+        </div>
+        <div class="ref-body">
+          <p class="ref-overview">MMORPG 3D isométrico coreano da Webzen, lançado em 2001. Famoso pelo sistema de avanço de classes e crafting com Chaos Machine. Referência para sistemas de progressão de personagem e eventos especiais.</p>
+          <div>
+            <div class="ref-col-title">⚙️ Mecânicas Principais</div>
+            <ul class="ref-mechanics-list">
+              <li>Class Advancement: Dark Wizard → Soul Master → Grand Master</li>
+              <li>Wings (Asas): itens poderosos craftados via Chaos Machine</li>
+              <li>Chaos Machine: crafting com chance de falha (alto risco/recompensa)</li>
+              <li>Castle Siege: evento semanal de guildas pelo castelo</li>
+              <li>Jewels: Bless, Soul, Life, Chaos — para uppar e craftar</li>
+              <li>Stats: Strength, Agility, Vitality, Energy, Charisma</li>
+              <li>Events: Blood Castle, Devil Square, Chaos Castle, Arca War</li>
+            </ul>
+          </div>
+          <div>
+            <div class="ref-col-title" style="color:var(--green);">✅ O que trazer para Fields Online</div>
+            <ul class="ref-bring-list">
+              <li><span class="check">✅</span>Evolução de classe em tiers (tier 1 → 2 → 3 com visuais diferentes)</li>
+              <li><span class="check">✅</span>Wings/Asas com crafting especial e aparência visual impactante</li>
+              <li><span class="check">✅</span>Chaos Machine — combinação de itens com risco/recompensa</li>
+              <li><span class="check">✅</span>Castle Siege — guerra de guildas pelo controle de território</li>
+              <li><span class="check">✅</span>Joias/materiais especiais para upgrade de equipamentos</li>
+              <li><span class="check">✅</span>Events especiais com horários programados no servidor</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- RAGNAROK -->
+      <div class="ref-card ro">
+        <div class="ref-header">
+          <div class="ref-title-group">
+            <span class="ref-emoji">🌸</span>
+            <div>
+              <div class="ref-name">Ragnarok Online</div>
+              <div class="ref-meta">Gravity · MMORPG 2D Sprite Isométrico Coreano · War of Emperium</div>
+            </div>
+          </div>
+          <span class="ref-year-badge">2002 — Presente</span>
+        </div>
+        <div class="ref-body">
+          <p class="ref-overview">MMORPG 2D sprite isométrico coreano da Gravity, lançado em 2002. Icônico pelo sistema de jobs em árvore e pelo War of Emperium. Referência para sistema de classes, cards e MVP bosses.</p>
+          <div>
+            <div class="ref-col-title">⚙️ Mecânicas Principais</div>
+            <ul class="ref-mechanics-list">
+              <li>Job System: Novice → 1st Job → 2nd Job → Transcendence/3rd Job</li>
+              <li>Sistema de Cards: drops raros que encaixam em equipamentos</li>
+              <li>MVP Bosses: chefões com respawn timer e drops raros</li>
+              <li>War of Emperium (WoE): guerra de guildas por castelos</li>
+              <li>Sistema de elementos: fraqueza e resistência elemental</li>
+              <li>Refinamento (+) de equipamentos com chance de quebrar</li>
+              <li>Pet System: captura e criação de pets/monstros</li>
+            </ul>
+          </div>
+          <div>
+            <div class="ref-col-title" style="color:var(--green);">✅ O que trazer para Fields Online</div>
+            <ul class="ref-bring-list">
+              <li><span class="check">✅</span>Job/Class tree com evolução em múltiplas etapas e especialização</li>
+              <li><span class="check">✅</span>Cards raros em equipamentos com bônus únicos</li>
+              <li><span class="check">✅</span>MVP Bosses com respawn timer e loot especial</li>
+              <li><span class="check">✅</span>War of Emperium — guerra de guildas para controle de castelos</li>
+              <li><span class="check">✅</span>Sistema de elementos (fraqueza e resistência)</li>
+              <li><span class="check">✅</span>Refinamento de equipamentos com risco de quebra</li>
+              <li><span class="check">✅</span>Sistema de pets</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- DIABLO -->
+      <div class="ref-card diablo">
+        <div class="ref-header">
+          <div class="ref-title-group">
+            <span class="ref-emoji">💀</span>
+            <div>
+              <div class="ref-name">Saga Diablo</div>
+              <div class="ref-meta">Blizzard · ARPG Isométrico · Diablo I, II, III — Loot System Icônico</div>
+            </div>
+          </div>
+          <span class="ref-year-badge">1996 — Presente</span>
+        </div>
+        <div class="ref-body">
+          <p class="ref-overview">ARPG isométrico da Blizzard. Embora não seja um MMO tradicional, sua influência no design de loot, atmosfera dark fantasy e dungeons é enorme. Referência para sistema de raridades e dungeon crawling.</p>
+          <div>
+            <div class="ref-col-title">⚙️ Mecânicas Principais</div>
+            <ul class="ref-mechanics-list">
+              <li>Loot system: Normal, Magic, Rare, Set, Unique/Legendary</li>
+              <li>Dungeon crawling com calabouços procedurais e múltiplos andares</li>
+              <li>Dark fantasy atmosphere: lore profundo sobre bem vs. mal</li>
+              <li>Skill trees profundas (Diablo II especialmente)</li>
+              <li>Boss fights marcantes com mecânicas únicas</li>
+              <li>Runewords: combinação de runas para efeitos especiais</li>
+              <li>Seasonal content com leaderboards e itens exclusivos</li>
+            </ul>
+          </div>
+          <div>
+            <div class="ref-col-title" style="color:var(--green);">✅ O que trazer para Fields Online</div>
+            <ul class="ref-bring-list">
+              <li><span class="check">✅</span>Raridades de itens: Normal → Mágico → Raro → Épico → Lendário</li>
+              <li><span class="check">✅</span>Atmosfera dark fantasy com lore rico e profundo</li>
+              <li><span class="check">✅</span>Dungeon crawling com diferentes andares e dificuldades</li>
+              <li><span class="check">✅</span>Runas/runewords para criar efeitos especiais em equipamentos</li>
+              <li><span class="check">✅</span>Boss fights com mecânicas únicas (padrões de ataque especiais)</li>
+              <li><span class="check">✅</span>Seasonal content / temporadas com rankings</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- WOW -->
+      <div class="ref-card wow">
+        <div class="ref-header">
+          <div class="ref-title-group">
+            <span class="ref-emoji">🏰</span>
+            <div>
+              <div class="ref-name">World of Warcraft</div>
+              <div class="ref-meta">Blizzard · MMORPG 3D · O maior MMORPG ocidental de todos os tempos</div>
+            </div>
+          </div>
+          <span class="ref-year-badge">2004 — Presente</span>
+        </div>
+        <div class="ref-body">
+          <p class="ref-overview">MMORPG 3D da Blizzard (2004), o maior MMORPG ocidental de todos os tempos. Referência em narrativa, dungeons, raids e sistemas de progressão. Padrão ouro para sistemas de quests e conteúdo em grupo.</p>
+          <div>
+            <div class="ref-col-title">⚙️ Mecânicas Principais</div>
+            <ul class="ref-mechanics-list">
+              <li>Sistema de Quests robusto: main, side, daily, chain quests</li>
+              <li>Dungeons em grupo (5 jogadores): conteúdo instanciado</li>
+              <li>Raids (10-25-40 jogadores): conteúdo de alto nível para guildas</li>
+              <li>Talent Tree: árvore de talentos para customização de builds</li>
+              <li>Professions: Blacksmithing, Alchemy, Enchanting, etc.</li>
+              <li>Achievement system (conquistas)</li>
+              <li>Battlegrounds: PvP instanciado (Warsong Gulch, Alterac Valley)</li>
+            </ul>
+          </div>
+          <div>
+            <div class="ref-col-title" style="color:var(--green);">✅ O que trazer para Fields Online</div>
+            <ul class="ref-bring-list">
+              <li><span class="check">✅</span>Sistema de quests robusto (main story, side, daily, chain quests)</li>
+              <li><span class="check">✅</span>Dungeons instanciadas para grupos de jogadores</li>
+              <li><span class="check">✅</span>Talent Tree para customização profunda de builds</li>
+              <li><span class="check">✅</span>Sistema de profissões/crafting especializado por personagem</li>
+              <li><span class="check">✅</span>Achievement system (conquistas para engajamento de longo prazo)</li>
+              <li><span class="check">✅</span>Battlegrounds de PvP instanciado</li>
+              <li><span class="check">✅</span>Lore e zonas temáticas com história coesa</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECTION 4: TABELA DE FEATURES ─── -->
+  <section class="section" id="features-table">
+    <div class="section-header">
+      <span class="section-number">4</span>
+      <span class="section-icon">📊</span>
+      <h2 class="section-title">Tabela de Features — O que trazer de cada MMORPG</h2>
+    </div>
+
+    <div class="table-stats">
+      <span class="table-stat"><span class="table-stat-dot" style="background:var(--green);"></span>Alta Prioridade</span>
+      <span class="table-stat"><span class="table-stat-dot" style="background:var(--gold);"></span>Média Prioridade</span>
+      <span class="table-stat"><span class="table-stat-dot" style="background:var(--text-muted);"></span>Baixa Prioridade</span>
+      <span class="table-stat" style="margin-left:8px;"><span class="table-stat-dot" style="background:var(--blue);"></span>Alta Viabilidade</span>
+      <span class="table-stat"><span class="table-stat-dot" style="background:var(--orange);"></span>Média Viabilidade</span>
+      <span class="table-stat"><span class="table-stat-dot" style="background:var(--red);"></span>Baixa Viabilidade</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Origem</th>
+            <th>Prioridade</th>
+            <th>Viabilidade no VXA-OS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🗺️ Mundo Aberto com Exploração</td>
+            <td><span class="origin-badge origin-tibia">🗡️ Tibia</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>👥 Vocações/Classes com papéis (Tank, DPS, Healer, Ranger)</td>
+            <td><span class="origin-badge origin-multi">🗡️ Tibia + 🌸 RO</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>⚔️ PvP com penalidade de morte</td>
+            <td><span class="origin-badge origin-tibia">🗡️ Tibia</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta <small style="opacity:0.7;">(PvP nativo)</small></span></td>
+          </tr>
+          <tr>
+            <td>📦 Loot no chão com proteção de dono</td>
+            <td><span class="origin-badge origin-tibia">🗡️ Tibia</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>📈 Skill system baseado em uso</td>
+            <td><span class="origin-badge origin-tibia">🗡️ Tibia</span></td>
+            <td><span class="priority-badge priority-media">Média</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>🔱 Class Advancement (evolução de tier)</td>
+            <td><span class="origin-badge origin-mu">⚔️ MU Online</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>🪽 Sistema de Wings/Asas</td>
+            <td><span class="origin-badge origin-mu">⚔️ MU Online</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>⚗️ Chaos Machine / Crafting especial</td>
+            <td><span class="origin-badge origin-mu">⚔️ MU Online</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>🏰 Castle Siege / Guerra de Guildas</td>
+            <td><span class="origin-badge origin-multi">⚔️ MU + 🌸 RO</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>💎 Joias e sistema de upgrade</td>
+            <td><span class="origin-badge origin-mu">⚔️ MU Online</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>🎪 Events especiais com horário</td>
+            <td><span class="origin-badge origin-mu">⚔️ MU Online</span></td>
+            <td><span class="priority-badge priority-media">Média</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>🌿 Job Tree / Especialização de classe</td>
+            <td><span class="origin-badge origin-ro">🌸 Ragnarok</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>🃏 Sistema de Cards</td>
+            <td><span class="origin-badge origin-ro">🌸 Ragnarok</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>👑 MVP Bosses com respawn timer</td>
+            <td><span class="origin-badge origin-ro">🌸 Ragnarok</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>🔥 Sistema de elementos</td>
+            <td><span class="origin-badge origin-ro">🌸 Ragnarok</span></td>
+            <td><span class="priority-badge priority-media">Média</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>🔨 Refinamento de equipamentos</td>
+            <td><span class="origin-badge origin-ro">🌸 Ragnarok</span></td>
+            <td><span class="priority-badge priority-media">Média</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>🐾 Sistema de Pets</td>
+            <td><span class="origin-badge origin-ro">🌸 Ragnarok</span></td>
+            <td><span class="priority-badge priority-baixa">Baixa</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>✨ Raridades de itens (Normal → Lendário)</td>
+            <td><span class="origin-badge origin-diablo">💀 Diablo</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>🏚️ Dungeon Crawling com andares</td>
+            <td><span class="origin-badge origin-diablo">💀 Diablo</span></td>
+            <td><span class="priority-badge priority-media">Média</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>🌑 Atmosfera Dark Fantasy</td>
+            <td><span class="origin-badge origin-diablo">💀 Diablo</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>🐉 Boss fights com mecânicas únicas</td>
+            <td><span class="origin-badge origin-multi">💀 Diablo + 🏰 WoW</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>🔮 Sistema de Runas</td>
+            <td><span class="origin-badge origin-diablo">💀 Diablo</span></td>
+            <td><span class="priority-badge priority-media">Média</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>📜 Sistema de Quests robusto</td>
+            <td><span class="origin-badge origin-wow">🏰 WoW</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-alta">Alta <small style="opacity:0.7;">(quests nativo)</small></span></td>
+          </tr>
+          <tr>
+            <td>🏛️ Dungeons instanciadas para grupos</td>
+            <td><span class="origin-badge origin-wow">🏰 WoW</span></td>
+            <td><span class="priority-badge priority-media">Média</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>🌳 Talent Tree / Build customization</td>
+            <td><span class="origin-badge origin-wow">🏰 WoW</span></td>
+            <td><span class="priority-badge priority-alta">Alta</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>⚒️ Sistema de Profissões/Crafting</td>
+            <td><span class="origin-badge origin-wow">🏰 WoW</span></td>
+            <td><span class="priority-badge priority-media">Média</span></td>
+            <td><span class="viab-badge viab-alta">Alta</span></td>
+          </tr>
+          <tr>
+            <td>🏆 Achievement System</td>
+            <td><span class="origin-badge origin-wow">🏰 WoW</span></td>
+            <td><span class="priority-badge priority-baixa">Baixa</span></td>
+            <td><span class="viab-badge viab-media">Média</span></td>
+          </tr>
+          <tr>
+            <td>⚔️ Battlegrounds (PvP instanciado)</td>
+            <td><span class="origin-badge origin-wow">🏰 WoW</span></td>
+            <td><span class="priority-badge priority-baixa">Baixa</span></td>
+            <td><span class="viab-badge viab-baixa">Baixa</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECTION 5: REPOSITÓRIO ─── -->
+  <section class="section" id="repo">
+    <div class="section-header">
+      <span class="section-number">5</span>
+      <span class="section-icon">📁</span>
+      <h2 class="section-title">Repositório do Projeto</h2>
+    </div>
+
+    <div class="repo-card">
+      <div class="repo-header">
+        <span class="repo-icon">🐙</span>
+        <div>
+          <div class="repo-name">FieldsOnlineHML</div>
+          <a href="https://github.com/CaioJuan2910/FieldsOnlineHML" class="repo-link" target="_blank">
+            🔗 github.com/CaioJuan2910/FieldsOnlineHML
+          </a>
+        </div>
+        <div style="margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <span class="origin-badge origin-multi" style="font-size:12px; padding:5px 12px;">🔴 Ruby</span>
+          <span class="origin-badge origin-ro" style="font-size:12px; padding:5px 12px;">⚡ EventMachine</span>
+          <span class="origin-badge origin-tibia" style="font-size:12px; padding:5px 12px;">🗄️ SQL/MySQL</span>
+        </div>
+      </div>
+      <div class="repo-body">
+        <div class="repo-item">
+          <div class="repo-item-icon">🎮</div>
+          <div class="repo-item-title">/Client</div>
+          <div class="repo-item-desc">Frontend RPG Maker VX Ace — scripts RGSS3, gráficos, áudio, tilesets e recursos visuais do jogo.</div>
+        </div>
+        <div class="repo-item">
+          <div class="repo-item-icon">⚙️</div>
+          <div class="repo-item-title">/Server</div>
+          <div class="repo-item-desc">Backend VXA-OS — Ruby, EventMachine, SQL. Processamento de batalha, eventos e lógica de jogo no servidor.</div>
+        </div>
+        <div class="repo-item">
+          <div class="repo-item-icon">🏗️</div>
+          <div class="repo-item-title">Arquitetura</div>
+          <div class="repo-item-desc">Separação clara entre cliente e servidor. Arquitetura client-server com comunicação via sockets em tempo real.</div>
+        </div>
+        <div class="repo-item">
+          <div class="repo-item-icon">🔧</div>
+          <div class="repo-item-title">Base: VXA-OS</div>
+          <div class="repo-item-desc">Baseado no repositório oficial <code>Valentine90/vxa-os</code> com customizações e scripts exclusivos para Fields Online.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ─── SECTION 6: PRÓXIMOS PASSOS ─── -->
+  <section class="section" id="next-steps">
+    <div class="section-header">
+      <span class="section-number">6</span>
+      <span class="section-icon">🚀</span>
+      <h2 class="section-title">Próximos Passos Sugeridos</h2>
+    </div>
+
+    <div class="steps-list">
+
+      <div class="step-item">
+        <span class="step-num">1</span>
+        <span class="step-icon">🏗️</span>
+        <div class="step-content">
+          <div class="step-title">Definir as classes/vocações iniciais do Fields Online</div>
+          <div class="step-desc">Criar o design das classes base inspirado em Tibia (Knight, Paladin, Sorcerer, Druid) e Ragnarok Online (Job Tree). Definir papéis, habilidades iniciais e caminhos de evolução.</div>
+        </div>
+        <div class="step-priority"><span class="priority-badge priority-alta">Alta</span></div>
+      </div>
+
+      <div class="step-item">
+        <span class="step-num">2</span>
+        <span class="step-icon">🗺️</span>
+        <div class="step-content">
+          <div class="step-title">Planejar o mapa-múndi e as zonas temáticas</div>
+          <div class="step-desc">Definir as regiões do mundo de Fields Online, cada uma com tema visual, nível de dificuldade, monstros e lore próprios. Inspirado nas zonas temáticas de WoW e no mundo aberto de Tibia.</div>
+        </div>
+        <div class="step-priority"><span class="priority-badge priority-alta">Alta</span></div>
+      </div>
+
+      <div class="step-item">
+        <span class="step-num">3</span>
+        <span class="step-icon">⚔️</span>
+        <div class="step-content">
+          <div class="step-title">Definir o sistema de combate em tempo real</div>
+          <div class="step-desc">Estruturar o sistema de combate aproveitando o suporte nativo do VXA-OS para batalha em tempo real no servidor. Definir mecânicas de ataque, skills, cooldowns e sistema de elementos.</div>
+        </div>
+        <div class="step-priority"><span class="priority-badge priority-alta">Alta</span></div>
+      </div>
+
+      <div class="step-item">
+        <span class="step-num">4</span>
+        <span class="step-icon">📜</span>
+        <div class="step-content">
+          <div class="step-title">Criar o sistema de quests base</div>
+          <div class="step-desc">Implementar o sistema de quests usando o módulo nativo do VXA-OS. Criar estrutura para main quests, side quests, daily quests e chain quests inspirado no sistema robusto de WoW.</div>
+        </div>
+        <div class="step-priority"><span class="priority-badge priority-alta">Alta</span></div>
+      </div>
+
+      <div class="step-item">
+        <span class="step-num">5</span>
+        <span class="step-icon">💎</span>
+        <div class="step-content">
+          <div class="step-title">Definir as raridades de itens</div>
+          <div class="step-desc">Implementar o sistema de raridades inspirado em Diablo: Normal → Mágico → Raro → Épico → Lendário. Definir cores, bônus e taxas de drop para cada raridade.</div>
+        </div>
+        <div class="step-priority"><span class="priority-badge priority-alta">Alta</span></div>
+      </div>
+
+      <div class="step-item">
+        <span class="step-num">6</span>
+        <span class="step-icon">👥</span>
+        <div class="step-content">
+          <div class="step-title">Planejar o sistema de guildas e PvP</div>
+          <div class="step-desc">Estruturar o sistema de guildas usando o módulo nativo do VXA-OS. Definir mecânicas de PvP com penalidades (inspirado em Tibia), Castle Siege (MU Online) e War of Emperium (Ragnarok).</div>
+        </div>
+        <div class="step-priority"><span class="priority-badge priority-media">Média</span></div>
+      </div>
+
+      <div class="step-item">
+        <span class="step-num">7</span>
+        <span class="step-icon">🧩</span>
+        <div class="step-content">
+          <div class="step-title">Desenvolver scripts customizados para features exclusivas</div>
+          <div class="step-desc">Criar scripts RGSS3 customizados para features não nativas do VXA-OS: sistema de raridades, Chaos Machine, sistema de Cards, Talent Tree, refinamento de equipamentos e outros sistemas exclusivos de Fields Online.</div>
+        </div>
+        <div class="step-priority"><span class="priority-badge priority-media">Média</span></div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════ FOOTER -->
+<footer>
+  <div class="footer-logo">⚔ FIELDS ONLINE</div>
+  <p class="footer-text">Fields Online © 2026 — Todos os direitos reservados — Caio Juan De Lima Silva</p>
+  <div class="footer-powered">
+    <span class="footer-tech">🎮 RPG Maker VX Ace</span>
+    <span style="color:var(--border-bright);">+</span>
+    <span class="footer-tech">🌐 VXA-OS (Valentine90)</span>
+    <span style="color:var(--border-bright);">+</span>
+    <span class="footer-tech">💎 RGSS3 / Ruby</span>
+    <span style="color:var(--border-bright);">+</span>
+    <span class="footer-tech">🐙 GitHub</span>
+  </div>
+  <p style="font-size:11px; color:var(--border-bright); margin-top:16px; letter-spacing:0.5px;">
+    Game Design Reference Document — v0.1 · Gerado em 03/04/2026
+  </p>
+</footer>
+
+</body>
+</html>
