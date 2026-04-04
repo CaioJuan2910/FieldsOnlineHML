@@ -32,7 +32,7 @@ class Network
 		$data_tilesets = []
 		$data_common_events = []
 		@switches = Game_GlobalSwitches.new
-		@log = Logger.new
+		@log = VS_Logger.new
 		@maps = {}
 		@blocked_ips = {}
 		@ban_list = {}
