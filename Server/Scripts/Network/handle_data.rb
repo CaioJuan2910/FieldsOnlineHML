@@ -336,48 +336,216 @@ module Handle_Data
     end
   end
 
+  #============================================================================
+  # ** handle_chat_message
+  #----------------------------------------------------------------------------
+  # Processa as mensagens de chat recebidas do cliente.
+  # Inclui sanitização, validação de canal, antispam por canal,
+  # suporte ao comando /me e integração completa com VS_Logger.
+  #
+  # ATENÇÃO: Adicione em configs.rb:
+  #   MAX_CHAT_MESSAGE_LENGTH = 200
+  #   GLOBAL_ANTISPAM_TIME    = 2.0   (se ainda não existir)
+  #
+  # Canais suportados:
+  #   MAP     → Visível apenas no mesmo mapa
+  #   GLOBAL  → Visível para todos os jogadores conectados
+  #   PARTY   → Visível apenas para membros do grupo
+  #   GUILD   → Visível apenas para membros da guilda
+  #   PRIVATE → Mensagem direta entre dois jogadores
+  #
+  # Comandos especiais:
+  #   /who → Lista jogadores online (isento de antispam)
+  #   /me  → Ação narrativa estilo MMO ("* Nome ação")
+  #============================================================================
   def handle_chat_message(client, buffer)
-    # Altera a codificação padrão da mensagem recebida pela Socket do Ruby (ASCII-8BIT) para UTF-8
+
+    #--------------------------------------------------------------------------
+    # ► ETAPA 1: LEITURA DO PACOTE
+    #--------------------------------------------------------------------------
+    # Força encoding UTF-8 para evitar erros com caracteres especiais/acentuados.
+    # O 'name' é o destinatário (usado apenas no canal PRIVATE).
+    #--------------------------------------------------------------------------
     message   = buffer.read_string.force_encoding('UTF-8')
     talk_type = buffer.read_byte
-    name      = buffer.read_string
+    name      = buffer.read_string.force_encoding('UTF-8').strip
 
-    return if message.strip.empty?
-    return if talk_type == Enums::Chat::GLOBAL && client.global_chat_spawning? && message != '/who'
-    return if client.spawning?
-    return if client.muted?
+    #--------------------------------------------------------------------------
+    # ► ETAPA 2: SANITIZAÇÃO DA MENSAGEM
+    #--------------------------------------------------------------------------
+    # Remove caracteres de controle que poderiam causar erros de parsing,
+    # injeção de dados no arquivo de log ou comportamento inesperado no cliente.
+    #
+    # Caracteres removidos:
+    #   \x00-\x08 → Null byte e controles não imprimíveis
+    #   \x0B      → Vertical Tab
+    #   \x0C      → Form Feed
+    #   \x0E-\x1F → Controles de dispositivo e outros não imprimíveis
+    #   \x7F      → Delete
+    #--------------------------------------------------------------------------
+    message = message.gsub(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/, '').strip
 
+    #--------------------------------------------------------------------------
+    # ► ETAPA 3: VALIDAÇÃO — Mensagem vazia após sanitização
+    #--------------------------------------------------------------------------
+    return if message.empty?
+
+    #--------------------------------------------------------------------------
+    # ► ETAPA 4: VALIDAÇÃO — Canal fora do intervalo válido
+    #--------------------------------------------------------------------------
+    # Previne pacotes malformados ou tentativas de exploração via canal inválido.
+    #--------------------------------------------------------------------------
+    valid_channels = [
+      Enums::Chat::MAP,
+      Enums::Chat::GLOBAL,
+      Enums::Chat::PARTY,
+      Enums::Chat::GUILD,
+      Enums::Chat::PRIVATE
+    ]
+
+    unless valid_channels.include?(talk_type)
+      @log.log_chat(
+        client,
+        "[BLOQUEADO:CANAL_INVALIDO type=#{talk_type}] #{message}",
+        'BLOCKED'
+      )
+      return
+    end
+
+    #--------------------------------------------------------------------------
+    # ► ETAPA 5: VALIDAÇÃO — Tamanho máximo da mensagem
+    #--------------------------------------------------------------------------
+    # Evita flood com textos gigantes que sobrecarregam o buffer e o chat.log.
+    # Configure Configs::MAX_CHAT_MESSAGE_LENGTH no configs.rb (sugerido: 200).
+    #--------------------------------------------------------------------------
+    if message.size > Configs::MAX_CHAT_MESSAGE_LENGTH
+      @log.log_chat(
+        client,
+        "[BLOQUEADO:MENSAGEM_LONGA size=#{message.size}] #{message[0..60]}...",
+        'BLOCKED'
+      )
+      return
+    end
+
+    #--------------------------------------------------------------------------
+    # ► ETAPA 6: VALIDAÇÃO — Jogador mutado
+    #--------------------------------------------------------------------------
+    if client.muted?
+      @log.log_chat(client, "[BLOQUEADO:MUTED] #{message}", 'BLOCKED')
+      return
+    end
+
+    #--------------------------------------------------------------------------
+    # ► ETAPA 7: VALIDAÇÃO — Antispam geral
+    #--------------------------------------------------------------------------
+    # Aplica-se a todos os canais. O comando /who é sempre isento de antispam.
+    #--------------------------------------------------------------------------
+    if client.spawning? && message != '/who'
+      @log.log_chat(client, "[BLOQUEADO:ANTISPAM_GERAL] #{message}", 'BLOCKED')
+      return
+    end
+
+    #--------------------------------------------------------------------------
+    # ► ETAPA 8: VALIDAÇÃO — Antispam exclusivo do chat global
+    #--------------------------------------------------------------------------
+    # Cooldown próprio separado do antispam geral para configuração independente.
+    #--------------------------------------------------------------------------
+    if talk_type == Enums::Chat::GLOBAL && client.global_chat_spawning? && message != '/who'
+      @log.log_chat(client, "[BLOQUEADO:ANTISPAM_GLOBAL] #{message}", 'BLOCKED')
+      return
+    end
+
+    #--------------------------------------------------------------------------
+    # ► ETAPA 9: VALIDAÇÃO — Nome do destinatário para chat privado
+    #--------------------------------------------------------------------------
+    # Verifica tamanho mínimo/máximo do nome antes de tentar buscar o jogador.
+    # Usa as mesmas constantes de criação de personagem para consistência.
+    #--------------------------------------------------------------------------
+    if talk_type == Enums::Chat::PRIVATE
+      if name.size < Configs::MIN_CHARACTERS || name.size > Configs::MAX_CHARACTERS
+        @log.log_chat(
+          client,
+          "[BLOQUEADO:NOME_PRIVADO_INVALIDO name='#{name}'] #{message}",
+          'BLOCKED'
+        )
+        return
+      end
+    end
+
+    #--------------------------------------------------------------------------
+    # ► ETAPA 10: APLICAR ANTISPAM
+    #--------------------------------------------------------------------------
+    # Executado APÓS todas as validações para não penalizar mensagens bloqueadas.
+    #--------------------------------------------------------------------------
     client.antispam_time = Time.now + 0.5
 
+    #--------------------------------------------------------------------------
+    # ► ETAPA 11: COMANDO /who — Lista jogadores online
+    #--------------------------------------------------------------------------
     if message == '/who'
       whos_online(client)
       return
     end
 
-    message = "#{client.name}: #{chat_filter(message)}"
+    #--------------------------------------------------------------------------
+    # ► ETAPA 12: COMANDO /me — Ação narrativa estilo MMO clássico
+    #--------------------------------------------------------------------------
+    # Transforma "/me acena para todos." em "* Caio acena para todos."
+    #--------------------------------------------------------------------------
+    if message.start_with?('/me ')
+      action = message[4..].strip
+      return if action.empty?
+      message = "* #{client.name} #{chat_filter(action)}"
 
+    #--------------------------------------------------------------------------
+    # ► ETAPA 13: FORMATAÇÃO PADRÃO
+    #--------------------------------------------------------------------------
+    else
+      message = "#{client.name}: #{chat_filter(message)}"
+    end
+
+    #--------------------------------------------------------------------------
+    # ► ETAPA 14: ROTEAMENTO POR CANAL
+    #--------------------------------------------------------------------------
     case talk_type
     when Enums::Chat::MAP
-      map_chat_message(client.map_id, message, client.id, !client.standard? ? 15 + client.group : Enums::Chat::MAP)
-      # [LOG] Chat de mapa
+      color = !client.standard? ? 15 + client.group : Enums::Chat::MAP
+      map_chat_message(client.map_id, message, client.id, color)
       @log.log_chat(client, message, 'MAP')
     when Enums::Chat::GLOBAL
       client.global_antispam_time = Time.now + Configs::GLOBAL_ANTISPAM_TIME
-      global_chat_message(message, !client.standard? ? 15 + client.group : Enums::Chat::GLOBAL)
-      # [LOG] Chat global
+      color = !client.standard? ? 15 + client.group : Enums::Chat::GLOBAL
+      global_chat_message(message, color)
       @log.log_chat(client, message, 'GLOBAL')
     when Enums::Chat::PARTY
+      unless client.in_party?
+        @log.log_chat(client, "[BLOQUEADO:SEM_GRUPO] #{message}", 'BLOCKED')
+        return
+      end
       party_chat_message(client, message)
-      # [LOG] Chat de grupo
       @log.log_chat(client, message, 'PARTY')
     when Enums::Chat::GUILD
+      unless client.in_guild?
+        @log.log_chat(client, "[BLOQUEADO:SEM_GUILDA] #{message}", 'BLOCKED')
+        return
+      end
       guild_chat_message(client, message)
-      # [LOG] Chat de guilda
       @log.log_chat(client, message, 'GUILD')
     when Enums::Chat::PRIVATE
       private_chat_message(client, message, name)
-      # [LOG] Chat privado (destinatário incluso na mensagem)
-      @log.log_chat(client, message, "PRIVATE -> #{name}")
+      @log.log_chat(client, message, "PRIVATE->#{name}")
+    end
+  end
+
+  # Helper privado: converte o enum do canal para string legível nos logs.
+  private def chat_channel_name(talk_type)
+    case talk_type
+    when Enums::Chat::MAP     then 'MAP'
+    when Enums::Chat::GLOBAL  then 'GLOBAL'
+    when Enums::Chat::PARTY   then 'PARTY'
+    when Enums::Chat::GUILD   then 'GUILD'
+    when Enums::Chat::PRIVATE then 'PRIVATE'
+    else "DESCONHECIDO(#{talk_type})"
     end
   end
 
