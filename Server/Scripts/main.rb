@@ -9,8 +9,8 @@
 load './configs.ini'
 load './vocab.ini'
 
-require_relative 'Scripts/Logger/vs_logger'
-require_relative 'Scripts/Logger/vs_logger_hooks'
+require_relative 'Logger/vs_logger'
+require_relative 'Logger/vs_logger_hooks'
 
 require 'eventmachine'
 require 'sequel'
