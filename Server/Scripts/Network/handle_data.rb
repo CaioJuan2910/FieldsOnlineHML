@@ -147,7 +147,7 @@ module Handle_Data
       add_attempt(client)
       client.close_connection_after_writing
       # [LOG] Tentativa de login com usuário inválido
-      @log.log_failed_login(client, user, 'Usuário não encontrado')
+      @log.log_login_failed(client, 'Usuário não encontrado', user: user)
       return
     elsif multi_accounts?(user, client.ip)
       send_failed_login(client, Enums::Login::MULTI_ACCOUNT)
@@ -162,13 +162,13 @@ module Handle_Data
       add_attempt(client)
       client.close_connection_after_writing
       # [LOG] Tentativa de login com senha incorreta
-      @log.log_failed_login(client, user, 'Senha incorreta')
+      @log.log_login_failed(client, 'Senha incorreta', user: user)
       return
     elsif banned?(account.id_db)
       send_failed_login(client, Enums::Login::ACC_BANNED)
       client.close_connection_after_writing
       # [LOG] Tentativa de login com conta banida
-      @log.log_failed_login(client, user, 'Conta banida')
+      @log.log_login_failed(client, 'Conta banida', user: user)
       return
     end
 
