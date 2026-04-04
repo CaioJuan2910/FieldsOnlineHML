@@ -105,6 +105,9 @@ module Configs
   # Quantidade máxima de linhas do bate-papo
   MAX_CHAT_LINES = 10 # Recomendável
   
+  # Quantidade máxima de caracteres por mensagem no bate-papo
+  MAX_CHAT_MESSAGE_LENGTH = 200
+  
   # Quantidade máxima de membros do grupo
   MAX_PARTY_MEMBERS = 4
   
