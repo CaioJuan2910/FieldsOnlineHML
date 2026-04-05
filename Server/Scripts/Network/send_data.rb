@@ -1,12 +1,11 @@
 #==============================================================================
 # ** Send_Data
 #------------------------------------------------------------------------------
-#  Este script envia as mensagens para o cliente.
+# Este script envia as mensagens para o cliente.
 #------------------------------------------------------------------------------
-#  Autor: Valentine
-#  Melhorias: Fields Online Dev Team
+# Autor: Valentine
+# Melhorias: Fields Online Dev Team
 #==============================================================================
-
 module Send_Data
 
   def send_data_to_map(map_id, data)
@@ -85,17 +84,151 @@ module Send_Data
   def send_use_actor(client)
     packet = Buffer::Writer.new
     packet.write_byte(Enums::Packet::USE_ACTOR)
+
+    #--------------------------------------------------------------------------
+    # Identificação do jogador
+    #--------------------------------------------------------------------------
     packet.write_short(client.id)
     packet.write_string(client.name)
+
+    #--------------------------------------------------------------------------
+    # Aparência e classe — NOVA ORDEM do protocolo refatorado
+    # ATENÇÃO: sex e class_id agora precedem os dados gráficos
+    # char_index e face_index agora são short (eram byte)
+    # Campos novos: level, title, admin
+    #--------------------------------------------------------------------------
     packet.write_byte(client.sex)
     packet.write_short(client.class_id)
-    packet.write_short(client.level)
-    packet.write_string(client.title)
-    packet.write_short(client.char_index)
+    packet.write_short(client.level)        # [NOVO] Nível do personagem
+    packet.write_string(client.title)       # [NOVO] Título do personagem
+    packet.write_short(client.char_index)   # [ALTERADO] era write_byte
     packet.write_string(client.char_name)
-    packet.write_short(client.face_index)
+    packet.write_short(client.face_index)   # [ALTERADO] era write_byte
     packet.write_string(client.face_name)
-    packet.write_byte(client.admin)
+    packet.write_byte(client.admin)         # [NOVO] Nível de administrador
+
+    #--------------------------------------------------------------------------
+    # Equipamentos (MAX_EQUIPS slots)
+    #--------------------------------------------------------------------------
+    Configs::MAX_EQUIPS.times do |slot_id|
+      packet.write_short(client.equips[slot_id] ? client.equips[slot_id] : 0)
+    end
+
+    #--------------------------------------------------------------------------
+    # Parâmetros base — 8 atributos: MHP, MMP, ATK, DEF, MAT, MDF, AGI, LUK
+    #--------------------------------------------------------------------------
+    8.times { |param_id| packet.write_int(client.param_base[param_id]) }
+
+    #--------------------------------------------------------------------------
+    # HP, MP e Experiência acumulada
+    #--------------------------------------------------------------------------
+    packet.write_int(client.hp)
+    packet.write_int(client.mp)
+    packet.write_int(client.exp)
+
+    #--------------------------------------------------------------------------
+    # Pontos de atributo disponíveis e nome da guilda
+    #--------------------------------------------------------------------------
+    packet.write_short(client.points)
+    packet.write_string(client.guild_name)
+
+    #--------------------------------------------------------------------------
+    # Ouro
+    #--------------------------------------------------------------------------
+    packet.write_int(client.gold)
+
+    #--------------------------------------------------------------------------
+    # Inventário: Itens comuns
+    #--------------------------------------------------------------------------
+    packet.write_byte(client.items.size)
+    client.items.each do |item_id, amount|
+      packet.write_short(item_id)
+      packet.write_short(amount)
+    end
+
+    #--------------------------------------------------------------------------
+    # Inventário: Armas
+    #--------------------------------------------------------------------------
+    packet.write_byte(client.weapons.size)
+    client.weapons.each do |item_id, amount|
+      packet.write_short(item_id)
+      packet.write_short(amount)
+    end
+
+    #--------------------------------------------------------------------------
+    # Inventário: Armaduras
+    #--------------------------------------------------------------------------
+    packet.write_byte(client.armors.size)
+    client.armors.each do |item_id, amount|
+      packet.write_short(item_id)
+      packet.write_short(amount)
+    end
+
+    #--------------------------------------------------------------------------
+    # Habilidades aprendidas
+    #--------------------------------------------------------------------------
+    packet.write_byte(client.skills.size)
+    client.skills.each { |skill_id| packet.write_short(skill_id) }
+
+    #--------------------------------------------------------------------------
+    # Lista de amigos (apenas o nome)
+    #--------------------------------------------------------------------------
+    packet.write_byte(client.friends.size)
+    client.friends.each { |friend| packet.write_string(friend[:name]) }
+
+    #--------------------------------------------------------------------------
+    # Missões em andamento ou concluídas
+    #--------------------------------------------------------------------------
+    packet.write_byte(client.quests.size)
+    client.quests.each do |quest_id, quest|
+      packet.write_byte(quest_id)
+      packet.write_byte(quest.state)
+    end
+
+    #--------------------------------------------------------------------------
+    # Hotbar (MAX_HOTBAR slots: tipo + id do item)
+    #--------------------------------------------------------------------------
+    Configs::MAX_HOTBAR.times do |id|
+      packet.write_byte(client.hotbar[id][:type])
+      packet.write_short(client.hotbar[id][:id])
+    end
+
+    #--------------------------------------------------------------------------
+    # Switches do jogador
+    #--------------------------------------------------------------------------
+    Configs::MAX_PLAYER_SWITCHES.times do |switch_id|
+      packet.write_bool(client.switches[switch_id + 1])
+    end
+
+    #--------------------------------------------------------------------------
+    # Variáveis do jogador
+    # Nota: usa short em vez de int para economizar bytes. O valor máximo
+    # suportado pelo evento "Armazenar Número" é 99.999.999, mas o limite
+    # prático configurado no sistema não chega a esse valor.
+    #--------------------------------------------------------------------------
+    Configs::MAX_PLAYER_VARIABLES.times do |variable_id|
+      packet.write_short(client.variables[variable_id + 1])
+    end
+
+    #--------------------------------------------------------------------------
+    # Self-Switches (switches locais de eventos específicos)
+    #--------------------------------------------------------------------------
+    packet.write_short(client.self_switches.size)
+    client.self_switches.each do |key, value|
+      packet.write_short(key[0])   # map_id
+      packet.write_short(key[1])   # event_id
+      packet.write_string(key[2])  # letra ("A", "B", "C" ou "D")
+      packet.write_bool(value)
+    end
+
+    #--------------------------------------------------------------------------
+    # Posição inicial no mapa
+    #--------------------------------------------------------------------------
+    packet.write_short(client.map_id)
+    packet.write_short(client.x)
+    packet.write_short(client.y)
+    packet.write_byte(client.direction)
+
     client.send_data(packet)
   end
 
@@ -162,7 +295,6 @@ module Send_Data
   end
 
   # === CHAT ===
-
   # Helper privado — centraliza a criação do pacote CHAT_MSG
   def build_chat_packet(color_id, message)
     packet = Buffer::Writer.new
@@ -222,7 +354,6 @@ module Send_Data
   def broadcast_server_message(message, color_id = Enums::Chat::GLOBAL)
     send_data_to_all(build_chat_packet(color_id, message))
   end
-
   # === FIM DA SEÇÃO DE CHAT ===
 
   def alert_message(client, type)
