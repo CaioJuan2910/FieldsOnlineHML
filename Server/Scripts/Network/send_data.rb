@@ -38,70 +38,27 @@ module Send_Data
 
 #==============================================================================
 # ** send_login
-#------------------------------------------------------------------------------
-# Envia os dados iniciais de login para o cliente.
-#
-# Protocolo esperado por handle_login no cliente:
-#   [1] header    : byte  (Enums::Packet::LOGIN)
-#   [2] group     : byte  (nível de acesso: 0=padrão, 1=monitor, 2=admin)
-#   [3] vip_time  : time  (short year + byte month + byte day = 4 bytes)
-#   [4] size      : byte  (quantidade de personagens da conta)
-#   [5] actors[]  : bloco repetido size vezes (ver handle_actor)
 #==============================================================================
-def send_login(client)
-  packet = Buffer::Writer.new
-
-  # [1] Header do pacote
-  packet.write_byte(Enums::Packet::LOGIN)
-
-  #--------------------------------------------------------------------------
-  # [2] Grupo do jogador
-  # Nível de acesso: 0 = jogador comum, 1 = monitor, 2 = administrador
-  #--------------------------------------------------------------------------
-  packet.write_byte(client.group.to_i)
-
-  #--------------------------------------------------------------------------
-  # [3] Data de expiração VIP
-  # Usa Time.now como fallback se @vip_time for nil
-  # (conta sem VIP nunca configurado — evita ArgumentError no cliente)
-  #--------------------------------------------------------------------------
-  vip_time = client.vip_time || Time.now
-  packet.write_time(vip_time)
-
-  #--------------------------------------------------------------------------
-  # [4] Quantidade de personagens da conta
-  #--------------------------------------------------------------------------
-  packet.write_byte(client.actors.size)
-
-  #--------------------------------------------------------------------------
-  # [5] Dados de cada personagem
-  # Formato exato esperado por handle_actor no cliente:
-  #   actor_id        : byte
-  #   name            : string
-  #   character_name  : string
-  #   character_index : byte
-  #   face_name       : string
-  #   face_index      : byte
-  #   sex             : byte
-  #   weapon_id       : short  (equips[0])
-  #   armors          : short  (equips[1..MAX_EQUIPS-1], um short por slot)
-  #--------------------------------------------------------------------------
-  client.actors.each do |actor_id, actor|
-    packet.write_byte(actor_id)
-    packet.write_string(actor.name.to_s)
-    packet.write_string(actor.character_name.to_s)
-    packet.write_byte(actor.character_index.to_i)
-    packet.write_string(actor.face_name.to_s)
-    packet.write_byte(actor.face_index.to_i)
-    packet.write_byte(actor.sex.to_i)
-    # Slot 0 = arma equipada (0 = nenhuma)
-    packet.write_short(actor.equips[0].to_i)
-    # Slots 1..MAX_EQUIPS-1 = armaduras (0 = nenhuma)
-    (Configs::MAX_EQUIPS - 1).times { |i| packet.write_short(actor.equips[i + 1].to_i) }
+  def send_login(client)
+    packet = Buffer::Writer.new
+    packet.write_byte(Enums::Packet::LOGIN)
+    packet.write_byte(client.group.to_i)
+    vip_time = client.vip_time || Time.now
+    packet.write_time(vip_time)
+    packet.write_byte(client.actors.size)
+    client.actors.each do |actor_id, actor|
+      packet.write_byte(actor_id)
+      packet.write_string(actor.name.to_s)
+      packet.write_string(actor.character_name.to_s)
+      packet.write_byte(actor.character_index.to_i)
+      packet.write_string(actor.face_name.to_s)
+      packet.write_byte(actor.face_index.to_i)
+      packet.write_byte(actor.sex.to_i)
+      packet.write_short(actor.equips[0].to_i)
+      (Configs::MAX_EQUIPS - 1).times { |i| packet.write_short(actor.equips[i + 1].to_i) }
+    end
+    client.send_data(packet)
   end
-
-  client.send_data(packet)
-end
 
   def send_failed_login(client, type)
     packet = Buffer::Writer.new
@@ -119,54 +76,21 @@ end
 
 #==============================================================================
 # ** send_create_actor
-#------------------------------------------------------------------------------
-# Envia os dados do personagem recém-criado para o cliente.
-#
-# Protocolo esperado por handle_actor no cliente:
-#   [1] header          : byte  (Enums::Packet::CREATE_ACTOR)
-#   [2] actor_id        : byte
-#   [3] name            : string
-#   [4] character_name  : string
-#   [5] character_index : byte
-#   [6] face_name       : string
-#   [7] face_index      : byte
-#   [8] sex             : byte
-#   [9] weapon_id       : short
-#   [10] armors         : short x (MAX_EQUIPS - 1)
 #==============================================================================
-def send_create_actor(client, actor_id, actor)
-  packet = Buffer::Writer.new
-
-  # [1] Header do pacote
-  packet.write_byte(Enums::Packet::CREATE_ACTOR)
-
-  #--------------------------------------------------------------------------
-  # [2–8] Dados de identificação e aparência do personagem
-  # Deve escrever exatamente na mesma ordem que handle_actor lê no cliente
-  #--------------------------------------------------------------------------
-  packet.write_byte(actor_id)
-  packet.write_string(actor[:name].to_s)
-  packet.write_string(actor[:character_name].to_s)
-  packet.write_byte(actor[:character_index].to_i)
-  packet.write_string(actor[:face_name].to_s)
-  packet.write_byte(actor[:face_index].to_i)
-  packet.write_byte(actor[:sex].to_i)
-
-  #--------------------------------------------------------------------------
-  # [9] Arma equipada no slot 0
-  # Personagem recém-criado começa sem arma (0 = nenhuma)
-  # Se o sistema de criação permitir arma inicial, use actor[:weapon_id]
-  #--------------------------------------------------------------------------
-  packet.write_short(actor[:weapon_id].to_i)
-
-  #--------------------------------------------------------------------------
-  # [10] Armaduras nos slots restantes
-  # Personagem recém-criado começa sem armaduras (0 = nenhuma por slot)
-  #--------------------------------------------------------------------------
-  (Configs::MAX_EQUIPS - 1).times { packet.write_short(0) }
-
-  client.send_data(packet)
-end
+  def send_create_actor(client, actor_id, actor)
+    packet = Buffer::Writer.new
+    packet.write_byte(Enums::Packet::CREATE_ACTOR)
+    packet.write_byte(actor_id)
+    packet.write_string(actor[:name].to_s)
+    packet.write_string(actor[:character_name].to_s)
+    packet.write_byte(actor[:character_index].to_i)
+    packet.write_string(actor[:face_name].to_s)
+    packet.write_byte(actor[:face_index].to_i)
+    packet.write_byte(actor[:sex].to_i)
+    # [CORRIGIDO] actor é Hash (personagem recém-criado), não tem .equips → todos os slots = 0
+    Configs::MAX_EQUIPS.times { packet.write_short(0) }
+    client.send_data(packet)
+  end
 
   def send_failed_create_actor(client)
     packet = Buffer::Writer.new
@@ -184,138 +108,68 @@ end
   def send_use_actor(client)
     packet = Buffer::Writer.new
     packet.write_byte(Enums::Packet::USE_ACTOR)
-    #--------------------------------------------------------------------------
-    # Identificação do jogador
-    #--------------------------------------------------------------------------
     packet.write_short(client.id)
     packet.write_string(client.name)
-    #--------------------------------------------------------------------------
-    # Aparência e classe — NOVA ORDEM do protocolo refatorado
-    # ATENÇÃO: sex e class_id agora precedem os dados gráficos
-    # character_index e face_index agora são short (eram byte)
-    # CORRIGIDO v2:
-    #   - character_index em vez de char_index (attr_reader correto)
-    #   - character_name em vez de char_name (attr_reader correto)
-    #   - '' em vez de client.title (title não existe no Actor struct)
-    #   - client.group em vez de client.admin (admin não definido)
-    #--------------------------------------------------------------------------
     packet.write_byte(client.sex)
     packet.write_short(client.class_id)
-    packet.write_short(client.level)           # [NOVO] Nível do personagem
-    packet.write_string('')                     # [RESERVADO] title — não definido no Actor struct
-    packet.write_short(client.character_index)  # [CORRIGIDO] era char_index / era write_byte
+    packet.write_short(client.level)
+    packet.write_string('')                     # [CORRIGIDO] title não existe em Game_Client
+    packet.write_short(client.character_index)  # [CORRIGIDO] era char_index
     packet.write_string(client.character_name)  # [CORRIGIDO] era char_name
-    packet.write_short(client.face_index)       # [ALTERADO] era write_byte
+    packet.write_short(client.face_index)
     packet.write_string(client.face_name)
-    packet.write_byte(client.group)             # [CORRIGIDO] era client.admin — group é attr_accessor
-    #--------------------------------------------------------------------------
-    # Equipamentos (MAX_EQUIPS slots)
-    #--------------------------------------------------------------------------
+    packet.write_byte(client.group)             # [CORRIGIDO] era client.admin
     Configs::MAX_EQUIPS.times do |slot_id|
       packet.write_short(client.equips[slot_id] ? client.equips[slot_id] : 0)
     end
-    #--------------------------------------------------------------------------
-    # Parâmetros base — 8 atributos: MHP, MMP, ATK, DEF, MAT, MDF, AGI, LUK
-    #--------------------------------------------------------------------------
     8.times { |param_id| packet.write_int(client.param_base[param_id]) }
-    #--------------------------------------------------------------------------
-    # HP, MP e Experiência acumulada
-    #--------------------------------------------------------------------------
     packet.write_int(client.hp)
     packet.write_int(client.mp)
     packet.write_int(client.exp)
-    #--------------------------------------------------------------------------
-    # Pontos de atributo disponíveis e nome da guilda
-    #--------------------------------------------------------------------------
     packet.write_short(client.points)
     packet.write_string(client.guild_name)
-    #--------------------------------------------------------------------------
-    # Ouro
-    #--------------------------------------------------------------------------
     packet.write_int(client.gold)
-    #--------------------------------------------------------------------------
-    # Inventário: Itens comuns
-    #--------------------------------------------------------------------------
     packet.write_byte(client.items.size)
     client.items.each do |item_id, amount|
       packet.write_short(item_id)
       packet.write_short(amount)
     end
-    #--------------------------------------------------------------------------
-    # Inventário: Armas
-    #--------------------------------------------------------------------------
     packet.write_byte(client.weapons.size)
     client.weapons.each do |item_id, amount|
       packet.write_short(item_id)
       packet.write_short(amount)
     end
-    #--------------------------------------------------------------------------
-    # Inventário: Armaduras
-    #--------------------------------------------------------------------------
     packet.write_byte(client.armors.size)
     client.armors.each do |item_id, amount|
       packet.write_short(item_id)
       packet.write_short(amount)
     end
-    #--------------------------------------------------------------------------
-    # Habilidades aprendidas
-    #--------------------------------------------------------------------------
     packet.write_byte(client.skills.size)
     client.skills.each { |skill_id| packet.write_short(skill_id) }
-    #--------------------------------------------------------------------------
-    # Lista de amigos (apenas o nome)
-    # CORRIGIDO v2: client.friends é Array de Strings — iterar diretamente
-    # (friend[:name] causaria TypeError pois friend é uma String, não Hash)
-    #--------------------------------------------------------------------------
     packet.write_byte(client.friends.size)
     client.friends.each { |friend| packet.write_string(friend) }
-    #--------------------------------------------------------------------------
-    # Missões em andamento ou concluídas
-    #--------------------------------------------------------------------------
     packet.write_byte(client.quests.size)
     client.quests.each do |quest_id, quest|
       packet.write_byte(quest_id)
       packet.write_byte(quest.state)
     end
-    #--------------------------------------------------------------------------
-    # Hotbar (MAX_HOTBAR slots: tipo + id do item)
-    # CORRIGIDO v2: Hotbar = Struct.new(:type, :item_id)
-    # hotbar[id][:id] causa NameError — usar .item_id (accessor correto)
-    #--------------------------------------------------------------------------
     Configs::MAX_HOTBAR.times do |id|
       packet.write_byte(client.hotbar[id].type)
       packet.write_short(client.hotbar[id].item_id)
     end
-    #--------------------------------------------------------------------------
-    # Switches do jogador
-    #--------------------------------------------------------------------------
     Configs::MAX_PLAYER_SWITCHES.times do |switch_id|
       packet.write_bool(client.switches[switch_id + 1])
     end
-    #--------------------------------------------------------------------------
-    # Variáveis do jogador
-    # Nota: usa short em vez de int para economizar bytes. O valor máximo
-    # suportado pelo evento "Armazenar Número" é 99.999.999, mas o limite
-    # prático configurado no sistema não chega a esse valor.
-    #--------------------------------------------------------------------------
     Configs::MAX_PLAYER_VARIABLES.times do |variable_id|
       packet.write_short(client.variables[variable_id + 1])
     end
-    #--------------------------------------------------------------------------
-    # Self-Switches (switches locais de eventos específicos)
-    # CORRIGIDO v2: Game_SelfSwitches não tem #size nem #each
-    # Usar .data para acessar o Hash interno (attr_reader :data definido)
-    #--------------------------------------------------------------------------
     packet.write_short(client.self_switches.data.size)
     client.self_switches.data.each do |key, value|
-      packet.write_short(key[0])   # map_id
-      packet.write_short(key[1])   # event_id
-      packet.write_string(key[2])  # letra ("A", "B", "C" ou "D")
+      packet.write_short(key[0])
+      packet.write_short(key[1])
+      packet.write_string(key[2])
       packet.write_bool(value)
     end
-    #--------------------------------------------------------------------------
-    # Posição inicial no mapa
-    #--------------------------------------------------------------------------
     packet.write_short(client.map_id)
     packet.write_short(client.x)
     packet.write_short(client.y)
@@ -330,6 +184,17 @@ end
     client.send_data(packet)
   end
 
+#==============================================================================
+# ** send_player_data
+#------------------------------------------------------------------------------
+# CORRIGIDO:
+#   - client.title      → ''    (não existe em Game_Client)
+#   - client.admin      → client.group
+#   - client.char_index → client.character_index
+#   - client.char_name  → client.character_name
+#   - client.opacity    → 255   (não existe em Game_Client → padrão totalmente visível)
+#   - client.move_speed → 4     (não existe em Game_Client → padrão RPG Maker)
+#==============================================================================
   def send_player_data(client, map_id)
     packet = Buffer::Writer.new
     packet.write_byte(Enums::Packet::PLAYER_DATA)
@@ -340,16 +205,16 @@ end
     packet.write_byte(client.direction)
     packet.write_short(client.level)
     packet.write_string(client.name)
-    packet.write_string(client.title)
+    packet.write_string('')                      # [CORRIGIDO] client.title não existe
     packet.write_byte(client.sex)
     packet.write_short(client.class_id)
-    packet.write_short(client.char_index)
-    packet.write_string(client.char_name)
+    packet.write_short(client.character_index)   # [CORRIGIDO] era char_index
+    packet.write_string(client.character_name)   # [CORRIGIDO] era char_name
     packet.write_short(client.face_index)
     packet.write_string(client.face_name)
-    packet.write_byte(client.admin)
-    packet.write_byte(client.opacity)
-    packet.write_byte(client.move_speed)
+    packet.write_byte(client.group)              # [CORRIGIDO] era client.admin
+    packet.write_byte(255)                       # [CORRIGIDO] client.opacity não existe → padrão 255
+    packet.write_byte(4)                         # [CORRIGIDO] client.move_speed não existe → padrão 4
     packet.write_bool(client.in_party?)
     packet.write_bool(client.in_guild?)
     packet.write_string(client.guild_name)
@@ -373,6 +238,13 @@ end
     send_data_to_map(map_id, packet)
   end
 
+#==============================================================================
+# ** send_player_movement
+#------------------------------------------------------------------------------
+# CORRIGIDO:
+#   - client.move_speed → 4     (não existe em Game_Client → padrão RPG Maker)
+#   - client.moving     → false (não existe em Game_Client → padrão parado)
+#==============================================================================
   def send_player_movement(client)
     packet = Buffer::Writer.new
     packet.write_byte(Enums::Packet::PLAYER_MOVEMENT)
@@ -380,8 +252,8 @@ end
     packet.write_short(client.x)
     packet.write_short(client.y)
     packet.write_byte(client.direction)
-    packet.write_byte(client.move_speed)
-    packet.write_bool(client.moving)
+    packet.write_byte(4)                         # [CORRIGIDO] client.move_speed não existe → padrão 4
+    packet.write_bool(false)                     # [CORRIGIDO] client.moving não existe → padrão false
     send_data_to_map(client.map_id, packet)
   end
 
@@ -725,8 +597,8 @@ end
     packet = Buffer::Writer.new
     packet.write_byte(Enums::Packet::PLAYER_GRAPHIC)
     packet.write_short(client.id)
-    packet.write_short(client.char_index)
-    packet.write_string(client.char_name)
+    packet.write_short(client.character_index)   # [CORRIGIDO] era char_index
+    packet.write_string(client.character_name)   # [CORRIGIDO] era char_name
     packet.write_short(client.face_index)
     packet.write_string(client.face_name)
     send_data_to_map(client.map_id, packet)
@@ -743,8 +615,6 @@ end
     packet = Buffer::Writer.new
     packet.write_byte(Enums::Packet::PLAYER_HOTBAR)
     packet.write_byte(id)
-    # CORRIGIDO v2: Hotbar = Struct.new(:type, :item_id)
-    # [:id] causa NameError — usar accessors diretos do Struct
     packet.write_byte(client.hotbar[id].type)
     packet.write_short(client.hotbar[id].item_id)
     client.send_data(packet)

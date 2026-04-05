@@ -6,3 +6,17 @@
 [2026-04-05 19:39:53] [LOGIN] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Login realizado com sucesso.
 [2026-04-05 19:59:01] [LOGIN] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Login realizado com sucesso.
 [2026-04-05 19:59:10] [DEL_ACTOR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Personagem deletado: 'Testefields'
+[2026-04-05 20:11:08] [LOGIN] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Login realizado com sucesso.
+[2026-04-05 20:15:42] [LOGIN] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Login realizado com sucesso.
+[2026-04-05 20:15:44] [DEL_ACTOR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Personagem deletado: 'Novoteste'
+[2026-04-05 20:15:50] [NEW_ACTOR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Personagem criado: 'Teste' | Classe: 
+[2026-04-05 20:16:20] [NEW_ACTOR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Personagem criado: 'Silva' | Classe: 
+[2026-04-05 20:20:28] [LOGIN] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Login realizado com sucesso.
+[2026-04-05 20:20:32] [DEL_ACTOR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Personagem deletado: 'Silva'
+[2026-04-05 20:20:35] [DEL_ACTOR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Personagem deletado: 'Teste'
+[2026-04-05 20:20:43] [NEW_ACTOR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Personagem criado: 'Caitho' | Classe: 
+[2026-04-05 20:20:56] [LOGIN] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Login realizado com sucesso.
+[2026-04-05 20:44:00] [LOGIN] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Login realizado com sucesso.
+[2026-04-05 20:44:05] [DEL_ACTOR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Personagem deletado: 'Caitho'
+[2026-04-05 20:44:14] [NEW_ACTOR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Personagem criado: 'Testecont' | Classe: 
+[2026-04-05 20:44:23] [LOGIN] IP=127.0.0.1 | Conta=caio | Personagem=N/A | Login realizado com sucesso.
