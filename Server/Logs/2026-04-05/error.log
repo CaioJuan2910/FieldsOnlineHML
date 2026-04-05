@@ -1,0 +1,4 @@
+[2026-04-05 19:59:18] [ERROR] IP=127.0.0.1 | Conta=caio | Personagem=N/A | ERRO: Erro: no member 'weapon_id' in struct
+    >> D:/Fields Online/FieldsOnlineHML/Server/Scripts/Network/send_data.rb:160:in `[]'
+    >> D:/Fields Online/FieldsOnlineHML/Server/Scripts/Network/send_data.rb:160:in `send_create_actor'
+    >> D:/Fields Online/FieldsOnlineHML/Server/Scripts/Network/handle_data.rb:263:in `handle_create_actor'

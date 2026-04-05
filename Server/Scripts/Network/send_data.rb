@@ -36,11 +36,72 @@ module Send_Data
     end
   end
 
-  def send_login(client)
-    packet = Buffer::Writer.new
-    packet.write_byte(Enums::Packet::LOGIN)
-    client.send_data(packet)
+#==============================================================================
+# ** send_login
+#------------------------------------------------------------------------------
+# Envia os dados iniciais de login para o cliente.
+#
+# Protocolo esperado por handle_login no cliente:
+#   [1] header    : byte  (Enums::Packet::LOGIN)
+#   [2] group     : byte  (nível de acesso: 0=padrão, 1=monitor, 2=admin)
+#   [3] vip_time  : time  (short year + byte month + byte day = 4 bytes)
+#   [4] size      : byte  (quantidade de personagens da conta)
+#   [5] actors[]  : bloco repetido size vezes (ver handle_actor)
+#==============================================================================
+def send_login(client)
+  packet = Buffer::Writer.new
+
+  # [1] Header do pacote
+  packet.write_byte(Enums::Packet::LOGIN)
+
+  #--------------------------------------------------------------------------
+  # [2] Grupo do jogador
+  # Nível de acesso: 0 = jogador comum, 1 = monitor, 2 = administrador
+  #--------------------------------------------------------------------------
+  packet.write_byte(client.group.to_i)
+
+  #--------------------------------------------------------------------------
+  # [3] Data de expiração VIP
+  # Usa Time.now como fallback se @vip_time for nil
+  # (conta sem VIP nunca configurado — evita ArgumentError no cliente)
+  #--------------------------------------------------------------------------
+  vip_time = client.vip_time || Time.now
+  packet.write_time(vip_time)
+
+  #--------------------------------------------------------------------------
+  # [4] Quantidade de personagens da conta
+  #--------------------------------------------------------------------------
+  packet.write_byte(client.actors.size)
+
+  #--------------------------------------------------------------------------
+  # [5] Dados de cada personagem
+  # Formato exato esperado por handle_actor no cliente:
+  #   actor_id        : byte
+  #   name            : string
+  #   character_name  : string
+  #   character_index : byte
+  #   face_name       : string
+  #   face_index      : byte
+  #   sex             : byte
+  #   weapon_id       : short  (equips[0])
+  #   armors          : short  (equips[1..MAX_EQUIPS-1], um short por slot)
+  #--------------------------------------------------------------------------
+  client.actors.each do |actor_id, actor|
+    packet.write_byte(actor_id)
+    packet.write_string(actor.name.to_s)
+    packet.write_string(actor.character_name.to_s)
+    packet.write_byte(actor.character_index.to_i)
+    packet.write_string(actor.face_name.to_s)
+    packet.write_byte(actor.face_index.to_i)
+    packet.write_byte(actor.sex.to_i)
+    # Slot 0 = arma equipada (0 = nenhuma)
+    packet.write_short(actor.equips[0].to_i)
+    # Slots 1..MAX_EQUIPS-1 = armaduras (0 = nenhuma)
+    (Configs::MAX_EQUIPS - 1).times { |i| packet.write_short(actor.equips[i + 1].to_i) }
   end
+
+  client.send_data(packet)
+end
 
   def send_failed_login(client, type)
     packet = Buffer::Writer.new
@@ -56,17 +117,56 @@ module Send_Data
     client.send_data(packet)
   end
 
-  def send_create_actor(client, actor_id, actor)
-    packet = Buffer::Writer.new
-    packet.write_byte(Enums::Packet::CREATE_ACTOR)
-    packet.write_byte(actor_id)
-    packet.write_string(actor[:name])
-    packet.write_byte(actor[:sex])
-    packet.write_short(actor[:class_id])
-    packet.write_short(actor[:char_index])
-    packet.write_short(actor[:face_index])
-    client.send_data(packet)
-  end
+#==============================================================================
+# ** send_create_actor
+#------------------------------------------------------------------------------
+# Envia os dados do personagem recém-criado para o cliente.
+#
+# Protocolo esperado por handle_actor no cliente:
+#   [1] header          : byte  (Enums::Packet::CREATE_ACTOR)
+#   [2] actor_id        : byte
+#   [3] name            : string
+#   [4] character_name  : string
+#   [5] character_index : byte
+#   [6] face_name       : string
+#   [7] face_index      : byte
+#   [8] sex             : byte
+#   [9] weapon_id       : short
+#   [10] armors         : short x (MAX_EQUIPS - 1)
+#==============================================================================
+def send_create_actor(client, actor_id, actor)
+  packet = Buffer::Writer.new
+
+  # [1] Header do pacote
+  packet.write_byte(Enums::Packet::CREATE_ACTOR)
+
+  #--------------------------------------------------------------------------
+  # [2–8] Dados de identificação e aparência do personagem
+  # Deve escrever exatamente na mesma ordem que handle_actor lê no cliente
+  #--------------------------------------------------------------------------
+  packet.write_byte(actor_id)
+  packet.write_string(actor[:name].to_s)
+  packet.write_string(actor[:character_name].to_s)
+  packet.write_byte(actor[:character_index].to_i)
+  packet.write_string(actor[:face_name].to_s)
+  packet.write_byte(actor[:face_index].to_i)
+  packet.write_byte(actor[:sex].to_i)
+
+  #--------------------------------------------------------------------------
+  # [9] Arma equipada no slot 0
+  # Personagem recém-criado começa sem arma (0 = nenhuma)
+  # Se o sistema de criação permitir arma inicial, use actor[:weapon_id]
+  #--------------------------------------------------------------------------
+  packet.write_short(actor[:weapon_id].to_i)
+
+  #--------------------------------------------------------------------------
+  # [10] Armaduras nos slots restantes
+  # Personagem recém-criado começa sem armaduras (0 = nenhuma por slot)
+  #--------------------------------------------------------------------------
+  (Configs::MAX_EQUIPS - 1).times { packet.write_short(0) }
+
+  client.send_data(packet)
+end
 
   def send_failed_create_actor(client)
     packet = Buffer::Writer.new

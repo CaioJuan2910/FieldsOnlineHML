@@ -115,9 +115,33 @@ class Buffer_Reader
     read(size, "A#{size}")
   end
 
-  def read_time
-    Time.new(read_short, read_byte, read_byte)
-  end
+#==============================================================================
+# ** read_time
+#------------------------------------------------------------------------------
+# Lê uma data do buffer no formato: short(year) + byte(month) + byte(day)
+#
+# Proteção defensiva:
+#   - Garante que month esteja entre 1 e 12 (Time.new rejeita 0 ou >12)
+#   - Garante que day esteja entre 1 e 31
+#   - Em caso de ArgumentError residual, retorna Time.now como fallback
+#
+# Isso evita o crash "ArgumentError: argument out of range" quando o servidor
+# envia dados de VIP corrompidos, zerados ou de pacote adjacente no socket.
+#==============================================================================
+def read_time
+  year  = read_short.to_i
+  month = read_byte.to_i
+  day   = read_byte.to_i
+
+  # Sanitiza valores fora do range aceito por Time.new
+  month = month.between?(1, 12) ? month : 1
+  day   = day.between?(1, 31)   ? day   : 1
+
+  Time.new(year, month, day)
+rescue ArgumentError
+  # Fallback seguro: retorna data atual se ainda assim falhar
+  Time.now
+end
 
   private
 
