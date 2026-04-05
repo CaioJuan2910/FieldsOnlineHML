@@ -84,59 +84,55 @@ module Send_Data
   def send_use_actor(client)
     packet = Buffer::Writer.new
     packet.write_byte(Enums::Packet::USE_ACTOR)
-
     #--------------------------------------------------------------------------
     # Identificação do jogador
     #--------------------------------------------------------------------------
     packet.write_short(client.id)
     packet.write_string(client.name)
-
     #--------------------------------------------------------------------------
     # Aparência e classe — NOVA ORDEM do protocolo refatorado
     # ATENÇÃO: sex e class_id agora precedem os dados gráficos
-    # char_index e face_index agora são short (eram byte)
-    # Campos novos: level, title, admin
+    # character_index e face_index agora são short (eram byte)
+    # CORRIGIDO v2:
+    #   - character_index em vez de char_index (attr_reader correto)
+    #   - character_name em vez de char_name (attr_reader correto)
+    #   - '' em vez de client.title (title não existe no Actor struct)
+    #   - client.group em vez de client.admin (admin não definido)
     #--------------------------------------------------------------------------
     packet.write_byte(client.sex)
     packet.write_short(client.class_id)
-    packet.write_short(client.level)        # [NOVO] Nível do personagem
-    packet.write_string(client.title)       # [NOVO] Título do personagem
-    packet.write_short(client.char_index)   # [ALTERADO] era write_byte
-    packet.write_string(client.char_name)
-    packet.write_short(client.face_index)   # [ALTERADO] era write_byte
+    packet.write_short(client.level)           # [NOVO] Nível do personagem
+    packet.write_string('')                     # [RESERVADO] title — não definido no Actor struct
+    packet.write_short(client.character_index)  # [CORRIGIDO] era char_index / era write_byte
+    packet.write_string(client.character_name)  # [CORRIGIDO] era char_name
+    packet.write_short(client.face_index)       # [ALTERADO] era write_byte
     packet.write_string(client.face_name)
-    packet.write_byte(client.admin)         # [NOVO] Nível de administrador
-
+    packet.write_byte(client.group)             # [CORRIGIDO] era client.admin — group é attr_accessor
     #--------------------------------------------------------------------------
     # Equipamentos (MAX_EQUIPS slots)
     #--------------------------------------------------------------------------
     Configs::MAX_EQUIPS.times do |slot_id|
       packet.write_short(client.equips[slot_id] ? client.equips[slot_id] : 0)
     end
-
     #--------------------------------------------------------------------------
     # Parâmetros base — 8 atributos: MHP, MMP, ATK, DEF, MAT, MDF, AGI, LUK
     #--------------------------------------------------------------------------
     8.times { |param_id| packet.write_int(client.param_base[param_id]) }
-
     #--------------------------------------------------------------------------
     # HP, MP e Experiência acumulada
     #--------------------------------------------------------------------------
     packet.write_int(client.hp)
     packet.write_int(client.mp)
     packet.write_int(client.exp)
-
     #--------------------------------------------------------------------------
     # Pontos de atributo disponíveis e nome da guilda
     #--------------------------------------------------------------------------
     packet.write_short(client.points)
     packet.write_string(client.guild_name)
-
     #--------------------------------------------------------------------------
     # Ouro
     #--------------------------------------------------------------------------
     packet.write_int(client.gold)
-
     #--------------------------------------------------------------------------
     # Inventário: Itens comuns
     #--------------------------------------------------------------------------
@@ -145,7 +141,6 @@ module Send_Data
       packet.write_short(item_id)
       packet.write_short(amount)
     end
-
     #--------------------------------------------------------------------------
     # Inventário: Armas
     #--------------------------------------------------------------------------
@@ -154,7 +149,6 @@ module Send_Data
       packet.write_short(item_id)
       packet.write_short(amount)
     end
-
     #--------------------------------------------------------------------------
     # Inventário: Armaduras
     #--------------------------------------------------------------------------
@@ -163,19 +157,18 @@ module Send_Data
       packet.write_short(item_id)
       packet.write_short(amount)
     end
-
     #--------------------------------------------------------------------------
     # Habilidades aprendidas
     #--------------------------------------------------------------------------
     packet.write_byte(client.skills.size)
     client.skills.each { |skill_id| packet.write_short(skill_id) }
-
     #--------------------------------------------------------------------------
     # Lista de amigos (apenas o nome)
+    # CORRIGIDO v2: client.friends é Array de Strings — iterar diretamente
+    # (friend[:name] causaria TypeError pois friend é uma String, não Hash)
     #--------------------------------------------------------------------------
     packet.write_byte(client.friends.size)
-    client.friends.each { |friend| packet.write_string(friend[:name]) }
-
+    client.friends.each { |friend| packet.write_string(friend) }
     #--------------------------------------------------------------------------
     # Missões em andamento ou concluídas
     #--------------------------------------------------------------------------
@@ -184,22 +177,21 @@ module Send_Data
       packet.write_byte(quest_id)
       packet.write_byte(quest.state)
     end
-
     #--------------------------------------------------------------------------
     # Hotbar (MAX_HOTBAR slots: tipo + id do item)
+    # CORRIGIDO v2: Hotbar = Struct.new(:type, :item_id)
+    # hotbar[id][:id] causa NameError — usar .item_id (accessor correto)
     #--------------------------------------------------------------------------
     Configs::MAX_HOTBAR.times do |id|
-      packet.write_byte(client.hotbar[id][:type])
-      packet.write_short(client.hotbar[id][:id])
+      packet.write_byte(client.hotbar[id].type)
+      packet.write_short(client.hotbar[id].item_id)
     end
-
     #--------------------------------------------------------------------------
     # Switches do jogador
     #--------------------------------------------------------------------------
     Configs::MAX_PLAYER_SWITCHES.times do |switch_id|
       packet.write_bool(client.switches[switch_id + 1])
     end
-
     #--------------------------------------------------------------------------
     # Variáveis do jogador
     # Nota: usa short em vez de int para economizar bytes. O valor máximo
@@ -209,18 +201,18 @@ module Send_Data
     Configs::MAX_PLAYER_VARIABLES.times do |variable_id|
       packet.write_short(client.variables[variable_id + 1])
     end
-
     #--------------------------------------------------------------------------
     # Self-Switches (switches locais de eventos específicos)
+    # CORRIGIDO v2: Game_SelfSwitches não tem #size nem #each
+    # Usar .data para acessar o Hash interno (attr_reader :data definido)
     #--------------------------------------------------------------------------
-    packet.write_short(client.self_switches.size)
-    client.self_switches.each do |key, value|
+    packet.write_short(client.self_switches.data.size)
+    client.self_switches.data.each do |key, value|
       packet.write_short(key[0])   # map_id
       packet.write_short(key[1])   # event_id
       packet.write_string(key[2])  # letra ("A", "B", "C" ou "D")
       packet.write_bool(value)
     end
-
     #--------------------------------------------------------------------------
     # Posição inicial no mapa
     #--------------------------------------------------------------------------
@@ -228,7 +220,6 @@ module Send_Data
     packet.write_short(client.x)
     packet.write_short(client.y)
     packet.write_byte(client.direction)
-
     client.send_data(packet)
   end
 
@@ -295,7 +286,6 @@ module Send_Data
   end
 
   # === CHAT ===
-  # Helper privado — centraliza a criação do pacote CHAT_MSG
   def build_chat_packet(color_id, message)
     packet = Buffer::Writer.new
     packet.write_byte(Enums::Packet::CHAT_MSG)
@@ -653,8 +643,10 @@ module Send_Data
     packet = Buffer::Writer.new
     packet.write_byte(Enums::Packet::PLAYER_HOTBAR)
     packet.write_byte(id)
-    packet.write_byte(client.hotbar[id][:type])
-    packet.write_short(client.hotbar[id][:id])
+    # CORRIGIDO v2: Hotbar = Struct.new(:type, :item_id)
+    # [:id] causa NameError — usar accessors diretos do Struct
+    packet.write_byte(client.hotbar[id].type)
+    packet.write_short(client.hotbar[id].item_id)
     client.send_data(packet)
   end
 
