@@ -1,12 +1,13 @@
 #==============================================================================
 # ** Handle_Data
 #------------------------------------------------------------------------------
-# Este script recebe as mensagens do servidor.
+#  Este script recebe as mensagens do servidor.
 #------------------------------------------------------------------------------
-# Autor: Valentine
+#  Autor: Valentine
 #==============================================================================
-module Handle_Data
 
+module Handle_Data
+  
   def handle_messages(message)
     buffer = Buffer_Reader.new(message)
     header = buffer.read_byte
@@ -16,7 +17,7 @@ module Handle_Data
       handle_messages_menu(header, buffer)
     end
   end
-
+  
   def handle_messages_menu(header, buffer)
     case header
     when Enums::Packet::LOGIN
@@ -35,7 +36,7 @@ module Handle_Data
       handle_use_actor(buffer)
     end
   end
-
+  
   def handle_messages_game(header, buffer)
     case header
     when Enums::Packet::MOTD
@@ -170,39 +171,46 @@ module Handle_Data
       handle_global_switches(buffer)
     end
   end
-
+  
   def handle_login(buffer)
-    @group     = buffer.read_byte
-    @vip_time  = buffer.read_time
-    size       = buffer.read_byte
+    @group = buffer.read_byte
+    @vip_time = buffer.read_time
+    size = buffer.read_byte
     size.times { handle_actor(buffer) }
     $windows[:login].save_user
     SceneManager.goto(Scene_Character)
   end
-
+  
   def handle_actor(buffer)
     actor_id = buffer.read_byte
     @actors[actor_id] = Actor.new
-    @actors[actor_id].name            = buffer.read_string
-    @actors[actor_id].character_name  = buffer.read_string
+    @actors[actor_id].name = buffer.read_string
+    @actors[actor_id].character_name = buffer.read_string
     @actors[actor_id].character_index = buffer.read_byte
-    @actors[actor_id].face_name       = buffer.read_string
-    @actors[actor_id].face_index      = buffer.read_byte
-    @actors[actor_id].sex             = buffer.read_byte
-    @actors[actor_id].equips          = [$data_weapons[buffer.read_short]]
+    @actors[actor_id].face_name = buffer.read_string
+    @actors[actor_id].face_index = buffer.read_byte
+    @actors[actor_id].sex = buffer.read_byte
+    @actors[actor_id].equips = [$data_weapons[buffer.read_short]]
     (Configs::MAX_EQUIPS - 1).times { @actors[actor_id].equips << $data_armors[buffer.read_short] }
   end
-
+  
   def handle_failed_login(buffer)
     type = buffer.read_byte
     case type
-    when Enums::Login::SERVER_FULL   then $windows[:alert].show(Vocab::ServerFull)
-    when Enums::Login::IP_BANNED     then $windows[:alert].show(Vocab::IPBanned)
-    when Enums::Login::OLD_VERSION   then $windows[:alert].show(Vocab::OldVersion)
-    when Enums::Login::ACC_BANNED    then $windows[:alert].show(Vocab::AccBanned)
-    when Enums::Login::INVALD_USER   then $windows[:alert].show(Vocab::InvalidUser)
-    when Enums::Login::MULTI_ACCOUNT then $windows[:alert].show(Vocab::MultiAccount)
-    when Enums::Login::INVALID_PASS  then $windows[:alert].show(Vocab::InvalidPass)
+    when Enums::Login::SERVER_FULL
+      $windows[:alert].show(Vocab::ServerFull)
+    when Enums::Login::IP_BANNED
+      $windows[:alert].show(Vocab::IPBanned)
+    when Enums::Login::OLD_VERSION
+      $windows[:alert].show(Vocab::OldVersion)
+    when Enums::Login::ACC_BANNED
+      $windows[:alert].show(Vocab::AccBanned)
+    when Enums::Login::INVALD_USER
+      $windows[:alert].show(Vocab::InvalidUser)
+    when Enums::Login::MULTI_ACCOUNT
+      $windows[:alert].show(Vocab::MultiAccount)
+    when Enums::Login::INVALID_PASS
+      $windows[:alert].show(Vocab::InvalidPass)
     when Enums::Login::IP_BLOCKED
       if SceneManager.scene_is?(Scene_Login)
         $windows[:alert].show(Vocab::IPBlocked)
@@ -213,7 +221,7 @@ module Handle_Data
       $alert_msg = Vocab::Inactivity
     end
   end
-
+  
   def handle_create_account(buffer)
     type = buffer.read_byte
     case type
@@ -224,178 +232,73 @@ module Handle_Data
       $windows[:create_acc].login
     end
   end
-
+  
   def handle_create_actor(buffer)
     handle_actor(buffer)
     $windows[:create_char].hide
   end
-
+  
   def handle_failed_create_actor
     $windows[:alert].show(Vocab::CharExist)
   end
-
+  
   def handle_remove_actor(buffer)
     actor_id = buffer.read_byte
     @actors.delete(actor_id)
     $windows[:use_char].refresh
   end
-
-  #============================================================================
-  # ** handle_use_actor — CORRIGIDO
-  #----------------------------------------------------------------------------
-  # Lê o pacote USE_ACTOR enviado pelo servidor após o jogador selecionar
-  # seu personagem. A leitura foi reordenada para corresponder ao novo formato
-  # de send_use_actor no servidor:
-  #
-  #   ANTES (cliente esperava):
-  #     name → set_graphic(char_name, char_index[byte], face_name, face_index[byte])
-  #     → change_class → sex → ...
-  #
-  #   DEPOIS (nova ordem do servidor):
-  #     name → sex → class_id → level → title → char_index[short]
-  #     → char_name → face_index[short] → face_name → admin → ...
-  #
-  # Campos alterados:
-  #   - char_index: era read_byte, agora read_short
-  #   - face_index: era read_byte, agora read_short
-  #   - sex: agora vem ANTES de change_class
-  #   - Campos novos lidos mas descartados: level, title, admin
-  #============================================================================
+  
   def handle_use_actor(buffer)
-    # Reseta as informações caso o usuário já tenha entrado anteriormente
+    # Reseta as informações caso o usuário já tenha
+    #entrado anteriormente
     DataManager.create_game_objects
     $game_party.setup_starting_members
-
-    #--------------------------------------------------------------------------
-    # Identificação
-    #--------------------------------------------------------------------------
     @player_id = buffer.read_short
-    $game_actors[1].name = buffer.read_string
-
-    #--------------------------------------------------------------------------
-    # Aparência e classe — NOVA ORDEM do protocolo
-    #--------------------------------------------------------------------------
-    $game_actors[1].sex = buffer.read_byte           # sex vem antes de class_id
-    $game_actors[1].change_class(buffer.read_short)  # class_id
-    buffer.read_short   # level  — lido para consumir o campo; nível é derivado via change_exp
-    buffer.read_string  # title  — lido para consumir o campo; reservado para uso futuro
-    char_index = buffer.read_short  # [ALTERADO] era read_byte
-    char_name  = buffer.read_string
-    face_index = buffer.read_short  # [ALTERADO] era read_byte
-    face_name  = buffer.read_string
-    @admin     = buffer.read_byte   # [NOVO] nível de administrador enviado pelo servidor
-    $game_actors[1].set_graphic(char_name, char_index, face_name, face_index)
     $game_player.group = @group
-
-    #--------------------------------------------------------------------------
-    # Equipamentos
-    #--------------------------------------------------------------------------
-    Configs::MAX_EQUIPS.times do |slot_id|
-      $game_actors[1].change_equip_by_id(slot_id, buffer.read_short)
-    end
-
-    #--------------------------------------------------------------------------
-    # Parâmetros base (8 atributos: MHP, MMP, ATK, DEF, MAT, MDF, AGI, LUK)
-    #--------------------------------------------------------------------------
+    $game_actors[1].name = buffer.read_string
+    $game_actors[1].set_graphic(buffer.read_string, buffer.read_byte, buffer.read_string, buffer.read_byte)
+    $game_actors[1].change_class(buffer.read_short)
+    $game_actors[1].sex = buffer.read_byte
+    Configs::MAX_EQUIPS.times { |slot_id| $game_actors[1].change_equip_by_id(slot_id, buffer.read_short) }
     8.times { |param_id| $game_actors[1].add_param(param_id, buffer.read_int) }
-
-    #--------------------------------------------------------------------------
-    # HP, MP e Experiência
-    #--------------------------------------------------------------------------
     $game_actors[1].hp = buffer.read_int
     $game_actors[1].mp = buffer.read_int
     $game_actors[1].change_exp(buffer.read_int, false)
-
-    #--------------------------------------------------------------------------
-    # Pontos de atributo e Guilda
-    #--------------------------------------------------------------------------
-    $game_actors[1].points     = buffer.read_short
+    $game_actors[1].points = buffer.read_short
     $game_actors[1].guild_name = buffer.read_string
-
-    #--------------------------------------------------------------------------
-    # Ouro
-    #--------------------------------------------------------------------------
     $game_party.gain_gold(buffer.read_int)
-
-    #--------------------------------------------------------------------------
-    # Inventário: Itens comuns
-    #--------------------------------------------------------------------------
     size = buffer.read_byte
     size.times { $game_party.gain_item($data_items[buffer.read_short], buffer.read_short) }
-
-    #--------------------------------------------------------------------------
-    # Inventário: Armas
-    #--------------------------------------------------------------------------
     size = buffer.read_byte
     size.times { $game_party.gain_item($data_weapons[buffer.read_short], buffer.read_short) }
-
-    #--------------------------------------------------------------------------
-    # Inventário: Armaduras
-    #--------------------------------------------------------------------------
     size = buffer.read_byte
     size.times { $game_party.gain_item($data_armors[buffer.read_short], buffer.read_short) }
-
-    #--------------------------------------------------------------------------
-    # Habilidades aprendidas
-    #--------------------------------------------------------------------------
     size = buffer.read_byte
     size.times { $game_actors[1].learn_skill(buffer.read_short) }
-
-    #--------------------------------------------------------------------------
-    # Lista de amigos
-    #--------------------------------------------------------------------------
     size = buffer.read_byte
     size.times { $game_actors[1].friends << buffer.read_string }
-
-    #--------------------------------------------------------------------------
-    # Missões em andamento
-    #--------------------------------------------------------------------------
     size = buffer.read_byte
     size.times do
       quest_id = buffer.read_byte
       $game_actors[1].quests[quest_id] = Game_Quest.new(quest_id, buffer.read_byte)
     end
-
-    #--------------------------------------------------------------------------
-    # Hotbar
-    #--------------------------------------------------------------------------
-    Configs::MAX_HOTBAR.times do |id|
-      $game_actors[1].change_hotbar(id, buffer.read_byte, buffer.read_short)
-    end
-
-    #--------------------------------------------------------------------------
-    # Switches do jogador
-    #--------------------------------------------------------------------------
-    Configs::MAX_PLAYER_SWITCHES.times do |switch_id|
-      $game_switches[switch_id + 1] = buffer.read_boolean
-    end
-
-    #--------------------------------------------------------------------------
-    # Variáveis do jogador
-    # Nota: usa short em vez de int para economizar bytes. O valor máximo
-    # das variáveis, em razão do comando de evento "Armazenar Número", que
-    # possibilita até 8 dígitos, é 99.999.999, o que ultrapassa o limite do
-    # tipo short, porém, para evitar desperdício desnecessário de bytes com o
-    # tamanho do tipo int, e partindo da ideia de que ninguém vai precisar de
-    # um limite tão alto, o short é utilizado. Na tabela actor_variables do
-    # Database.sql, o tipo smallint é utilizado na coluna value em vez de int.
-    #--------------------------------------------------------------------------
-    Configs::MAX_PLAYER_VARIABLES.times do |variable_id|
-      $game_variables[variable_id + 1] = buffer.read_short
-    end
-
-    #--------------------------------------------------------------------------
-    # Self-Switches (switches locais de eventos)
-    #--------------------------------------------------------------------------
+    Configs::MAX_HOTBAR.times { |id| $game_actors[1].change_hotbar(id, buffer.read_byte, buffer.read_short)} 
+    Configs::MAX_PLAYER_SWITCHES.times { |switch_id| $game_switches[switch_id + 1] = buffer.read_boolean}
+    # O valor máximo das variáveis, em razão do comando de
+    #evento Armazenar Número, que possibilita até 8 dígitos,
+    #é 99.999.999, o que ultrapassa o limite do tipo short,
+    #porém, para evitar desperídico desnecessário de bytes,
+    #com o tamanho do tipo int, e partindo da ideia de que
+    #ninguém vai precisar de um limite tão alto, o short é
+    #utilizado para receber o valor das variáveis, em vez de
+    #int. Na tabela actor_variables do Database.sql, o tipo
+    #smallint é utilizado na coluna value em vez de int
+    Configs::MAX_PLAYER_VARIABLES.times { |variable_id| $game_variables[variable_id + 1] = buffer.read_short }
     size = buffer.read_short
     size.times do
       key = [buffer.read_short, buffer.read_short, buffer.read_string]
       $game_self_switches[key] = buffer.read_boolean
     end
-
-    #--------------------------------------------------------------------------
-    # Posição e inicialização no mapa
-    #--------------------------------------------------------------------------
     $game_map.setup(buffer.read_short)
     $game_player.moveto(buffer.read_short, buffer.read_short)
     $game_player.set_direction(buffer.read_byte)
@@ -406,16 +309,17 @@ module Handle_Data
     RPG::ME.stop
     $game_map.autoplay
     @in_game = true
-    # Limpa o typing da caixa de texto de senha da janela de entrada
-    $typing           = nil
+    # Limpa o typing da caixa de texto de senha da
+    #janela de entrada, caso esteja ativa
+    $typing = nil
     $wait_player_move = false
     SceneManager.goto(Scene_Map)
   end
-
+  
   def handle_motd(buffer)
     @motd = buffer.read_string
   end
-
+  
   def handle_player_data(buffer)
     player_id = buffer.read_short
     $game_map.players[player_id] = Game_NetPlayer.new(player_id)
@@ -423,9 +327,7 @@ module Handle_Data
     $game_map.players[player_id].actor.name = buffer.read_string
     $game_map.players[player_id].actor.set_graphic(buffer.read_string, buffer.read_byte, '', 0)
     $game_map.players[player_id].actor.sex = buffer.read_byte
-    Configs::MAX_EQUIPS.times do |slot_id|
-      $game_map.players[player_id].actor.change_equip_by_id(slot_id, buffer.read_short)
-    end
+    Configs::MAX_EQUIPS.times { |slot_id| $game_map.players[player_id].actor.change_equip_by_id(slot_id, buffer.read_short) }
     $game_map.players[player_id].actor.add_param(0, buffer.read_int)
     $game_map.players[player_id].actor.hp = buffer.read_int
     $game_map.players[player_id].actor.change_exp(buffer.read_int, false)
@@ -439,19 +341,19 @@ module Handle_Data
       $windows[:party].refresh
     end
   end
-
+  
   def handle_remove_player(buffer)
     player_id = buffer.read_short
     $game_map.players.delete(player_id)
     SceneManager.scene.remove_player(player_id)
     $windows[:party].refresh if $game_actors[1].party_members.has_key?(player_id)
   end
-
+  
   def handle_player_movement(buffer)
     player_id = buffer.read_short
-    x         = buffer.read_short
-    y         = buffer.read_short
-    d         = buffer.read_byte
+    x = buffer.read_short
+    y = buffer.read_short
+    d = buffer.read_byte
     if @player_id == player_id
       $game_player.move(x, y, d)
       $wait_player_move = false
@@ -460,68 +362,85 @@ module Handle_Data
       $game_map.players[player_id].move(x, y, d)
     end
   end
-
+  
   def handle_map_chat_message(buffer)
     player_id = buffer.read_short
-    color_id  = buffer.read_byte
-    message   = buffer.read_string
-    # Se a scene não foi inteiramente carregada
+    color_id = buffer.read_byte
+    message = buffer.read_string
+    # Se a scene não já foi inteiramente carregada
     return unless $windows.has_key?(:chat)
     index = message.index(': ')
-    name  = message[0, index]
-    msg   = message[index + 2..message.size]
+    name = message[0, index]
+    msg = message[index + 2..message.size]
     unless $game_player.blocked.include?(name)
       $windows[:chat].write_message(message, color_id)
       player = @player_id == player_id ? $game_player : $game_map.players[player_id]
       player.message = $windows[:chat].word_wrap(msg, 217) if $game_map.in_screen?(player)
     end
   end
-
+  
   def handle_chat_message(buffer)
     color_id = buffer.read_byte
-    message  = buffer.read_string
+    message = buffer.read_string
     return unless $windows.has_key?(:chat)
     # Garante que o índice não seja nulo
     name = message[0, message.index(': ').to_i]
     $windows[:chat].write_message(message, color_id) unless $game_player.blocked.include?(name)
   end
-
+  
   def handle_alert_message(buffer)
     type = buffer.read_byte
     case type
-    when Enums::Alert::INVALID_NAME     then $windows[:chat].write_message(Vocab::InvalidName, Configs::ERROR_COLOR)
-    when Enums::Alert::TELEPORTED       then $windows[:chat].write_message(Vocab::Teleported, Configs::SUCCESS_COLOR)
-    when Enums::Alert::PULLED           then $windows[:chat].write_message(Vocab::Pulled, Configs::SUCCESS_COLOR)
-    when Enums::Alert::ATTACK_ADMIN     then $error_msg = Vocab::AttackAdmin
-    when Enums::Alert::BUSY             then $error_msg = Vocab::Busy
-    when Enums::Alert::IN_PARTY         then $error_msg = Vocab::InParty
-    when Enums::Alert::IN_GUILD         then $error_msg = Vocab::YouInGuild
-    when Enums::Alert::GUILD_EXIST      then $error_msg = Vocab::GuildExist
-    when Enums::Alert::NOT_GUILD_LEADER then $error_msg = Vocab::NotGuildLeader
-    when Enums::Alert::FULL_GUILD       then $error_msg = Vocab::FullGuild
-    when Enums::Alert::NOT_PICK_UP_DROP then $error_msg = Vocab::NotPickUpDrop
-    when Enums::Alert::REQUEST_DECLINED then $windows[:chat].write_message(Vocab::RequestDeclined, Configs::ERROR_COLOR)
-    when Enums::Alert::TRADE_DECLINED   then $windows[:chat].write_message(Vocab::TradeDeclined, Configs::ERROR_COLOR)
-    when Enums::Alert::TRADE_FINISHED   then $windows[:chat].write_message(Vocab::TradeFinished, Configs::SUCCESS_COLOR)
-    when Enums::Alert::FULL_INV         then $error_msg = Vocab::FullInventory
-    when Enums::Alert::FULL_TRADE       then $error_msg = Vocab::FullTrade
-    when Enums::Alert::FULL_BANK        then $error_msg = Vocab::FullBank
-    when Enums::Alert::MUTED            then $windows[:chat].write_message(Vocab::Muted, Configs::ERROR_COLOR)
+    when Enums::Alert::INVALID_NAME
+      $windows[:chat].write_message(Vocab::InvalidName, Configs::ERROR_COLOR)
+    when Enums::Alert::TELEPORTED
+      $windows[:chat].write_message(Vocab::Teleported, Configs::SUCCESS_COLOR)
+    when Enums::Alert::PULLED
+      $windows[:chat].write_message(Vocab::Pulled, Configs::SUCCESS_COLOR)
+    when Enums::Alert::ATTACK_ADMIN
+      $error_msg = Vocab::AttackAdmin
+    when Enums::Alert::BUSY
+      $error_msg = Vocab::Busy
+    when Enums::Alert::IN_PARTY
+      $error_msg = Vocab::InParty
+    when Enums::Alert::IN_GUILD
+      $error_msg = Vocab::YouInGuild
+    when Enums::Alert::GUILD_EXIST
+      $error_msg = Vocab::GuildExist
+    when Enums::Alert::NOT_GUILD_LEADER
+      $error_msg = Vocab::NotGuildLeader
+    when Enums::Alert::FULL_GUILD
+      $error_msg = Vocab::FullGuild
+    when Enums::Alert::NOT_PICK_UP_DROP
+      $error_msg = Vocab::NotPickUpDrop
+    when Enums::Alert::REQUEST_DECLINED
+      $windows[:chat].write_message(Vocab::RequestDeclined, Configs::ERROR_COLOR)
+    when Enums::Alert::TRADE_DECLINED
+      $windows[:chat].write_message(Vocab::TradeDeclined, Configs::ERROR_COLOR)
+    when Enums::Alert::TRADE_FINISHED
+      $windows[:chat].write_message(Vocab::TradeFinished, Configs::SUCCESS_COLOR)
+    when Enums::Alert::FULL_INV
+      $error_msg = Vocab::FullInventory
+    when Enums::Alert::FULL_TRADE
+      $error_msg = Vocab::FullTrade
+    when Enums::Alert::FULL_BANK
+      $error_msg = Vocab::FullBank
+    when Enums::Alert::MUTED
+      $windows[:chat].write_message(Vocab::Muted, Configs::ERROR_COLOR)
     end
   end
-
+  
   def handle_attack_player(buffer)
-    attacker_id    = buffer.read_short
-    attacker_type  = buffer.read_byte
-    ani_index      = buffer.read_byte
-    player_id      = buffer.read_short
-    hp_damage      = buffer.read_int
-    mp_damage      = buffer.read_int
-    critical       = buffer.read_boolean
-    animation_id   = buffer.read_short
+    attacker_id = buffer.read_short
+    attacker_type = buffer.read_byte
+    ani_index = buffer.read_byte
+    player_id = buffer.read_short
+    hp_damage = buffer.read_int
+    mp_damage = buffer.read_int
+    critical = buffer.read_boolean
+    animation_id = buffer.read_short
     not_show_missed = buffer.read_boolean
-    attacker = attacker_type == 1 ? $game_map.events[attacker_id] :
-               attacker_id == @player_id ? $game_player : $game_map.players[attacker_id]
+    attacker = attacker_type == 1 ? $game_map.events[attacker_id] : attacker_id == @player_id ? $game_player : $game_map.players[attacker_id]
     attacker.animate_attack(ani_index)
     if @player_id == player_id
       $game_actors[1].hp += hp_damage
@@ -540,44 +459,38 @@ module Handle_Data
     else
       $game_map.players[player_id].actor.hp += hp_damage
       $game_map.players[player_id].actor.mp += mp_damage
-      $game_map.players[player_id].change_damage(hp_damage, mp_damage, critical, animation_id, not_show_missed)
-      if $game_map.in_screen?($game_map.players[player_id]) && !$game_map.players[player_id].actor.dead?
-        $windows[:target_hud].refresh if $game_map.players[player_id] == $game_player.target &&
-                                         !$game_map.players[player_id].actor.dead?
-      end
+      $game_map.players[player_id].change_damage(hp_damage, mp_damage, critical, animation_id, not_show_missed) if $game_map.in_screen?($game_map.players[player_id]) && !$game_map.players[player_id].actor.dead?
+      $windows[:target_hud].refresh if $game_map.players[player_id] == $game_player.target && !$game_map.players[player_id].actor.dead?
     end
   end
-
+  
   def handle_attack_enemy(buffer)
-    attacker_id   = buffer.read_short
+    attacker_id = buffer.read_short
     attacker_type = buffer.read_byte
-    ani_index     = buffer.read_byte
-    event_id      = buffer.read_short
-    hp_damage     = buffer.read_int
-    mp_damage     = buffer.read_int
-    critical      = buffer.read_boolean
-    animation_id  = buffer.read_short
-    attacker = attacker_type == 1 ? $game_map.events[attacker_id] :
-               attacker_id == @player_id ? $game_player : $game_map.players[attacker_id]
+    ani_index = buffer.read_byte
+    event_id = buffer.read_short
+    hp_damage = buffer.read_int
+    mp_damage = buffer.read_int
+    critical = buffer.read_boolean
+    animation_id = buffer.read_short
+    attacker = attacker_type == 1 ? $game_map.events[attacker_id] : attacker_id == @player_id ? $game_player : $game_map.players[attacker_id]
     attacker.animate_attack(ani_index)
     $game_map.events[event_id].actor.hp += hp_damage
     $game_map.events[event_id].actor.mp += mp_damage
     $game_map.events[event_id].change_damage(hp_damage, mp_damage, critical, animation_id) if $game_map.in_screen?($game_map.events[event_id])
     $game_map.events[event_id].erase if $game_map.events[event_id].actor.dead?
     # Se o inimigo é o alvo e ele não morreu
-    $windows[:target_hud].refresh if $game_map.events[event_id] == $game_player.target &&
-                                     $game_map.events[event_id].actor?
+    $windows[:target_hud].refresh if $game_map.events[event_id] == $game_player.target && $game_map.events[event_id].actor?
   end
-
+  
   def handle_animation(buffer)
-    attacker_id    = buffer.read_short
-    attacker_type  = buffer.read_byte
-    ani_index      = buffer.read_byte
-    character_id   = buffer.read_short
+    attacker_id = buffer.read_short
+    attacker_type = buffer.read_byte
+    ani_index = buffer.read_byte
+    character_id = buffer.read_short
     character_type = buffer.read_byte
-    animation_id   = buffer.read_short
-    attacker = attacker_type == 1 ? $game_map.events[attacker_id] :
-               attacker_id == @player_id ? $game_player : $game_map.players[attacker_id]
+    animation_id = buffer.read_short
+    attacker = attacker_type == 1 ? $game_map.events[attacker_id] : attacker_id == @player_id ? $game_player : $game_map.players[attacker_id]
     attacker.animate_attack(ani_index)
     if character_type == Enums::Target::ENEMY
       $game_map.events[character_id].animation_id = animation_id if $game_map.in_screen?($game_map.events[character_id])
@@ -587,11 +500,11 @@ module Handle_Data
       $game_map.players[character_id].animation_id = animation_id
     end
   end
-
+  
   def handle_balloon(buffer)
-    character_id   = buffer.read_short
+    character_id = buffer.read_short
     character_type = buffer.read_byte
-    balloon_id     = buffer.read_byte
+    balloon_id = buffer.read_byte
     if character_type == Enums::Target::ENEMY
       $game_map.events[character_id].balloon_id = balloon_id if $game_map.in_screen?($game_map.events[character_id])
     elsif @player_id == character_id
@@ -600,87 +513,83 @@ module Handle_Data
       $game_map.players[character_id].balloon_id = balloon_id
     end
   end
-
+  
   def handle_enemy_revive(buffer)
     event_id = buffer.read_short
     $game_map.events[event_id].erased = false
     $game_map.events[event_id].refresh
     # Cancela a animação de ataque do inimigo que foi morto
-    # por outro jogador enquanto a janela estava minimizada
+    #por outro jogador enquanto a janela estava minimizada
     $game_map.events[event_id].animation_id = 0
   end
-
+  
   def handle_event_data(buffer)
     event_id = buffer.read_short
-    x        = buffer.read_short
-    y        = buffer.read_short
-    d        = buffer.read_byte
-    hp       = buffer.read_int
+    x = buffer.read_short
+    y = buffer.read_short
+    d = buffer.read_byte
+    hp = buffer.read_int
     unless $game_map.events[event_id]
       msgbox("Os dados dos mapas do servidor estão desatualizados! O evento #{event_id} não existe mais neste mapa, embora ainda conste no servidor.")
       exit
     end
     # Evita alinhamento dos eventos fixos
-    $game_map.events[event_id].moveto(x, y) unless $game_map.events[event_id].x == x &&
-                                                    $game_map.events[event_id].y == y
-    # Evita que a direção da página global do evento no servidor prevaleça
-    # sobre a direção da página atual do evento com movimento fixo
+    $game_map.events[event_id].moveto(x, y) unless $game_map.events[event_id].x == x && $game_map.events[event_id].y == y
+    # Evita que a direção da página global do evento no
+    #servidor prevaleça sobre a direção da página atual
+    #do evento com movimento fixo
     $game_map.events[event_id].set_direction(d) unless $game_map.events[event_id].fixed_movement?
     if $game_map.events[event_id].actor
       $game_map.events[event_id].actor.hp = hp
       $game_map.events[event_id].erase if $game_map.events[event_id].actor.dead?
     end
   end
-
+  
   def handle_event_movement(buffer)
     event_id = buffer.read_short
-    x        = buffer.read_short
-    y        = buffer.read_short
-    d        = buffer.read_byte
+    x = buffer.read_short
+    y = buffer.read_short
+    d = buffer.read_byte
     $game_map.events[event_id].move(x, y, d)
   end
-
+  
   def handle_add_drop(buffer)
     item_id = buffer.read_short
-    kind    = buffer.read_byte
-    amount  = buffer.read_short
-    x       = buffer.read_short
-    y       = buffer.read_short
+    kind = buffer.read_byte
+    amount = buffer.read_short
+    x = buffer.read_short
+    y = buffer.read_short
     item = $game_party.item_object(kind, item_id)
-    $game_map.drops << Game_Drop.new(item.name, item.icon_index,
-                                     item.is_a?(RPG::Item) && item.key_item?,
-                                     amount, x, y)
+    $game_map.drops << Game_Drop.new(item.name, item.icon_index, item.is_a?(RPG::Item) && item.key_item?, amount, x, y)
     SceneManager.scene.add_drop($game_map.drops.last)
   end
-
+  
   def handle_remove_drop(buffer)
     drop_id = buffer.read_byte
     $game_map.drops.delete_at(drop_id)
     SceneManager.scene.remove_drop(drop_id)
   end
-
+  
   def handle_add_projectile(buffer)
-    start_x        = buffer.read_short
-    start_y        = buffer.read_short
-    finish_x       = buffer.read_short
-    finish_y       = buffer.read_short
-    target_x       = buffer.read_short
-    target_y       = buffer.read_short
+    start_x = buffer.read_short
+    start_y = buffer.read_short
+    finish_x = buffer.read_short
+    finish_y = buffer.read_short
+    target_x = buffer.read_short
+    target_y = buffer.read_short
     projectile_type = buffer.read_byte
-    projectile_id  = buffer.read_byte
+    projectile_id = buffer.read_byte
     if $game_map.in_screen?(start_x, start_y) || $game_map.in_screen?(finish_x, finish_y)
-      projectile = projectile_type == Enums::Projectile::WEAPON ?
-                   Configs::RANGE_WEAPONS[projectile_id] : Configs::RANGE_SKILLS[projectile_id]
-      $game_map.projectiles << Game_Projectile.new(start_x, start_y, finish_x, finish_y,
-                                                   target_x, target_y, projectile)
+      projectile = projectile_type == Enums::Projectile::WEAPON ? Configs::RANGE_WEAPONS[projectile_id] : Configs::RANGE_SKILLS[projectile_id]
+      $game_map.projectiles << Game_Projectile.new(start_x, start_y, finish_x, finish_y, target_x, target_y, projectile)
       SceneManager.scene.add_projectile($game_map.projectiles.last)
     end
   end
-
+  
   def handle_player_vitals(buffer)
     player_id = buffer.read_short
-    hp        = buffer.read_int
-    mp        = buffer.read_int
+    hp = buffer.read_int
+    mp = buffer.read_int
     if @player_id == player_id
       dif_hp = hp - $game_actors[1].hp
       dif_mp = mp - $game_actors[1].mp
@@ -688,7 +597,7 @@ module Handle_Data
       $game_actors[1].mp = mp
       $game_player.change_damage(dif_hp, dif_mp) unless dif_hp == 0 && dif_mp <= 0
       # Se a conexão estiver muito lenta e o personagem
-      # recuperar HP ou MP antes da Scene_Map ser carregada
+      #recuperar HP ou MP antes da Scene_Map ser carregada
       if $windows.has_key?(:hud)
         $windows[:hud].refresh
         $windows[:status].refresh if $windows[:status].visible
@@ -703,46 +612,45 @@ module Handle_Data
       end
     end
   end
-
+  
   def handle_player_exp(buffer)
     player_id = buffer.read_short
-    exp       = buffer.read_int
+    exp = buffer.read_int
     if @player_id == player_id
-      # Mostra apenas quando o herói ganha experiência e não quando morre e a perde
+      # Mostra apenas quando o herói ganha experiência e
+      #não quando morre e a perde
       $game_actors[1].result.exp = exp if exp > 0
       # Aumenta ou diminui experiência
       $game_actors[1].change_exp($game_actors[1].exp + exp, true)
       $windows[:hud].refresh
     else
-      $game_map.players[player_id].actor.result.exp = exp if exp > 0 &&
-        $game_map.in_screen?($game_map.players[player_id])
+      $game_map.players[player_id].actor.result.exp = exp if exp > 0 && $game_map.in_screen?($game_map.players[player_id])
       $game_map.players[player_id].actor.change_exp($game_map.players[player_id].actor.exp + exp, false)
-      if $game_actors[1].party_members.has_key?(player_id) &&
-         $game_actors[1].party_members[player_id].actor.level != $game_map.players[player_id].actor.level
+      if $game_actors[1].party_members.has_key?(player_id) && $game_actors[1].party_members[player_id].actor.level != $game_map.players[player_id].actor.level
         $game_actors[1].party_members[player_id] = $game_map.players[player_id]
         $windows[:party].refresh
       end
     end
   end
-
+  
   def handle_player_state(buffer)
-    state_id  = buffer.read_short
+    state_id = buffer.read_short
     add_state = buffer.read_boolean
     if add_state
       $game_actors[1].add_state(state_id)
     else
       $game_actors[1].remove_state(state_id)
     end
-    # Se um evento comum em processo paralelo mudar o estado do jogador
-    # antes da Scene_Map ser carregada
+    # Se um evento comum em processo paralelo mudar o
+    #estado do jogador antes da Scene_Map ser carregada
     if $windows.has_key?(:states)
       $windows[:states].visible = $game_actors[1].result.status_affected?
       $windows[:states].refresh if $windows[:states].visible
     end
   end
-
+  
   def handle_player_buff(buffer)
-    param_id   = buffer.read_byte
+    param_id = buffer.read_byte
     buff_level = buffer.read_short
     if buff_level == 1
       $game_actors[1].add_buff(param_id, 0)
@@ -751,8 +659,8 @@ module Handle_Data
     else
       $game_actors[1].remove_buff(param_id)
     end
-    # Se um evento comum em processo paralelo mudar buff do jogador
-    # antes da Scene_Map ser carregada
+    # Se um evento comum em processo paralelo mudar
+    #buff do jogador antes da Scene_Map ser carregada
     if $windows.has_key?(:states)
       $windows[:states].visible = $game_actors[1].result.status_affected?
       $windows[:states].refresh if $windows[:states].visible
@@ -761,37 +669,36 @@ module Handle_Data
       $windows[:status].refresh if $windows[:status].visible
     end
   end
-
+  
   def handle_player_item(buffer)
-    item_id    = buffer.read_short
-    kind       = buffer.read_byte
-    amount     = buffer.read_short
+    item_id = buffer.read_short
+    kind = buffer.read_byte
+    amount = buffer.read_short
     drop_sound = buffer.read_boolean
-    popup      = buffer.read_boolean
+    popup = buffer.read_boolean
     item = $game_party.item_object(kind, item_id)
     $game_party.gain_item(item, amount)
     $windows[:item].refresh if $windows[:item].visible
     $windows[:hotbar].refresh if $game_actors[1].hotbar.include?(item)
-    $windows[:popup].show(item.name, item.icon_index, amount,
-                          item.is_a?(RPG::Item) && item.key_item?) if popup
+    $windows[:popup].show(item.name, item.icon_index, amount, item.is_a?(RPG::Item) && item.key_item?) if popup
     Sound.play_ok if drop_sound
   end
-
+  
   def handle_player_gold(buffer)
-    amount     = buffer.read_int
+    amount = buffer.read_int
     shop_sound = buffer.read_boolean
-    popup      = buffer.read_boolean
+    popup = buffer.read_boolean
     $game_party.gain_gold(amount)
     $windows[:item].refresh_gold_bar if $windows[:item].visible
     $windows[:shop].refresh if $windows[:shop].visible
     $windows[:popup].show(Vocab.currency_unit, Configs::GOLD_ICON, amount) if popup
     Sound.play_shop if shop_sound
   end
-
+  
   def handle_player_param(buffer)
     player_id = buffer.read_short
-    param_id  = buffer.read_byte
-    value     = buffer.read_short
+    param_id = buffer.read_byte
+    value = buffer.read_short
     if @player_id == player_id
       $game_actors[1].add_param(param_id, value)
       $windows[:status].refresh if $windows[:status].visible
@@ -806,15 +713,16 @@ module Handle_Data
       end
     end
   end
-
+  
   def handle_player_equip(buffer)
     player_id = buffer.read_short
-    slot_id   = buffer.read_byte
-    item_id   = buffer.read_short
+    slot_id = buffer.read_byte
+    item_id = buffer.read_short
     if @player_id == player_id
       $game_actors[1].change_equip_by_id(slot_id, item_id)
       $windows[:equip].refresh
-      # Se o equipamento que aumentava HP e/ou MP máximo foi removido
+      # Se o equipamento que aumentava HP e/ou MP
+      #máximo foi removido
       $windows[:hud].refresh
       # Se alterou algum parâmetro
       $windows[:status].refresh if $windows[:status].visible
@@ -831,10 +739,10 @@ module Handle_Data
       end
     end
   end
-
+  
   def handle_player_skill(buffer)
     skill_id = buffer.read_short
-    learn    = buffer.read_boolean
+    learn = buffer.read_boolean
     if learn
       $game_actors[1].learn_skill(skill_id)
     else
@@ -844,30 +752,30 @@ module Handle_Data
     # Se ganhou ou perdeu alguma habilidade que estava na hotbar
     $windows[:hotbar].refresh if $game_actors[1].hotbar.include?($data_skills[skill_id])
   end
-
+  
   def handle_player_class(buffer)
     class_id = buffer.read_short
     $game_actors[1].change_class(class_id, true)
     $windows[:status].refresh if $windows[:status].visible
   end
-
+  
   def handle_player_sex(buffer)
     player_id = buffer.read_short
-    sex       = buffer.read_byte
-    player    = @player_id == player_id ? $game_actors[1] : $game_map.players[player_id].actor
+    sex = buffer.read_byte
+    player = @player_id == player_id ? $game_actors[1] : $game_map.players[player_id].actor
     player.sex = sex
     if $game_actors[1].party_members.has_key?(player_id)
       $game_actors[1].party_members[player_id] = $game_map.players[player_id]
       $windows[:party].refresh
     end
   end
-
+  
   def handle_player_graphic(buffer)
-    player_id      = buffer.read_short
+    player_id = buffer.read_short
     character_name = buffer.read_string
     character_index = buffer.read_byte
-    face_name      = buffer.read_string
-    face_index     = buffer.read_byte
+    face_name = buffer.read_string
+    face_index = buffer.read_byte
     if @player_id == player_id
       $game_actors[1].set_graphic(character_name, character_index, face_name, face_index)
       $game_player.refresh
@@ -881,43 +789,41 @@ module Handle_Data
       end
     end
   end
-
+  
   def handle_player_points(buffer)
     $game_actors[1].points = buffer.read_short
     $windows[:status].refresh if $windows[:status].visible
   end
-
+  
   def handle_player_hotbar(buffer)
-    id      = buffer.read_byte
-    type    = buffer.read_byte
+    id = buffer.read_byte
+    type = buffer.read_byte
     item_id = buffer.read_short
     $game_actors[1].change_hotbar(id, type, item_id)
     $windows[:hotbar].refresh
   end
-
+  
   def handle_target(buffer)
     target_type = buffer.read_byte
-    target_id   = buffer.read_short
-    $game_player.target = target_type == Enums::Target::PLAYER ?
-                          $game_map.players[target_id] : $game_map.events[target_id]
-    # Se o inimigo não é um boss, que já tem uma HUD própria fixada no centro da tela
-    $windows[:target_hud].visible = ($game_player.has_target? &&
-                                     $game_player.target.actor? &&
-                                     !$game_player.target.boss?)
+    target_id = buffer.read_short
+    $game_player.target = target_type == Enums::Target::PLAYER ? $game_map.players[target_id] :$game_map.events[target_id]
+    # Se o inimigo não é um boss, que já tem uma HUD
+    #própria fixada no centro da tela
+    $windows[:target_hud].visible = ($game_player.has_target? && $game_player.target.actor? && !$game_player.target.boss?)
     $windows[:target_hud].refresh if $windows[:target_hud].visible
   end
-
+  
   def handle_transfer_player(buffer)
     map_id = buffer.read_short
-    x      = buffer.read_short
-    y      = buffer.read_short
-    d      = buffer.read_byte
+    x = buffer.read_short
+    y = buffer.read_short
+    d = buffer.read_byte
     $game_player.reserve_transfer(map_id, x, y, d)
     $game_player.perform_transfer
   end
-
+  
   def handle_open_friends(buffer)
-    size           = buffer.read_byte
+    size = buffer.read_byte
     online_friends = []
     size.times { online_friends << buffer.read_string }
     offline_friends = $game_actors[1].friends - online_friends
@@ -925,7 +831,7 @@ module Handle_Data
     $game_actors[1].online_friends_size = size
     $windows[:friend].show
   end
-
+  
   def handle_add_friend(buffer)
     name = buffer.read_string
     $game_actors[1].friends.insert($game_actors[1].online_friends_size, name)
@@ -933,47 +839,48 @@ module Handle_Data
     $windows[:friend].refresh if $windows[:friend].visible
     $windows[:chat].write_message("#{name} #{Vocab::FriendAdded}", Configs::SUCCESS_COLOR)
   end
-
+  
   def handle_remove_friend(buffer)
     index = buffer.read_byte
     $game_actors[1].friends.delete_at(index)
     $game_actors[1].online_friends_size -= 1 if index <= $game_actors[1].online_friends_size - 1
     $windows[:friend].refresh
   end
-
+  
   def handle_open_create_guild
     $windows[:create_guild].show
   end
-
+  
   def handle_open_guild(buffer)
-    $game_guild.leader      = buffer.read_string
-    $game_guild.notice      = buffer.read_string
-    $game_guild.flag        = []
+    $game_guild.leader = buffer.read_string
+    $game_guild.notice = buffer.read_string
+    $game_guild.flag = []
     64.times { $game_guild.flag << buffer.read_byte }
-    members_size            = buffer.read_byte
+    members_size = buffer.read_byte
     $game_guild.online_size = buffer.read_byte
-    $game_guild.members     = []
+    $game_guild.members = []
     members_size.times { $game_guild.members << buffer.read_string }
     $windows[:guild].show
   end
-
+  
   def handle_guild_leader(buffer)
     $game_guild.leader = buffer.read_string
     $windows[:guild].refresh
     $windows[:guild].disable_buttons
   end
-
+  
   def handle_guild_notice(buffer)
     $game_guild.notice = buffer.read_string
     $windows[:guild].refresh
   end
-
+  
   def handle_guild_name(buffer)
-    name      = buffer.read_string
+    name = buffer.read_string
     player_id = buffer.read_short
     if @player_id == player_id
       $game_actors[1].guild_name = name
-      # Se o membro foi expulso da guilda ou ela foi deletada e estava com a janela aberta
+      # Se o membro foi expulso da guilda ou ela foi
+      #deletada e estava com a janela aberta
       if name.empty?
         $windows[:guild].hide
         $windows[:guild].disable_buttons
@@ -982,48 +889,40 @@ module Handle_Data
       $game_map.players[player_id].actor.guild_name = name
     end
   end
-
+  
   def handle_remove_guild_member(buffer)
     player_name = buffer.read_string
     $game_guild.members.delete(player_name)
     $windows[:guild].refresh
   end
-
+  
   def handle_join_party(buffer)
     player_id = buffer.read_short
     $game_actors[1].party_members[player_id] = Game_NetPlayer.new(player_id)
     $game_actors[1].party_members[player_id].actor.name = buffer.read_string
     $game_actors[1].party_members[player_id].actor.set_graphic(buffer.read_string, buffer.read_byte, '', 0)
     $game_actors[1].party_members[player_id].actor.sex = buffer.read_byte
-    Configs::MAX_EQUIPS.times do |slot_id|
-      $game_actors[1].party_members[player_id].actor.change_equip_by_id(slot_id, buffer.read_short)
-    end
+    Configs::MAX_EQUIPS.times { |slot_id| $game_actors[1].party_members[player_id].actor.change_equip_by_id(slot_id, buffer.read_short) }
     $game_actors[1].party_members[player_id].actor.add_param(0, buffer.read_int)
     $game_actors[1].party_members[player_id].actor.hp = buffer.read_int
     $game_actors[1].party_members[player_id].actor.change_exp(buffer.read_int, false)
-    $windows[:chat].write_message(
-      "#{$game_actors[1].party_members[player_id].actor.name} #{Vocab::PartyMemberJoined}",
-      Configs::SUCCESS_COLOR
-    )
+    $windows[:chat].write_message("#{$game_actors[1].party_members[player_id].actor.name} #{Vocab::PartyMemberJoined}", Configs::SUCCESS_COLOR)
     $windows[:party].show
   end
-
+  
   def handle_leave_party(buffer)
     player_id = buffer.read_short
-    $windows[:chat].write_message(
-      "#{$game_actors[1].party_members[player_id].actor.name} #{Vocab::PartyMemberLeave}",
-      Configs::ERROR_COLOR
-    )
+    $windows[:chat].write_message("#{$game_actors[1].party_members[player_id].actor.name} #{Vocab::PartyMemberLeave}", Configs::ERROR_COLOR)
     $game_actors[1].party_members.delete(player_id)
     $windows[:party].refresh
   end
-
+  
   def handle_dissolve_party
     $windows[:chat].write_message(Vocab::DissolvedParty, Configs::ERROR_COLOR)
     $game_actors[1].party_members.clear
     $windows[:party].hide
   end
-
+  
   def handle_open_bank(buffer)
     $game_bank.gain_gold(buffer.read_int)
     size = buffer.read_byte
@@ -1034,23 +933,23 @@ module Handle_Data
     size.times { $game_bank.gain_item($data_armors[buffer.read_short], buffer.read_short) }
     $game_bank.open
   end
-
+  
   def handle_bank_item(buffer)
     item_id = buffer.read_short
-    kind    = buffer.read_byte
-    amount  = buffer.read_short
-    item    = $game_party.item_object(kind, item_id)
+    kind = buffer.read_byte
+    amount = buffer.read_short
+    item = $game_party.item_object(kind, item_id)
     $game_bank.gain_item(item, amount)
     $windows[:bank].tab_page.index = kind - 1
     $windows[:bank].refresh
   end
-
+  
   def handle_bank_gold(buffer)
     amount = buffer.read_int
     $game_bank.gain_gold(amount)
     $windows[:bank].refresh_gold_bar
   end
-
+  
   def handle_close_window
     if $windows[:bank].visible
       $game_bank.close
@@ -1065,12 +964,12 @@ module Handle_Data
     $windows[:teleportinfo].hide
     $windows[:create_guild].hide
   end
-
+  
   def handle_open_shop(buffer)
     event_id = buffer.read_short
-    index    = buffer.read_short
-    list     = $game_map.events[event_id].list
-    goods    = [list[index].parameters]
+    index = buffer.read_short
+    list = $game_map.events[event_id].list
+    goods = [list[index].parameters]
     while list[index + 1].code == 605
       index += 1
       goods << list[index].parameters
@@ -1078,151 +977,161 @@ module Handle_Data
     $windows[:shop].show(goods, goods[0][4])
     $windows[:equip].show
   end
-
+  
   def handle_open_teleport(buffer)
     teleport_id = buffer.read_byte
     $windows[:teleport].show(teleport_id)
   end
-
+  
   def handle_event_command(buffer)
-    event_id      = buffer.read_short
+    event_id = buffer.read_short
     initial_index = buffer.read_short
-    final_index   = buffer.read_short
+    final_index = buffer.read_short
     # Se é um evento com condição de início processo paralelo,
-    # os comandos são executados no interpretador do próprio
-    # evento, que não trava o movimento do jogador
+    #os comandos são executados no interpretador do próprio
+    #evento, que não trava o movimento do jogador
     if event_id > 0 && $game_map.events[event_id].trigger == 4
-      $game_map.events[event_id].interpreter.setup(
-        $game_map.events[event_id].list[initial_index..final_index] +
-        [$game_map.events[event_id].list.last], event_id
-      )
+      $game_map.events[event_id].interpreter.setup($game_map.events[event_id].list[initial_index..final_index] + [$game_map.events[event_id].list.last], event_id)
     elsif event_id > 0
-      $game_map.interpreter.setup(
-        $game_map.events[event_id].list[initial_index..final_index] +
-        [$game_map.events[event_id].list.last], event_id
-      )
+      $game_map.interpreter.setup($game_map.events[event_id].list[initial_index..final_index] + [$game_map.events[event_id].list.last], event_id)
     else
-      $game_map.interpreter.setup(
-        $data_common_events[event_id.abs].list[initial_index..final_index] +
-        [$data_common_events[event_id.abs].list.last], event_id
-      )
+      $game_map.interpreter.setup($data_common_events[event_id.abs].list[initial_index..final_index] + [$data_common_events[event_id.abs].list.last], event_id)
     end
   end
-
+  
   def handle_request(buffer)
-    type        = buffer.read_byte
-    player_id   = buffer.read_short
+    type = buffer.read_byte
     player_name = buffer.read_string
-    $game_player.request_id   = player_id
-    $game_player.request_type = type
-    $windows[:request].show(type, player_id, player_name)
+    guild_name = buffer.read_string
+    case type
+    when Enums::Request::TRADE
+      $windows[:choice].show("#{player_name} #{Vocab::TradeRequest}", Enums::Choice::REQUEST)
+    when Enums::Request::FINISH_TRADE
+      $windows[:choice].show("#{player_name} #{Vocab::TradeComplete}", Enums::Choice::FINISH_TRADE)
+    when Enums::Request::PARTY
+      $windows[:choice].show("#{player_name} #{Vocab::PartyRequest}", Enums::Choice::REQUEST)
+    when Enums::Request::FRIEND
+      $windows[:choice].show("#{player_name} #{Vocab::FriendRequest}", Enums::Choice::REQUEST)
+    when Enums::Request::GUILD
+      $windows[:choice].show("#{player_name} #{sprintf(Vocab::GuildRequest, guild_name)}", Enums::Choice::REQUEST)
+    end
   end
-
+  
   def handle_accept_request(buffer)
     type = buffer.read_byte
     case type
     when Enums::Request::TRADE
-      $windows[:my_trade].show
-      $windows[:their_trade].show
-    when Enums::Request::PARTY
-      # Party foi aceita — nada especial a fazer no cliente
+      $game_trade.open
+    when Enums::Request::FINISH_TRADE
+      $game_trade.close
     end
   end
-
+  
   def handle_trade_item(buffer)
     player_id = buffer.read_short
-    item_id   = buffer.read_short
-    kind      = buffer.read_byte
-    amount    = buffer.read_short
+    item_id = buffer.read_short
+    kind = buffer.read_byte
+    amount = buffer.read_short
     item = $game_party.item_object(kind, item_id)
-    if player_id == @player_id
-      $game_trade.my_items[item_id] = { kind: kind, amount: amount }
+    if @player_id == player_id
+      $game_trade.gain_my_item(item, amount)
+      $windows[:item].refresh
       $windows[:my_trade].refresh
     else
-      $game_trade.their_items[item_id] = { kind: kind, amount: amount }
-      $windows[:their_trade].refresh
+      $game_trade.gain_his_item(item, amount)
+      $windows[:his_trade].refresh
     end
+    $windows[:choice].hide if $windows[:choice].finish_trade?
   end
-
+  
   def handle_trade_gold(buffer)
     player_id = buffer.read_short
-    amount    = buffer.read_int
-    if player_id == @player_id
-      $game_trade.my_gold = amount
-      $windows[:my_trade].refresh_gold
+    amount = buffer.read_int
+    if @player_id == player_id
+      $game_trade.gain_my_gold(amount)
+      $windows[:item].refresh_gold_bar
+      $windows[:my_trade].refresh_gold_bar
     else
-      $game_trade.their_gold = amount
-      $windows[:their_trade].refresh_gold
+      $game_trade.gain_his_gold(amount)
+      $windows[:his_trade].refresh_gold_bar
     end
+    $windows[:choice].hide if $windows[:choice].finish_trade?
   end
-
+  
   def handle_add_quest(buffer)
-    quest_id        = buffer.read_short
-    name            = buffer.read_string
-    description     = buffer.read_string
-    objectives_size = buffer.read_short
-    objectives      = []
-    objectives_size.times do
-      obj = {}
-      obj[:type]    = buffer.read_byte
-      obj[:id]      = buffer.read_short
-      obj[:amount]  = buffer.read_short
-      obj[:current] = buffer.read_short
-      objectives << obj
-    end
-    $game_player.quests[quest_id] = { name: name, description: description, objectives: objectives }
+    quest_id = buffer.read_byte
+    $game_actors[1].quests[quest_id] = Game_Quest.new(quest_id)
+    $windows[:chat].write_message("#{Vocab::StartQuest} #{$game_actors[1].quests[quest_id].name}", Configs::SUCCESS_COLOR)
     $windows[:quest].refresh if $windows[:quest].visible
+    $game_map.need_refresh = true
   end
-
+  
   def handle_finish_quest(buffer)
-    quest_id = buffer.read_short
-    $game_actors[1].quests.delete(quest_id)
+    quest_id = buffer.read_byte
+    $game_actors[1].quests[quest_id].state = Enums::Quest::FINISHED
+    $windows[:chat].write_message("#{Vocab::FinishQuest} #{$game_actors[1].quests[quest_id].name}", Configs::SUCCESS_COLOR)
+    if $game_actors[1].quests[quest_id].repeat?
+      $windows[:quest_info].hide if $windows[:quest_info].quest == $game_actors[1].quests[quest_id]
+      $game_actors[1].quests.delete(quest_id)
+    end
     $windows[:quest].refresh if $windows[:quest].visible
   end
-
+  
   def handle_vip_days(buffer)
-    @vip_days = buffer.read_short
+    @vip_time = buffer.read_time
   end
-
+  
   def handle_logout(buffer)
+    handle_actor(buffer)
     @in_game = false
-    SceneManager.goto(Scene_Login)
+    RPG::BGM.stop
+    RPG::BGS.stop
+    RPG::ME.stop
+    $data_system.title_bgm.play
+    SceneManager.goto(Scene_Character)
   end
-
+  
   def handle_admin_command(buffer)
-    command   = buffer.read_byte
-    alert_msg = buffer.read_string
-    $windows[:chat].write_message(alert_msg, Configs::ERROR_COLOR) unless alert_msg.empty?
+    command = buffer.read_byte
+    message = buffer.read_string
+    case command
+    when Enums::Command::BAN_IP
+      $alert_msg = Vocab::IPBanned
+    when Enums::Command::BAN_ACC
+      $alert_msg = Vocab::AccBanned
+    when Enums::Command::KICK
+      $alert_msg = Vocab::Kicked
+    when Enums::Command::MSG
+      $admin_msg = message
+    end
   end
-
+  
   def handle_switch(buffer)
     switch_id = buffer.read_short
-    value     = buffer.read_boolean
-    # Atribui diretamente ao array interno para não acionar o envio de volta ao servidor
-    $game_switches.data[switch_id - 1] = value
+    value = buffer.read_boolean
+    # Muda o switche e chama o need_refresh
+    $game_switches[switch_id] = value
   end
-
+  
   def handle_variable(buffer)
     variable_id = buffer.read_short
-    value       = buffer.read_int
-    # Atribui diretamente ao array interno para não acionar o envio de volta ao servidor
-    $game_variables.data[variable_id - 1] = value
+    value = buffer.read_short
+    $game_variables[variable_id] = value
   end
-
+  
   def handle_player_self_switch(buffer)
-    key   = buffer.read_string
+    map_id = buffer.read_short
+    event_id = buffer.read_short
+    ch = buffer.read_string
     value = buffer.read_boolean
-    # Atribui diretamente ao hash interno para não acionar o envio de volta ao servidor
-    $game_self_switches.data[key] = value
+    key = [map_id, event_id, ch]
+    $game_self_switches[key] = value
   end
-
+  
   def handle_global_switches(buffer)
-    size = buffer.read_short
-    size.times do
-      switch_id = buffer.read_short
-      value     = buffer.read_boolean
-      $game_switches.data[switch_id - 1] = value
+    (Configs::MAX_PLAYER_SWITCHES...Configs::MAX_PLAYER_SWITCHES + 100).each do |switch_id|
+      $game_switches[switch_id + 1] = buffer.read_boolean
     end
   end
-
+  
 end
