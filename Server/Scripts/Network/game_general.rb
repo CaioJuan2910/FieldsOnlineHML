@@ -70,9 +70,9 @@ module Game_General
 		return true unless client.connected?
 		return true if client.logged?
 		return true if user.size < Configs::MIN_CHARACTERS || user.size > Configs::MAX_CHARACTERS
-		# A quantidade máxima de caracteres é 32, pois a senha é criptografada no formato
-		#de hash MD5, com valor fixo de hash de 128 bits expresso em 32 caracteres
-		return true if pass.size < Configs::MIN_CHARACTERS || pass.size > 32
+		# A quantidade máxima de caracteres é 64, pois a senha é criptografada no formato
+		#de hash SHA-256, com valor fixo de hash de 256 bits expresso em 64 caracteres
+		return true if pass.size < Configs::MIN_CHARACTERS || pass.size > 64
 		return true if invalid_user?(user)
 		return true if invalid_email?(email)
 		return true if email.size > 40

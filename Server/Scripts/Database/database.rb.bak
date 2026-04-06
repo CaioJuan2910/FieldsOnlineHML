@@ -1,5 +1,3 @@
-require 'digest'
-require 'securerandom'
 #==============================================================================
 # ** Database
 #------------------------------------------------------------------------------
@@ -22,10 +20,8 @@ module Database
 
 	def self.create_account(user, pass, email)
 		s_client = sql_client
-		salt = SecureRandom.hex(32)
-		hashed_pass = Digest::SHA256.hexdigest(pass + salt)
 		# Salva o valor 0 em cash para que esta coluna, cujo tipo é text, não fique vazia
-		s_client[:accounts].insert(:username => user, :password => hashed_pass, :salt => salt, :email => email, 
+		s_client[:accounts].insert(:username => user, :password => pass, :email => email, 
 		  :vip_time => Time.now.to_i, :creation_date => Time.now.to_i, :cash => 0)
 		account_id_db = s_client[:accounts].select(:id).where(:username => user).single_value
 		s_client[:banks].insert(:account_id => account_id_db)
@@ -34,11 +30,10 @@ module Database
 
 	def self.load_account(user)
 		s_client = sql_client
-		result = s_client[:accounts].where(:username => user)
+		result = s_client[:accounts].where(:username => user)#Sequel.ilike(:username, "#{user}%"))
 		account = Account.new
 		account.id_db = result.get(:id)
 		account.pass = result.get(:password)
-		account.salt = result.get(:salt)
 		account.group = result.get(:group)
 		account.vip_time = [Time.at(result.get(:vip_time)), Time.now].max
 		account.friends = s_client[:account_friends].select(:name).where(:account_id => account.id_db).map(:name)
@@ -49,13 +44,13 @@ module Database
 		account
 	end
 
-	def self.verify_password(pass, stored_hash, salt)
-		Digest::SHA256.hexdigest(pass + salt) == stored_hash
-	end
-
 	def self.save_account(client, s_client)
+		# Carrega vip_time da conta no banco de dados, pois o jogador pode ter
+		#comprado vip na loja do site durante o jogo
 		vip_time = [s_client[:accounts].select(:vip_time).where(:id => client.account_id_db).single_value, Time.now.to_i].max
 		s_client[:accounts].where(:id => client.account_id_db).update(:vip_time => vip_time + client.added_vip_time)
+		# Atualiza o tempo VIP e reseta o tempo VIP adicionado caso o jogador
+		#vá para seleção de personagens e depois volte para o jogo
 		client.vip_time = Time.at(vip_time) + client.added_vip_time
 		client.added_vip_time = 0
 		friends = s_client[:account_friends].select(:name).where(:account_id => client.account_id_db).map(:name)
@@ -69,7 +64,7 @@ module Database
 
 	def self.account_exist?(user)
 		s_client = sql_client
-		account = s_client[:accounts].select(:id).where(:username => user)
+		account = s_client[:accounts].select(:id).where(:username => user)#Sequel.ilike(:username, "#{user}%"))
 		s_client.disconnect
 		!account.empty?
 	end
@@ -105,6 +100,7 @@ module Database
 		actor.skills = []
 		$data_classes[class_id].learnings.each { |learning| actor.skills << learning.skill_id if learning.level <= actor.level }
 		actor.quests = {}
+		# Preenche a matriz com objetos mutáveis separados
 		actor.hotbar = Array.new(Configs::MAX_HOTBAR) { Hotbar.new(0, 0) }
 		actor.switches = Array.new(Configs::MAX_PLAYER_SWITCHES, false)
 		actor.variables = Array.new(Configs::MAX_PLAYER_VARIABLES, 0)
@@ -131,7 +127,8 @@ module Database
 
 	def self.load_some_player_data(name)
 		s_client = sql_client
-		actor = s_client[:actors].select(:account_id, :name).where(:name => name)
+		# O ilike pesquisa de maneira não sensível a maiúsculas e minúsculas no SQLite
+		actor = s_client[:actors].select(:account_id, :name).where(:name => name)#Sequel.ilike(:name, "#{name}%"))
 		s_client.disconnect
 		actor.map([:account_id, :name]).first
 	end
@@ -157,12 +154,15 @@ module Database
 		actor.revive_x = row[:revive_x]
 		actor.revive_y = row[:revive_y]
 		map_id = row[:map_id]
+		# Se o mapa existe
 		actor.map_id = $network.maps.has_key?(map_id) ? map_id : actor.revive_map_id
 		actor.x = row[:x]
 		actor.y = row[:y]
 		actor.direction = row[:direction]
 		actor.gold = row[:gold]
 		actor.skills = s_client[:actor_skills].select(:skill_id).where(:actor_id => actor.id_db).map(:skill_id)
+		# O SQLite não possui uma classe de armazenamento booleana separada, por isso
+		#os valores booleanos são armazenados como inteiros 1 (true) e 0 (false)
 		actor.switches = s_client[:actor_switches].select(:value).where(:actor_id => actor.id_db).map { |r| r[:value] == 1 }
 		actor.variables = s_client[:actor_variables].select(:value).where(:actor_id => actor.id_db).map(:value)
 		actor.self_switches = {}
@@ -180,6 +180,7 @@ module Database
 		actor.equips = []
 		equips = s_client[:actor_equips].select(:equip_id, :slot_id).where(:actor_id => actor.id_db)
 		equips.each do |row|
+			# Se o equipamento não existe no banco de dados
 			row[:equip_id] = 0 if row[:slot_id] == Enums::Equip::WEAPON && !$data_weapons[row[:equip_id]] ||
 			  row[:slot_id] > Enums::Equip::WEAPON && !$data_armors[row[:equip_id]]
 			actor.equips << row[:equip_id]
@@ -189,6 +190,7 @@ module Database
 	def self.load_player_items(actor, s_client)
 		actor.items = {}
 		items = s_client[:actor_items].select(:item_id, :amount).where(:actor_id => actor.id_db)
+		# Se o item existe no banco de dados
 		items.each { |row| actor.items[row[:item_id]] = row[:amount] if $data_items[row[:item_id]] }
 	end
 
@@ -287,6 +289,8 @@ module Database
 				s_client[:actor_quests].where(:actor_id => client.id_db, :quest_id => quest_id).update(:state => quest.state, :kills => quest.kills)
 				quests.delete(quest_id)
 			else
+				# Salva todos os dados da nova missão, inclusive state e kills, já que ela
+				#pode ter sido finalizada logo após ter sido iniciada pelo jogador
 				s_client[:actor_quests].insert(:actor_id => client.id_db, :quest_id => quest_id, :state => quest.state, :kills => quest.kills)
 			end
 		end
@@ -308,7 +312,10 @@ module Database
 
 	def self.player_exist?(name)
 		s_client = sql_client
-		player = s_client[:actors].select(:id).where(:name => name)
+		# Embora não seja necessário pesquisar o nome do jogador de maneira não sensível
+		#a maiúsculas e minúsculas na criação de personagem em razão do titleize, é
+		#necessário fazer uma busca case-insensitive ao banir jogador off-line
+		player = s_client[:actors].select(:id).where(:name => name)#Sequel.ilike(:name, "#{name}%"))
 		s_client.disconnect
 		!player.empty?
 	end
@@ -353,10 +360,14 @@ module Database
 	def self.load_distributor(client)
 		s_client = sql_client
 		items = s_client[:distributor].where(:account_id => client.account_id_db)
+		# Carrega os itens comprados na loja do site de uma tabela específica, em vez de
+		#carregá-los diretamente do banco, para evitar que o item seja deletado erroneamente
+		#após fechar o banco, quando o jogador comprar no site enquanto estiver com o banco aberto
 		items.each do |row|
 			container = client.bank_item_container(row[:kind])
 			container[row[:item_id]] = [client.bank_item_number(container[row[:item_id]]) + row[:amount], Configs::MAX_ITEMS].min
 		end
+		# Deleta do distribuidor do banco de dados todos os itens vinculados à conta
 		items.delete
 		s_client.disconnect
 	end
@@ -433,8 +444,9 @@ module Database
 
 	def self.unban(client, player_name)
 		s_client = sql_client
-		account_id_db = s_client[:actors].select(:account_id).where(:name => player_name).single_value
+		account_id_db = s_client[:actors].select(:account_id).where(:name => player_name).single_value#Sequel.ilike(:name, "#{player_name}%")).single_value
 		s_client.disconnect
+		# O ID da conta é diferente de nulo se o nome do jogador existe no banco de dados
 		if account_id_db
 			$network.ban_list.delete(account_id_db)
 			$network.global_chat_message("#{player_name} #{NotBanned}")

@@ -64,6 +64,7 @@ Guild = Struct.new(
 Account = Struct.new(
 	:id_db,
 	:pass,
+	:salt,
 	:group,
 	:vip_time,
 	:actors,
