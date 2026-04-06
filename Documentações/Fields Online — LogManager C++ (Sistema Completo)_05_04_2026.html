@@ -1,0 +1,2376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fields Online — LogManager</title>
+<style>
+  :root {
+    --base: #1e1e2e;
+    --mantle: #181825;
+    --crust: #11111b;
+    --surface0: #313244;
+    --surface1: #45475a;
+    --surface2: #585b70;
+    --overlay0: #6c7086;
+    --overlay1: #7f849c;
+    --overlay2: #9399b2;
+    --text: #cdd6f4;
+    --subtext0: #a6adc8;
+    --subtext1: #bac2de;
+    --lavender: #b4befe;
+    --blue: #89b4fa;
+    --sapphire: #74c7ec;
+    --sky: #89dceb;
+    --teal: #94e2d5;
+    --green: #a6e3a1;
+    --yellow: #f9e2af;
+    --peach: #fab387;
+    --maroon: #eba0ac;
+    --red: #f38ba8;
+    --mauve: #cba6f7;
+    --pink: #f5c2e7;
+    --flamingo: #f2cdcd;
+    --rosewater: #f5e0dc;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--base);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: linear-gradient(135deg, var(--crust) 0%, var(--mantle) 100%);
+    border-bottom: 1px solid var(--surface0);
+    padding: 24px 32px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .header-title-group {}
+
+  .header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--lavender);
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-title .icon {
+    font-size: 1.3rem;
+  }
+
+  .header-subtitle {
+    color: var(--subtext0);
+    font-size: 0.85rem;
+    margin-top: 4px;
+    letter-spacing: 0.01em;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border: 1px solid;
+  }
+
+  .badge-cpp    { background: rgba(137,180,250,0.12); color: var(--blue);   border-color: rgba(137,180,250,0.3); }
+  .badge-safe   { background: rgba(166,227,161,0.12); color: var(--green);  border-color: rgba(166,227,161,0.3); }
+  .badge-async  { background: rgba(203,166,247,0.12); color: var(--mauve);  border-color: rgba(203,166,247,0.3); }
+  .badge-ffi    { background: rgba(249,226,175,0.12); color: var(--yellow); border-color: rgba(249,226,175,0.3); }
+
+  /* ── Tabs ── */
+  .tabs-wrapper {
+    background: var(--mantle);
+    border-bottom: 1px solid var(--surface0);
+    padding: 0 32px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface1) transparent;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    min-width: max-content;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--overlay1);
+    cursor: pointer;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    padding: 12px 18px 10px;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    position: relative;
+  }
+
+  .tab-btn:hover {
+    color: var(--text);
+    background: rgba(255,255,255,0.04);
+  }
+
+  .tab-btn.active {
+    color: var(--text);
+    border-bottom-color: var(--lavender);
+    background: rgba(180,190,254,0.06);
+  }
+
+  .tab-btn .tab-ext {
+    font-size: 0.7rem;
+    opacity: 0.7;
+  }
+
+  .tab-btn[data-tab="0"].active { border-bottom-color: var(--blue);   color: var(--blue);   }
+  .tab-btn[data-tab="1"].active { border-bottom-color: var(--sapphire); color: var(--sapphire); }
+  .tab-btn[data-tab="2"].active { border-bottom-color: var(--yellow);  color: var(--yellow); }
+  .tab-btn[data-tab="3"].active { border-bottom-color: var(--red);     color: var(--red);    }
+  .tab-btn[data-tab="4"].active { border-bottom-color: var(--green);   color: var(--green);  }
+
+  .tab-icon { font-size: 0.9rem; }
+
+  /* ── Content ── */
+  .content-area {
+    flex: 1;
+    padding: 24px 32px;
+    overflow: hidden;
+  }
+
+  .tab-panel {
+    display: none;
+    height: calc(100vh - 220px);
+    min-height: 400px;
+    flex-direction: column;
+  }
+
+  .tab-panel.active {
+    display: flex;
+  }
+
+  .code-header {
+    background: var(--crust);
+    border: 1px solid var(--surface0);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .code-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .traffic-lights {
+    display: flex;
+    gap: 6px;
+  }
+
+  .tl { width: 12px; height: 12px; border-radius: 50%; }
+  .tl-red    { background: #ff5f57; }
+  .tl-yellow { background: #febc2e; }
+  .tl-green  { background: #28c840; }
+
+  .code-filename {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.82rem;
+    color: var(--subtext1);
+  }
+
+  .code-lang-badge {
+    font-size: 0.68rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  .lang-cpp  { background: rgba(137,180,250,0.15); color: var(--blue);   }
+  .lang-ini  { background: rgba(249,226,175,0.15); color: var(--yellow); }
+  .lang-ruby { background: rgba(243,139,168,0.15); color: var(--red);    }
+
+  .copy-btn {
+    background: var(--surface0);
+    border: 1px solid var(--surface1);
+    border-radius: 6px;
+    color: var(--subtext1);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    transition: all 0.18s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .copy-btn:hover {
+    background: var(--surface1);
+    color: var(--text);
+    border-color: var(--overlay0);
+  }
+
+  .copy-btn.copied {
+    background: rgba(166,227,161,0.15);
+    border-color: rgba(166,227,161,0.4);
+    color: var(--green);
+  }
+
+  .code-box {
+    background: var(--crust);
+    border: 1px solid var(--surface0);
+    border-top: 1px solid var(--surface0);
+    border-radius: 0 0 8px 8px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface1) transparent;
+  }
+
+  .code-box::-webkit-scrollbar { width: 8px; height: 8px; }
+  .code-box::-webkit-scrollbar-track { background: var(--crust); }
+  .code-box::-webkit-scrollbar-thumb { background: var(--surface1); border-radius: 4px; }
+  .code-box::-webkit-scrollbar-thumb:hover { background: var(--surface2); }
+
+  pre {
+    padding: 20px 24px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+    font-size: 0.8rem;
+    line-height: 1.65;
+    tab-size: 4;
+    white-space: pre;
+    min-width: max-content;
+  }
+
+  /* ── Syntax Highlighting ── */
+  .c  { color: var(--overlay0); font-style: italic; }         /* comment */
+  .kw { color: var(--mauve); font-weight: 600; }              /* keyword */
+  .ty { color: var(--blue); }                                  /* type */
+  .st { color: var(--green); }                                 /* string */
+  .pp { color: var(--yellow); }                                /* preprocessor */
+  .nm { color: var(--peach); }                                 /* number */
+  .fn { color: var(--sapphire); }                              /* function */
+  .ns { color: var(--teal); }                                  /* namespace */
+  .op { color: var(--pink); }                                  /* operator */
+  .mc { color: var(--flamingo); }                              /* macro/constant */
+  .at { color: var(--lavender); }                              /* attribute/decorator */
+  .rb-kw  { color: var(--mauve); font-weight: 600; }          /* ruby keyword */
+  .rb-sym { color: var(--peach); }                             /* ruby symbol */
+  .rb-str { color: var(--green); }                             /* ruby string */
+  .rb-cm  { color: var(--overlay0); font-style: italic; }     /* ruby comment */
+  .rb-fn  { color: var(--sapphire); }                         /* ruby method */
+  .rb-nm  { color: var(--peach); }                             /* ruby number */
+  .rb-cn  { color: var(--yellow); }                            /* ruby constant */
+  .ini-cm { color: var(--overlay0); font-style: italic; }     /* ini comment */
+  .ini-k  { color: var(--blue); }                              /* ini key */
+  .ini-v  { color: var(--green); }                             /* ini value */
+  .ini-s  { color: var(--yellow); font-weight: 600; }         /* ini section */
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .header { padding: 16px 16px 14px; }
+    .tabs-wrapper { padding: 0 16px; }
+    .content-area { padding: 16px; }
+    .header-title { font-size: 1.2rem; }
+    .tab-btn { padding: 10px 12px 8px; font-size: 0.78rem; }
+    pre { font-size: 0.72rem; padding: 14px 16px; }
+    .tab-panel { height: calc(100vh - 240px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- Header -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<header class="header">
+  <div class="header-top">
+    <div class="header-title-group">
+      <div class="header-title">
+        <span class="icon">⚙️</span>
+        Fields Online — LogManager
+      </div>
+      <div class="header-subtitle">Sistema de Logging C++ + Ruby Integration &nbsp;·&nbsp; VXA-OS Server &nbsp;·&nbsp; 2026-04-05</div>
+    </div>
+    <div class="badges">
+      <span class="badge badge-cpp">C++17</span>
+      <span class="badge badge-safe">Thread-Safe</span>
+      <span class="badge badge-async">Async</span>
+      <span class="badge badge-ffi">Ruby FFI</span>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- Tabs -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="tabs-wrapper">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="0" onclick="switchTab(0)">
+      <span class="tab-icon">📄</span> LogManager<span class="tab-ext">.h</span>
+    </button>
+    <button class="tab-btn" data-tab="1" onclick="switchTab(1)">
+      <span class="tab-icon">⚙️</span> LogManager<span class="tab-ext">.cpp</span>
+    </button>
+    <button class="tab-btn" data-tab="2" onclick="switchTab(2)">
+      <span class="tab-icon">🔧</span> log_config<span class="tab-ext">.ini</span>
+    </button>
+    <button class="tab-btn" data-tab="3" onclick="switchTab(3)">
+      <span class="tab-icon">💎</span> log_integration<span class="tab-ext">.rb</span>
+    </button>
+    <button class="tab-btn" data-tab="4" onclick="switchTab(4)">
+      <span class="tab-icon">🧪</span> test_logmanager<span class="tab-ext">.cpp</span>
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- Content -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div class="content-area">
+
+  <!-- ── Tab 0: LogManager.h ── -->
+  <div class="tab-panel active" id="panel-0">
+    <div class="code-header">
+      <div class="code-header-left">
+        <div class="traffic-lights"><div class="tl tl-red"></div><div class="tl tl-yellow"></div><div class="tl tl-green"></div></div>
+        <span class="code-filename">LogManager.h</span>
+        <span class="code-lang-badge lang-cpp">C++17</span>
+      </div>
+      <button class="copy-btn" onclick="copyCode(0)"><span>📋</span> Copiar</button>
+    </div>
+    <div class="code-box">
+<pre id="code-0"><span class="c">/**
+ * @file    LogManager.h
+ * @brief   Sistema de logging thread-safe e assíncrono para Fields Online MMORPG
+ * @author  Fields Online Dev Team
+ * @version 2.0.0
+ * @date    2026-04-05
+ *
+ * @details Declara a classe LogManager — sistema central de registro de eventos
+ *          do servidor Fields Online. Suporta:
+ *            - Escrita assíncrona via buffer + worker thread dedicada
+ *            - Arquivos separados por categoria (auth, combat, trade, etc.)
+ *            - Arquivos separados por data (categoria_YYYY-MM-DD.log)
+ *            - Rotação automática por tamanho (padrão: 10 MB)
+ *            - Níveis de severidade: DEBUG, INFO, WARNING, ERROR, CRITICAL
+ *            - Saída colorida no console (códigos ANSI)
+ *            - Configuração via arquivo .ini (sem recompilar)
+ *
+ * @thread_safety  Totalmente thread-safe. Qualquer thread do servidor pode
+ *                 chamar os métodos Log*() simultaneamente sem race conditions.
+ *
+ * @performance    A escrita em disco ocorre em thread separada. O impacto nas
+ *                 threads do EventMachine (Ruby) é mínimo — apenas um enqueue
+ *                 com mutex de baixa contenção.
+ *
+ * @integration    Pode ser compilado como DLL/SO e chamado via Ruby FFI,
+ *                 ou usado diretamente em módulos C++ nativos do servidor.
+ *
+ * @example
+ * @code
+ *   auto&amp; log = FieldsOnline::LogManager::Instance();
+ *   log.Initialize("Logs/log_config.ini");
+ *
+ *   log.LogInfo("LOGIN",   "192.168.1.1",  "caio123",  "Guerreiro", "Login OK");
+ *   log.LogWarning("SPAM", "10.0.0.5",     "spammer",  "Mago",      "Mensagem repetida");
+ *   log.LogError("DB_FAIL","SERVER",        "system",   "",          "Falha ao salvar");
+ *   log.LogCritical("OOM", "SERVER",        "system",   "",          "Sem memória");
+ *
+ *   log.Shutdown(); // Obrigatório antes de encerrar
+ * @endcode
+ */</span>
+
+<span class="pp">#ifndef FIELDS_ONLINE_LOG_MANAGER_H</span>
+<span class="pp">#define FIELDS_ONLINE_LOG_MANAGER_H</span>
+
+<span class="pp">#include &lt;string&gt;</span>
+<span class="pp">#include &lt;fstream&gt;</span>
+<span class="pp">#include &lt;sstream&gt;</span>
+<span class="pp">#include &lt;mutex&gt;</span>
+<span class="pp">#include &lt;queue&gt;</span>
+<span class="pp">#include &lt;thread&gt;</span>
+<span class="pp">#include &lt;condition_variable&gt;</span>
+<span class="pp">#include &lt;atomic&gt;</span>
+<span class="pp">#include &lt;map&gt;</span>
+<span class="pp">#include &lt;chrono&gt;</span>
+<span class="pp">#include &lt;filesystem&gt;</span>
+<span class="pp">#include &lt;functional&gt;</span>
+
+<span class="kw">namespace</span> <span class="ns">FieldsOnline</span> {
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Constantes de configuração padrão
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="c">/** @brief Tamanho máximo de cada arquivo de log antes da rotação (10 MB). */</span>
+<span class="kw">constexpr</span> <span class="ty">size_t</span> <span class="mc">DEFAULT_MAX_FILE_SIZE_BYTES</span> = <span class="nm">10ULL</span> * <span class="nm">1024</span> * <span class="nm">1024</span>;
+
+<span class="c">/** @brief Número máximo de entradas no buffer assíncrono (evita OOM em picos). */</span>
+<span class="kw">constexpr</span> <span class="ty">size_t</span> <span class="mc">DEFAULT_BUFFER_MAX_ENTRIES</span>  = <span class="nm">10000</span>;
+
+<span class="c">/** @brief Intervalo padrão de flush do buffer para disco (ms). */</span>
+<span class="kw">constexpr</span> <span class="ty">int</span>    <span class="mc">DEFAULT_FLUSH_INTERVAL_MS</span>   = <span class="nm">500</span>;
+
+<span class="c">/** @brief Número máximo de arquivos de backup rotacionados por categoria. */</span>
+<span class="kw">constexpr</span> <span class="ty">int</span>    <span class="mc">DEFAULT_MAX_BACKUP_FILES</span>    = <span class="nm">10</span>;
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Enumerações
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="c">/**
+ * @enum  LogLevel
+ * @brief Níveis de severidade em ordem crescente de criticidade.
+ *
+ * @details Configurar min_level = WARNING faz o sistema ignorar DEBUG e INFO,
+ *          reduzindo I/O em produção sem perder eventos importantes.
+ */</span>
+<span class="kw">enum class</span> <span class="ty">LogLevel</span> : <span class="ty">int</span> {
+    <span class="mc">DEBUG</span>    = <span class="nm">0</span>,  <span class="c">///&lt; Detalhes de debug — desativar em produção</span>
+    <span class="mc">INFO</span>     = <span class="nm">1</span>,  <span class="c">///&lt; Operações normais do servidor</span>
+    <span class="mc">WARNING</span>  = <span class="nm">2</span>,  <span class="c">///&lt; Situações incomuns, não críticas</span>
+    <span class="mc">ERROR</span>    = <span class="nm">3</span>,  <span class="c">///&lt; Erros que afetam funcionalidade</span>
+    <span class="mc">CRITICAL</span> = <span class="nm">4</span>   <span class="c">///&lt; Falhas graves — flush imediato garantido</span>
+};
+
+<span class="c">/**
+ * @enum  LogCategory
+ * @brief Categorias de eventos do Fields Online.
+ *
+ * @details Cada categoria gera um arquivo separado, facilitando análise
+ *          direcionada sem varrer milhões de linhas de log misturadas.
+ */</span>
+<span class="kw">enum class</span> <span class="ty">LogCategory</span> : <span class="ty">int</span> {
+    <span class="mc">SYSTEM</span>    = <span class="nm">0</span>,  <span class="c">///&lt; Startup, shutdown, configuração</span>
+    <span class="mc">AUTH</span>      = <span class="nm">1</span>,  <span class="c">///&lt; Login, logout, registro, autenticação</span>
+    <span class="mc">COMBAT</span>    = <span class="nm">2</span>,  <span class="c">///&lt; Dano, morte, skills, PvP, PvE</span>
+    <span class="mc">TRADE</span>     = <span class="nm">3</span>,  <span class="c">///&lt; Trocas entre jogadores e NPCs</span>
+    <span class="mc">CHAT</span>      = <span class="nm">4</span>,  <span class="c">///&lt; Mensagens de chat, spam, filtro de palavrões</span>
+    <span class="mc">ADMIN</span>     = <span class="nm">5</span>,  <span class="c">///&lt; Comandos administrativos e de monitor</span>
+    <span class="mc">ERROR_LOG</span> = <span class="nm">6</span>,  <span class="c">///&lt; Erros e exceções do servidor (default para LogError)</span>
+    <span class="mc">NETWORK</span>   = <span class="nm">7</span>,  <span class="c">///&lt; Conexões, desconexões, pacotes inválidos</span>
+    <span class="mc">DATABASE</span>  = <span class="nm">8</span>,  <span class="c">///&lt; Operações no banco PostgreSQL/SQLite</span>
+    <span class="mc">SECURITY</span>  = <span class="nm">9</span>   <span class="c">///&lt; IP blocking, bans, tentativas de exploit</span>
+};
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Estruturas de dados
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="c">/**
+ * @struct LogEntry
+ * @brief  Representa uma única entrada de log com todos os metadados.
+ *
+ * @details Estrutura moveable copiada para o buffer assíncrono. O timestamp
+ *          é capturado no momento da chamada (não da escrita), garantindo
+ *          precisão temporal mesmo com buffer cheio.
+ */</span>
+<span class="kw">struct</span> <span class="ty">LogEntry</span> {
+    <span class="ty">std::chrono::system_clock::time_point</span> timestamp; <span class="c">///&lt; Momento exato do log (ms)</span>
+    <span class="ty">LogLevel</span>    level;      <span class="c">///&lt; Severidade</span>
+    <span class="ty">LogCategory</span> category;   <span class="c">///&lt; Categoria do evento</span>
+    <span class="ty">std::string</span> client_ip;  <span class="c">///&lt; IPv4/IPv6 do cliente, ou "SERVER" para interno</span>
+    <span class="ty">std::string</span> account;    <span class="c">///&lt; Nome da conta (vazio se desconhecido)</span>
+    <span class="ty">std::string</span> character;  <span class="c">///&lt; Nome do personagem (vazio se não logado)</span>
+    <span class="ty">std::string</span> event_type; <span class="c">///&lt; Tipo do evento (ex: "LOGIN_SUCCESS", "KILL")</span>
+    <span class="ty">std::string</span> message;    <span class="c">///&lt; Texto descritivo do evento</span>
+};
+
+<span class="c">/**
+ * @struct LogConfig
+ * @brief  Configurações carregadas do arquivo log_config.ini.
+ */</span>
+<span class="kw">struct</span> <span class="ty">LogConfig</span> {
+    <span class="ty">std::string</span> log_directory        = <span class="st">"Logs"</span>;
+    <span class="ty">LogLevel</span>    min_level            = <span class="ty">LogLevel</span>::<span class="mc">INFO</span>;
+    <span class="ty">size_t</span>      max_file_size_bytes  = <span class="mc">DEFAULT_MAX_FILE_SIZE_BYTES</span>;
+    <span class="ty">size_t</span>      buffer_max_entries   = <span class="mc">DEFAULT_BUFFER_MAX_ENTRIES</span>;
+    <span class="ty">int</span>         flush_interval_ms    = <span class="mc">DEFAULT_FLUSH_INTERVAL_MS</span>;
+    <span class="ty">int</span>         max_backup_files     = <span class="mc">DEFAULT_MAX_BACKUP_FILES</span>;
+    <span class="ty">bool</span>        console_output       = <span class="kw">true</span>;
+    <span class="ty">bool</span>        color_output         = <span class="kw">true</span>;
+    <span class="ty">std::map</span>&lt;<span class="ty">LogCategory</span>, <span class="ty">bool</span>&gt; category_enabled; <span class="c">///&lt; Categorias habilitadas</span>
+};
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Classe LogManager
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="c">/**
+ * @class  LogManager
+ * @brief  Sistema central de logging thread-safe com escrita assíncrona.
+ *
+ * @details Implementa o padrão Singleton (Meyer's) para instância global única.
+ *          Uma worker thread dedicada processa o buffer a cada flush_interval_ms,
+ *          separando completamente o I/O de disco do loop principal do servidor.
+ *
+ * @note   Hierarquia de operações no shutdown:
+ *         1. LogInfo de encerramento é enfileirado
+ *         2. running_ = false sinaliza a worker thread
+ *         3. worker_thread_.join() aguarda o processamento final
+ *         4. FlushBuffer() garante que nenhuma entrada seja perdida
+ *         5. Todos os ofstreams são fechados com flush implícito
+ *
+ * @warning Não destruir LogManager sem chamar Shutdown() antes —
+ *          entradas no buffer seriam perdidas.
+ */</span>
+<span class="kw">class</span> <span class="ty">LogManager</span> {
+<span class="kw">public</span>:
+    <span class="c">// ─────────────────────────────────────────────────────────────────────────
+    //  Singleton
+    // ─────────────────────────────────────────────────────────────────────────</span>
+
+    <span class="c">/**
+     * @brief  Retorna a instância única do LogManager (Meyer's Singleton).
+     * @return Referência para a instância global.
+     * @note   Thread-safe por garantia do C++11 (inicialização de static local).
+     */</span>
+    <span class="kw">static</span> <span class="ty">LogManager</span>&amp; <span class="fn">Instance</span>();
+
+    <span class="ty">LogManager</span>(<span class="kw">const</span> <span class="ty">LogManager</span>&amp;)            = <span class="kw">delete</span>;
+    <span class="ty">LogManager</span>&amp; <span class="kw">operator</span>=(<span class="kw">const</span> <span class="ty">LogManager</span>&amp;) = <span class="kw">delete</span>;
+    <span class="ty">LogManager</span>(<span class="ty">LogManager</span>&amp;&amp;)                 = <span class="kw">delete</span>;
+    <span class="ty">LogManager</span>&amp; <span class="kw">operator</span>=(<span class="ty">LogManager</span>&amp;&amp;)      = <span class="kw">delete</span>;
+
+    <span class="c">// ─────────────────────────────────────────────────────────────────────────
+    //  Ciclo de vida
+    // ─────────────────────────────────────────────────────────────────────────</span>
+
+    <span class="c">/**
+     * @brief  Inicializa o LogManager carregando configs e iniciando a worker thread.
+     * @param  config_path Caminho para log_config.ini.
+     * @return true se sucesso, false em falha crítica de inicialização.
+     * @note   Idempotente: chamadas subsequentes retornam true sem reinicializar.
+     */</span>
+    <span class="ty">bool</span> <span class="fn">Initialize</span>(<span class="kw">const</span> <span class="ty">std::string</span>&amp; config_path = <span class="st">"Logs/log_config.ini"</span>);
+
+    <span class="c">/**
+     * @brief  Finaliza o sistema de forma segura, sem perder entradas pendentes.
+     * @note   Integrar com SIGINT/SIGTERM do main.rb via Signal.trap.
+     */</span>
+    <span class="ty">void</span> <span class="fn">Shutdown</span>();
+
+    <span class="c">// ─────────────────────────────────────────────────────────────────────────
+    //  Métodos principais — API pública de logging
+    // ─────────────────────────────────────────────────────────────────────────</span>
+
+    <span class="ty">void</span> <span class="fn">LogInfo</span>(
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; event_type,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; message,
+        <span class="ty">LogCategory</span>        category = <span class="ty">LogCategory</span>::<span class="mc">SYSTEM</span>
+    );
+
+    <span class="ty">void</span> <span class="fn">LogWarning</span>(
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; event_type,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; message,
+        <span class="ty">LogCategory</span>        category = <span class="ty">LogCategory</span>::<span class="mc">SYSTEM</span>
+    );
+
+    <span class="ty">void</span> <span class="fn">LogError</span>(
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; event_type,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; message,
+        <span class="ty">LogCategory</span>        category = <span class="ty">LogCategory</span>::<span class="mc">ERROR_LOG</span>
+    );
+
+    <span class="c">/**
+     * @brief  Registra evento crítico — flush IMEDIATO garantido.
+     * @warning Operação levemente bloqueante (~50ms) por design de segurança.
+     */</span>
+    <span class="ty">void</span> <span class="fn">LogCritical</span>(
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; event_type,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; message,
+        <span class="ty">LogCategory</span>        category = <span class="ty">LogCategory</span>::<span class="mc">ERROR_LOG</span>
+    );
+
+    <span class="c">// ─────────────────────────────────────────────────────────────────────────
+    //  Métodos especializados para o Fields Online
+    // ─────────────────────────────────────────────────────────────────────────</span>
+
+    <span class="ty">void</span> <span class="fn">LogAuthEvent</span>(
+        <span class="ty">bool</span>               success,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; reason = <span class="st">""</span>
+    );
+
+    <span class="ty">void</span> <span class="fn">LogServerBatError</span>(
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; error_text,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; line_info = <span class="st">""</span>
+    );
+
+    <span class="ty">void</span> <span class="fn">LogCombatEvent</span>(
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; attacker_ip,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; attacker_name,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; target_name,
+        <span class="ty">int</span>                damage,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; skill_name = <span class="st">""</span>,
+        <span class="ty">bool</span>               killed     = <span class="kw">false</span>
+    );
+
+    <span class="ty">void</span> <span class="fn">LogTradeEvent</span>(
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; player1_ip,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; player1_name,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; player2_name,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; items_traded
+    );
+
+    <span class="ty">void</span> <span class="fn">LogSecurityEvent</span>(
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; reason,
+        <span class="kw">const</span> <span class="ty">std::string</span>&amp; action
+    );
+
+    <span class="c">// ─────────────────────────────────────────────────────────────────────────
+    //  Controle em runtime
+    // ─────────────────────────────────────────────────────────────────────────</span>
+
+    <span class="ty">void</span>   <span class="fn">ForceFlush</span>();
+    <span class="ty">size_t</span> <span class="fn">GetPendingEntries</span>() <span class="kw">const</span>;
+    <span class="ty">void</span>   <span class="fn">SetMinLevel</span>(<span class="ty">LogLevel</span> level);
+    <span class="ty">void</span>   <span class="fn">SetCategoryEnabled</span>(<span class="ty">LogCategory</span> category, <span class="ty">bool</span> enabled);
+
+<span class="kw">private</span>:
+    <span class="ty">LogManager</span>();
+    ~<span class="ty">LogManager</span>();
+
+    <span class="ty">void</span>        <span class="fn">EnqueueEntry</span>(<span class="ty">LogEntry</span> entry);
+    <span class="ty">void</span>        <span class="fn">WorkerThreadLoop</span>();
+    <span class="ty">void</span>        <span class="fn">FlushBuffer</span>();
+    <span class="ty">void</span>        <span class="fn">WriteEntry</span>(<span class="kw">const</span> <span class="ty">LogEntry</span>&amp; entry);
+    <span class="ty">std::string</span> <span class="fn">GetLogFilePath</span>(<span class="ty">LogCategory</span> category, <span class="kw">const</span> <span class="ty">std::string</span>&amp; date_str) <span class="kw">const</span>;
+    <span class="ty">void</span>        <span class="fn">RotateFileIfNeeded</span>(<span class="kw">const</span> <span class="ty">std::string</span>&amp; filepath);
+    <span class="ty">std::string</span> <span class="fn">FormatEntry</span>(<span class="kw">const</span> <span class="ty">LogEntry</span>&amp; entry) <span class="kw">const</span>;
+    <span class="ty">std::string</span> <span class="fn">FormatTimestamp</span>(<span class="kw">const</span> <span class="ty">std::chrono::system_clock::time_point</span>&amp; tp) <span class="kw">const</span>;
+    <span class="kw">static</span> <span class="ty">std::string</span> <span class="fn">LevelToString</span>(<span class="ty">LogLevel</span> level);
+    <span class="kw">static</span> <span class="ty">std::string</span> <span class="fn">CategoryToString</span>(<span class="ty">LogCategory</span> category);
+    <span class="kw">static</span> <span class="kw">const</span> <span class="ty">char</span>* <span class="fn">GetLevelColor</span>(<span class="ty">LogLevel</span> level);
+    <span class="ty">void</span>        <span class="fn">LoadConfig</span>(<span class="kw">const</span> <span class="ty">std::string</span>&amp; config_path);
+    <span class="ty">void</span>        <span class="fn">CreateLogDirectories</span>();
+
+    <span class="ty">LogConfig</span>                            config_;
+    <span class="ty">std::queue</span>&lt;<span class="ty">LogEntry</span>&gt;                 buffer_;
+    <span class="kw">mutable</span> <span class="ty">std::mutex</span>                   buffer_mutex_;
+    <span class="ty">std::condition_variable</span>              buffer_cv_;
+    <span class="ty">std::thread</span>                          worker_thread_;
+    <span class="ty">std::atomic</span>&lt;<span class="ty">bool</span>&gt;                    running_;
+    <span class="ty">std::atomic</span>&lt;<span class="ty">bool</span>&gt;                    initialized_;
+    <span class="ty">std::map</span>&lt;<span class="ty">std::string</span>, <span class="ty">std::ofstream</span>&gt; open_files_;
+    <span class="kw">mutable</span> <span class="ty">std::mutex</span>                   files_mutex_;
+
+    <span class="kw">static</span> <span class="kw">const</span> <span class="ty">std::map</span>&lt;<span class="ty">LogCategory</span>, <span class="ty">std::string</span>&gt; <span class="mc">CATEGORY_FILENAMES</span>;
+};
+
+} <span class="c">// namespace FieldsOnline</span>
+
+<span class="pp">#endif // FIELDS_ONLINE_LOG_MANAGER_H</span></pre>
+    </div>
+  </div>
+
+  <!-- ── Tab 1: LogManager.cpp ── -->
+  <div class="tab-panel" id="panel-1">
+    <div class="code-header">
+      <div class="code-header-left">
+        <div class="traffic-lights"><div class="tl tl-red"></div><div class="tl tl-yellow"></div><div class="tl tl-green"></div></div>
+        <span class="code-filename">LogManager.cpp</span>
+        <span class="code-lang-badge lang-cpp">C++17</span>
+      </div>
+      <button class="copy-btn" onclick="copyCode(1)"><span>📋</span> Copiar</button>
+    </div>
+    <div class="code-box">
+<pre id="code-1"><span class="c">/**
+ * @file    LogManager.cpp
+ * @brief   Implementação do sistema de logging para Fields Online MMORPG
+ * @author  Fields Online Dev Team
+ * @version 2.0.0
+ * @date    2026-04-05
+ *
+ * @compile g++ -std=c++17 -O2 -pthread -o LogManager.o -c LogManager.cpp
+ */</span>
+
+<span class="pp">#include "LogManager.h"</span>
+<span class="pp">#include &lt;iostream&gt;</span>
+<span class="pp">#include &lt;iomanip&gt;</span>
+<span class="pp">#include &lt;algorithm&gt;</span>
+<span class="pp">#include &lt;ctime&gt;</span>
+
+<span class="kw">namespace</span> <span class="ns">FieldsOnline</span> {
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Mapeamento estático de categorias → nomes de arquivo
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="kw">const</span> <span class="ty">std::map</span>&lt;<span class="ty">LogCategory</span>, <span class="ty">std::string</span>&gt; <span class="ty">LogManager</span>::<span class="mc">CATEGORY_FILENAMES</span> = {
+    { <span class="ty">LogCategory</span>::<span class="mc">SYSTEM</span>,    <span class="st">"system"</span>   },
+    { <span class="ty">LogCategory</span>::<span class="mc">AUTH</span>,      <span class="st">"auth"</span>     },
+    { <span class="ty">LogCategory</span>::<span class="mc">COMBAT</span>,    <span class="st">"combat"</span>   },
+    { <span class="ty">LogCategory</span>::<span class="mc">TRADE</span>,     <span class="st">"trade"</span>    },
+    { <span class="ty">LogCategory</span>::<span class="mc">CHAT</span>,      <span class="st">"chat"</span>     },
+    { <span class="ty">LogCategory</span>::<span class="mc">ADMIN</span>,     <span class="st">"admin"</span>    },
+    { <span class="ty">LogCategory</span>::<span class="mc">ERROR_LOG</span>, <span class="st">"error"</span>    },
+    { <span class="ty">LogCategory</span>::<span class="mc">NETWORK</span>,   <span class="st">"network"</span>  },
+    { <span class="ty">LogCategory</span>::<span class="mc">DATABASE</span>,  <span class="st">"database"</span> },
+    { <span class="ty">LogCategory</span>::<span class="mc">SECURITY</span>,  <span class="st">"security"</span> },
+};
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Singleton — construção e destruição
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">LogManager</span>&amp; <span class="ty">LogManager</span>::<span class="fn">Instance</span>() {
+    <span class="c">// Meyer's Singleton: thread-safe desde C++11 por garantia do padrão</span>
+    <span class="kw">static</span> <span class="ty">LogManager</span> instance;
+    <span class="kw">return</span> instance;
+}
+
+<span class="ty">LogManager</span>::<span class="fn">LogManager</span>()
+    : running_(<span class="kw">false</span>)
+    , initialized_(<span class="kw">false</span>) {
+    <span class="c">// Inicializa todas as categorias como habilitadas</span>
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt;= <span class="kw">static_cast</span>&lt;<span class="ty">int</span>&gt;(<span class="ty">LogCategory</span>::<span class="mc">SECURITY</span>); ++i) {
+        config_.category_enabled[<span class="kw">static_cast</span>&lt;<span class="ty">LogCategory</span>&gt;(i)] = <span class="kw">true</span>;
+    }
+}
+
+<span class="ty">LogManager</span>::~<span class="fn">LogManager</span>() {
+    <span class="kw">if</span> (running_) {
+        <span class="fn">Shutdown</span>();
+    }
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Ciclo de vida: Initialize e Shutdown
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">bool</span> <span class="ty">LogManager</span>::<span class="fn">Initialize</span>(<span class="kw">const</span> <span class="ty">std::string</span>&amp; config_path) {
+    <span class="kw">if</span> (initialized_) <span class="kw">return</span> <span class="kw">true</span>;
+
+    <span class="fn">LoadConfig</span>(config_path);
+    <span class="fn">CreateLogDirectories</span>();
+
+    running_     = <span class="kw">true</span>;
+    initialized_ = <span class="kw">true</span>;
+
+    worker_thread_ = <span class="ty">std::thread</span>(&amp;<span class="ty">LogManager</span>::<span class="fn">WorkerThreadLoop</span>, <span class="kw">this</span>);
+
+    <span class="fn">LogInfo</span>(<span class="st">"SERVER_START"</span>, <span class="st">"SERVER"</span>, <span class="st">"system"</span>, <span class="st">""</span>,
+            <span class="st">"=== Fields Online LogManager v2.0 Iniciado — Arquivo: "</span> + config_path + <span class="st">" ==="</span>);
+
+    <span class="kw">return</span> <span class="kw">true</span>;
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">Shutdown</span>() {
+    <span class="kw">if</span> (!running_) <span class="kw">return</span>;
+
+    <span class="fn">LogInfo</span>(<span class="st">"SERVER_STOP"</span>, <span class="st">"SERVER"</span>, <span class="st">"system"</span>, <span class="st">""</span>,
+            <span class="st">"=== Fields Online LogManager Encerrando — Flush final em andamento ==="</span>);
+
+    {
+        <span class="ty">std::lock_guard</span>&lt;<span class="ty">std::mutex</span>&gt; lock(buffer_mutex_);
+        running_ = <span class="kw">false</span>;
+    }
+    buffer_cv_.<span class="fn">notify_all</span>();
+
+    <span class="kw">if</span> (worker_thread_.<span class="fn">joinable</span>()) {
+        worker_thread_.<span class="fn">join</span>();
+    }
+
+    <span class="fn">FlushBuffer</span>();
+
+    {
+        <span class="ty">std::lock_guard</span>&lt;<span class="ty">std::mutex</span>&gt; lock(files_mutex_);
+        <span class="kw">for</span> (<span class="kw">auto</span>&amp; [key, file] : open_files_) {
+            <span class="kw">if</span> (file.<span class="fn">is_open</span>()) {
+                file.<span class="fn">flush</span>();
+                file.<span class="fn">close</span>();
+            }
+        }
+        open_files_.<span class="fn">clear</span>();
+    }
+
+    initialized_ = <span class="kw">false</span>;
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  API pública: métodos Log*()
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LogInfo</span>(
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; event_type, <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,    <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; message,    <span class="ty">LogCategory</span> category)
+{
+    <span class="kw">if</span> (<span class="kw">static_cast</span>&lt;<span class="ty">int</span>&gt;(config_.min_level) &gt; <span class="kw">static_cast</span>&lt;<span class="ty">int</span>&gt;(<span class="ty">LogLevel</span>::<span class="mc">INFO</span>)) <span class="kw">return</span>;
+    <span class="fn">EnqueueEntry</span>({ <span class="ty">std::chrono::system_clock</span>::<span class="fn">now</span>(), <span class="ty">LogLevel</span>::<span class="mc">INFO</span>,
+                   category, client_ip, account, character, event_type, message });
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LogWarning</span>(
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; event_type, <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,    <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; message,    <span class="ty">LogCategory</span> category)
+{
+    <span class="kw">if</span> (<span class="kw">static_cast</span>&lt;<span class="ty">int</span>&gt;(config_.min_level) &gt; <span class="kw">static_cast</span>&lt;<span class="ty">int</span>&gt;(<span class="ty">LogLevel</span>::<span class="mc">WARNING</span>)) <span class="kw">return</span>;
+    <span class="fn">EnqueueEntry</span>({ <span class="ty">std::chrono::system_clock</span>::<span class="fn">now</span>(), <span class="ty">LogLevel</span>::<span class="mc">WARNING</span>,
+                   category, client_ip, account, character, event_type, message });
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LogError</span>(
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; event_type, <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,    <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; message,    <span class="ty">LogCategory</span> category)
+{
+    <span class="kw">if</span> (<span class="kw">static_cast</span>&lt;<span class="ty">int</span>&gt;(config_.min_level) &gt; <span class="kw">static_cast</span>&lt;<span class="ty">int</span>&gt;(<span class="ty">LogLevel</span>::<span class="mc">ERROR</span>)) <span class="kw">return</span>;
+    <span class="fn">EnqueueEntry</span>({ <span class="ty">std::chrono::system_clock</span>::<span class="fn">now</span>(), <span class="ty">LogLevel</span>::<span class="mc">ERROR</span>,
+                   category, client_ip, account, character, event_type, message });
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LogCritical</span>(
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; event_type, <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,    <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; message,    <span class="ty">LogCategory</span> category)
+{
+    <span class="c">// CRITICAL ignora min_level — sempre registra</span>
+    <span class="fn">EnqueueEntry</span>({ <span class="ty">std::chrono::system_clock</span>::<span class="fn">now</span>(), <span class="ty">LogLevel</span>::<span class="mc">CRITICAL</span>,
+                   category, client_ip, account, character, event_type, message });
+
+    <span class="c">// Flush imediato: acorda worker thread e aguarda brevemente</span>
+    buffer_cv_.<span class="fn">notify_all</span>();
+    <span class="ty">std::this_thread</span>::<span class="fn">sleep_for</span>(<span class="ty">std::chrono::milliseconds</span>(<span class="nm">60</span>));
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Métodos especializados para o Fields Online
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LogAuthEvent</span>(
+    <span class="ty">bool</span> success, <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; account, <span class="kw">const</span> <span class="ty">std::string</span>&amp; character,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; reason)
+{
+    <span class="kw">if</span> (success) {
+        <span class="fn">LogInfo</span>(<span class="st">"LOGIN_SUCCESS"</span>, client_ip, account, character,
+                <span class="st">"Login realizado com sucesso"</span>, <span class="ty">LogCategory</span>::<span class="mc">AUTH</span>);
+    } <span class="kw">else</span> {
+        <span class="ty">std::string</span> msg = <span class="st">"Falha no login"</span>;
+        <span class="kw">if</span> (!reason.<span class="fn">empty</span>()) msg += <span class="st">" — Motivo: "</span> + reason;
+        <span class="fn">LogWarning</span>(<span class="st">"LOGIN_FAILED"</span>, client_ip, account, character,
+                   msg, <span class="ty">LogCategory</span>::<span class="mc">AUTH</span>);
+    }
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LogServerBatError</span>(
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; error_text, <span class="kw">const</span> <span class="ty">std::string</span>&amp; line_info)
+{
+    <span class="ty">std::string</span> msg = <span class="st">"[Server.bat/Ruby] "</span> + error_text;
+    <span class="kw">if</span> (!line_info.<span class="fn">empty</span>()) msg += <span class="st">" | Origem: "</span> + line_info;
+    <span class="fn">LogError</span>(<span class="st">"SERVER_BAT_ERROR"</span>, <span class="st">"SERVER"</span>, <span class="st">"system"</span>, <span class="st">""</span>, msg, <span class="ty">LogCategory</span>::<span class="mc">ERROR_LOG</span>);
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LogCombatEvent</span>(
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; attacker_ip,   <span class="kw">const</span> <span class="ty">std::string</span>&amp; attacker_name,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; target_name,   <span class="ty">int</span> damage,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; skill_name,    <span class="ty">bool</span> killed)
+{
+    <span class="ty">std::ostringstream</span> msg;
+    msg &lt;&lt; attacker_name &lt;&lt; <span class="st">" → "</span> &lt;&lt; target_name
+        &lt;&lt; <span class="st">" | Dano: "</span> &lt;&lt; damage;
+    <span class="kw">if</span> (!skill_name.<span class="fn">empty</span>()) msg &lt;&lt; <span class="st">" | Skill: "</span> &lt;&lt; skill_name;
+    <span class="kw">if</span> (killed)              msg &lt;&lt; <span class="st">" | *** KILL ***"</span>;
+
+    <span class="fn">LogInfo</span>(killed ? <span class="st">"PVP_KILL"</span> : <span class="st">"PVP_DAMAGE"</span>,
+            attacker_ip, attacker_name, attacker_name,
+            msg.<span class="fn">str</span>(), <span class="ty">LogCategory</span>::<span class="mc">COMBAT</span>);
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LogTradeEvent</span>(
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; player1_ip,   <span class="kw">const</span> <span class="ty">std::string</span>&amp; player1_name,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; player2_name, <span class="kw">const</span> <span class="ty">std::string</span>&amp; items_traded)
+{
+    <span class="ty">std::string</span> msg = player1_name + <span class="st">" ↔ "</span> + player2_name + <span class="st">" | "</span> + items_traded;
+    <span class="fn">LogInfo</span>(<span class="st">"TRADE_COMPLETED"</span>, player1_ip, player1_name, player1_name,
+            msg, <span class="ty">LogCategory</span>::<span class="mc">TRADE</span>);
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LogSecurityEvent</span>(
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; client_ip, <span class="kw">const</span> <span class="ty">std::string</span>&amp; account,
+    <span class="kw">const</span> <span class="ty">std::string</span>&amp; reason,    <span class="kw">const</span> <span class="ty">std::string</span>&amp; action)
+{
+    <span class="ty">std::string</span> msg = <span class="st">"Motivo: "</span> + reason + <span class="st">" | Ação: "</span> + action;
+    <span class="fn">LogWarning</span>(<span class="st">"SECURITY_EVENT"</span>, client_ip, account, <span class="st">""</span>,
+               msg, <span class="ty">LogCategory</span>::<span class="mc">SECURITY</span>);
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Controle em runtime
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">ForceFlush</span>() {
+    buffer_cv_.<span class="fn">notify_all</span>();
+    <span class="ty">std::this_thread</span>::<span class="fn">sleep_for</span>(
+        <span class="ty">std::chrono::milliseconds</span>(config_.flush_interval_ms + <span class="nm">100</span>));
+}
+
+<span class="ty">size_t</span> <span class="ty">LogManager</span>::<span class="fn">GetPendingEntries</span>() <span class="kw">const</span> {
+    <span class="ty">std::lock_guard</span>&lt;<span class="ty">std::mutex</span>&gt; lock(buffer_mutex_);
+    <span class="kw">return</span> buffer_.<span class="fn">size</span>();
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">SetMinLevel</span>(<span class="ty">LogLevel</span> level) {
+    config_.min_level = level;
+    <span class="fn">LogInfo</span>(<span class="st">"CONFIG_CHANGED"</span>, <span class="st">"SERVER"</span>, <span class="st">"system"</span>, <span class="st">""</span>,
+            <span class="st">"Nível mínimo de log alterado para: "</span> + <span class="fn">LevelToString</span>(level));
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">SetCategoryEnabled</span>(<span class="ty">LogCategory</span> category, <span class="ty">bool</span> enabled) {
+    config_.category_enabled[category] = enabled;
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Worker thread — processamento assíncrono
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">WorkerThreadLoop</span>() {
+    <span class="kw">while</span> (<span class="kw">true</span>) {
+        {
+            <span class="ty">std::unique_lock</span>&lt;<span class="ty">std::mutex</span>&gt; lock(buffer_mutex_);
+            buffer_cv_.<span class="fn">wait_for</span>(
+                lock,
+                <span class="ty">std::chrono::milliseconds</span>(config_.flush_interval_ms),
+                [<span class="kw">this</span>] { <span class="kw">return</span> !buffer_.<span class="fn">empty</span>() || !running_; }
+            );
+        }
+
+        <span class="fn">FlushBuffer</span>();
+
+        {
+            <span class="ty">std::lock_guard</span>&lt;<span class="ty">std::mutex</span>&gt; lock(buffer_mutex_);
+            <span class="kw">if</span> (!running_ &amp;&amp; buffer_.<span class="fn">empty</span>()) <span class="kw">break</span>;
+        }
+    }
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">FlushBuffer</span>() {
+    <span class="ty">std::queue</span>&lt;<span class="ty">LogEntry</span>&gt; local_queue;
+
+    {
+        <span class="ty">std::lock_guard</span>&lt;<span class="ty">std::mutex</span>&gt; lock(buffer_mutex_);
+        <span class="ty">std::swap</span>(local_queue, buffer_);
+    }
+
+    <span class="kw">while</span> (!local_queue.<span class="fn">empty</span>()) {
+        <span class="fn">WriteEntry</span>(local_queue.<span class="fn">front</span>());
+        local_queue.<span class="fn">pop</span>();
+    }
+
+    {
+        <span class="ty">std::lock_guard</span>&lt;<span class="ty">std::mutex</span>&gt; lock(files_mutex_);
+        <span class="kw">for</span> (<span class="kw">auto</span>&amp; [key, file] : open_files_) {
+            <span class="kw">if</span> (file.<span class="fn">is_open</span>()) file.<span class="fn">flush</span>();
+        }
+    }
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Escrita em arquivo
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">EnqueueEntry</span>(<span class="ty">LogEntry</span> entry) {
+    <span class="kw">if</span> (!initialized_) <span class="kw">return</span>;
+
+    <span class="kw">auto</span> it = config_.category_enabled.<span class="fn">find</span>(entry.category);
+    <span class="kw">if</span> (it != config_.category_enabled.<span class="fn">end</span>() &amp;&amp; !it-&gt;second) <span class="kw">return</span>;
+
+    {
+        <span class="ty">std::lock_guard</span>&lt;<span class="ty">std::mutex</span>&gt; lock(buffer_mutex_);
+        <span class="kw">if</span> (buffer_.<span class="fn">size</span>() &gt;= config_.buffer_max_entries) {
+            buffer_.<span class="fn">pop</span>(); <span class="c">// Buffer cheio: descarta a mais antiga</span>
+        }
+        buffer_.<span class="fn">push</span>(<span class="ty">std::move</span>(entry));
+    }
+    buffer_cv_.<span class="fn">notify_one</span>();
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">WriteEntry</span>(<span class="kw">const</span> <span class="ty">LogEntry</span>&amp; entry) {
+    <span class="ty">std::string</span> formatted = <span class="fn">FormatEntry</span>(entry);
+
+    <span class="kw">if</span> (config_.console_output) {
+        <span class="kw">if</span> (config_.color_output) {
+            <span class="ty">std::cout</span> &lt;&lt; <span class="fn">GetLevelColor</span>(entry.level)
+                      &lt;&lt; formatted &lt;&lt; <span class="st">"\033[0m\n"</span>;
+        } <span class="kw">else</span> {
+            <span class="ty">std::cout</span> &lt;&lt; formatted &lt;&lt; <span class="st">"\n"</span>;
+        }
+    }
+
+    <span class="kw">auto</span> time_t_val = <span class="ty">std::chrono::system_clock</span>::<span class="fn">to_time_t</span>(entry.timestamp);
+    <span class="ty">std::tm</span> tm_info = {};
+<span class="pp">#ifdef _WIN32</span>
+    <span class="fn">localtime_s</span>(&amp;tm_info, &amp;time_t_val);
+<span class="pp">#else</span>
+    <span class="fn">localtime_r</span>(&amp;time_t_val, &amp;tm_info);
+<span class="pp">#endif</span>
+    <span class="ty">char</span> date_buf[<span class="nm">11</span>];
+    <span class="fn">std::strftime</span>(date_buf, <span class="kw">sizeof</span>(date_buf), <span class="st">"%Y-%m-%d"</span>, &amp;tm_info);
+
+    <span class="ty">std::string</span> filepath = <span class="fn">GetLogFilePath</span>(entry.category, date_buf);
+    <span class="fn">RotateFileIfNeeded</span>(filepath);
+
+    {
+        <span class="ty">std::lock_guard</span>&lt;<span class="ty">std::mutex</span>&gt; lock(files_mutex_);
+        <span class="kw">auto</span>&amp; file = open_files_[filepath];
+        <span class="kw">if</span> (!file.<span class="fn">is_open</span>()) {
+            file.<span class="fn">open</span>(filepath, <span class="ty">std::ios</span>::app | <span class="ty">std::ios</span>::out);
+        }
+        <span class="kw">if</span> (file.<span class="fn">is_open</span>()) {
+            file &lt;&lt; formatted &lt;&lt; <span class="st">"\n"</span>;
+        }
+    }
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Rotação de arquivos
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">std::string</span> <span class="ty">LogManager</span>::<span class="fn">GetLogFilePath</span>(
+    <span class="ty">LogCategory</span> category, <span class="kw">const</span> <span class="ty">std::string</span>&amp; date_str) <span class="kw">const</span>
+{
+    <span class="kw">auto</span> it = <span class="mc">CATEGORY_FILENAMES</span>.<span class="fn">find</span>(category);
+    <span class="ty">std::string</span> cat = (it != <span class="mc">CATEGORY_FILENAMES</span>.<span class="fn">end</span>()) ? it-&gt;second : <span class="st">"general"</span>;
+    <span class="kw">return</span> config_.log_directory + <span class="st">"/"</span> + cat + <span class="st">"_"</span> + date_str + <span class="st">".log"</span>;
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">RotateFileIfNeeded</span>(<span class="kw">const</span> <span class="ty">std::string</span>&amp; filepath) {
+    <span class="ty">std::error_code</span> ec;
+    <span class="kw">if</span> (!<span class="ty">std::filesystem</span>::<span class="fn">exists</span>(filepath, ec)) <span class="kw">return</span>;
+
+    <span class="kw">auto</span> file_size = <span class="ty">std::filesystem</span>::<span class="fn">file_size</span>(filepath, ec);
+    <span class="kw">if</span> (ec || file_size &lt; config_.max_file_size_bytes) <span class="kw">return</span>;
+
+    {
+        <span class="ty">std::lock_guard</span>&lt;<span class="ty">std::mutex</span>&gt; lock(files_mutex_);
+        <span class="kw">auto</span> it = open_files_.<span class="fn">find</span>(filepath);
+        <span class="kw">if</span> (it != open_files_.<span class="fn">end</span>()) {
+            it-&gt;second.<span class="fn">flush</span>();
+            it-&gt;second.<span class="fn">close</span>();
+            open_files_.<span class="fn">erase</span>(it);
+        }
+    }
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = config_.max_backup_files - <span class="nm">1</span>; i &gt;= <span class="nm">1</span>; --i) {
+        <span class="ty">std::string</span> old_path = filepath + <span class="st">"."</span> + <span class="ty">std::to_string</span>(i);
+        <span class="ty">std::string</span> new_path = filepath + <span class="st">"."</span> + <span class="ty">std::to_string</span>(i + <span class="nm">1</span>);
+        <span class="kw">if</span> (<span class="ty">std::filesystem</span>::<span class="fn">exists</span>(old_path, ec)) {
+            <span class="ty">std::filesystem</span>::<span class="fn">rename</span>(old_path, new_path, ec);
+        }
+    }
+
+    <span class="ty">std::filesystem</span>::<span class="fn">rename</span>(filepath, filepath + <span class="st">".1"</span>, ec);
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Formatação de saída
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">std::string</span> <span class="ty">LogManager</span>::<span class="fn">FormatEntry</span>(<span class="kw">const</span> <span class="ty">LogEntry</span>&amp; entry) <span class="kw">const</span> {
+    <span class="ty">std::ostringstream</span> oss;
+    oss &lt;&lt; <span class="st">"["</span> &lt;&lt; <span class="fn">FormatTimestamp</span>(entry.timestamp) &lt;&lt; <span class="st">"]"</span>
+        &lt;&lt; <span class="st">" ["</span> &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">8</span>)  &lt;&lt; <span class="ty">std::left</span> &lt;&lt; <span class="fn">LevelToString</span>(entry.level)      &lt;&lt; <span class="st">"]"</span>
+        &lt;&lt; <span class="st">" ["</span> &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">10</span>) &lt;&lt; <span class="ty">std::left</span> &lt;&lt; <span class="fn">CategoryToString</span>(entry.category) &lt;&lt; <span class="st">"]"</span>
+        &lt;&lt; <span class="st">" ["</span> &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">16</span>) &lt;&lt; <span class="ty">std::left</span> &lt;&lt; entry.event_type                &lt;&lt; <span class="st">"]"</span>
+        &lt;&lt; <span class="st">" IP="</span>   &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">16</span>) &lt;&lt; <span class="ty">std::left</span> &lt;&lt; (entry.client_ip.<span class="fn">empty</span>()  ? <span class="st">"-"</span> : entry.client_ip)
+        &lt;&lt; <span class="st">" ACC="</span>  &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">16</span>) &lt;&lt; <span class="ty">std::left</span> &lt;&lt; (entry.account.<span class="fn">empty</span>()    ? <span class="st">"-"</span> : entry.account)
+        &lt;&lt; <span class="st">" CHAR="</span> &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">16</span>) &lt;&lt; <span class="ty">std::left</span> &lt;&lt; (entry.character.<span class="fn">empty</span>()  ? <span class="st">"-"</span> : entry.character)
+        &lt;&lt; <span class="st">" | "</span> &lt;&lt; entry.message;
+    <span class="kw">return</span> oss.<span class="fn">str</span>();
+}
+
+<span class="ty">std::string</span> <span class="ty">LogManager</span>::<span class="fn">FormatTimestamp</span>(
+    <span class="kw">const</span> <span class="ty">std::chrono::system_clock::time_point</span>&amp; tp) <span class="kw">const</span>
+{
+    <span class="kw">auto</span> time_t_val = <span class="ty">std::chrono::system_clock</span>::<span class="fn">to_time_t</span>(tp);
+    <span class="kw">auto</span> ms = <span class="ty">std::chrono::duration_cast</span>&lt;<span class="ty">std::chrono::milliseconds</span>&gt;(
+                  tp.<span class="fn">time_since_epoch</span>()) % <span class="nm">1000</span>;
+
+    <span class="ty">std::tm</span> tm_info = {};
+<span class="pp">#ifdef _WIN32</span>
+    <span class="fn">localtime_s</span>(&amp;tm_info, &amp;time_t_val);
+<span class="pp">#else</span>
+    <span class="fn">localtime_r</span>(&amp;time_t_val, &amp;tm_info);
+<span class="pp">#endif</span>
+
+    <span class="ty">std::ostringstream</span> oss;
+    oss &lt;&lt; <span class="ty">std::put_time</span>(&amp;tm_info, <span class="st">"%Y-%m-%d %H:%M:%S"</span>)
+        &lt;&lt; <span class="st">"."</span> &lt;&lt; <span class="ty">std::setfill</span>(<span class="st">'0'</span>) &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">3</span>) &lt;&lt; ms.<span class="fn">count</span>();
+    <span class="kw">return</span> oss.<span class="fn">str</span>();
+}
+
+<span class="ty">std::string</span> <span class="ty">LogManager</span>::<span class="fn">LevelToString</span>(<span class="ty">LogLevel</span> level) {
+    <span class="kw">switch</span> (level) {
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">DEBUG</span>:    <span class="kw">return</span> <span class="st">"DEBUG"</span>;
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">INFO</span>:     <span class="kw">return</span> <span class="st">"INFO"</span>;
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">WARNING</span>:  <span class="kw">return</span> <span class="st">"WARNING"</span>;
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">ERROR</span>:    <span class="kw">return</span> <span class="st">"ERROR"</span>;
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">CRITICAL</span>: <span class="kw">return</span> <span class="st">"CRITICAL"</span>;
+        <span class="kw">default</span>:                 <span class="kw">return</span> <span class="st">"UNKNOWN"</span>;
+    }
+}
+
+<span class="ty">std::string</span> <span class="ty">LogManager</span>::<span class="fn">CategoryToString</span>(<span class="ty">LogCategory</span> category) {
+    <span class="kw">auto</span> it = <span class="mc">CATEGORY_FILENAMES</span>.<span class="fn">find</span>(category);
+    <span class="kw">if</span> (it == <span class="mc">CATEGORY_FILENAMES</span>.<span class="fn">end</span>()) <span class="kw">return</span> <span class="st">"UNKNOWN"</span>;
+    <span class="ty">std::string</span> result = it-&gt;second;
+    <span class="ty">std::transform</span>(result.<span class="fn">begin</span>(), result.<span class="fn">end</span>(), result.<span class="fn">begin</span>(), ::toupper);
+    <span class="kw">return</span> result;
+}
+
+<span class="kw">const</span> <span class="ty">char</span>* <span class="ty">LogManager</span>::<span class="fn">GetLevelColor</span>(<span class="ty">LogLevel</span> level) {
+    <span class="kw">switch</span> (level) {
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">DEBUG</span>:    <span class="kw">return</span> <span class="st">"\033[36m"</span>;   <span class="c">// Cyan</span>
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">INFO</span>:     <span class="kw">return</span> <span class="st">"\033[32m"</span>;   <span class="c">// Verde</span>
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">WARNING</span>:  <span class="kw">return</span> <span class="st">"\033[33m"</span>;   <span class="c">// Amarelo</span>
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">ERROR</span>:    <span class="kw">return</span> <span class="st">"\033[31m"</span>;   <span class="c">// Vermelho</span>
+        <span class="kw">case</span> <span class="ty">LogLevel</span>::<span class="mc">CRITICAL</span>: <span class="kw">return</span> <span class="st">"\033[35;1m"</span>; <span class="c">// Magenta negrito</span>
+        <span class="kw">default</span>:                 <span class="kw">return</span> <span class="st">"\033[0m"</span>;
+    }
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Configuração e diretórios
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">LoadConfig</span>(<span class="kw">const</span> <span class="ty">std::string</span>&amp; config_path) {
+    <span class="ty">std::ifstream</span> file(config_path);
+    <span class="kw">if</span> (!file.<span class="fn">is_open</span>()) {
+        <span class="ty">std::cerr</span> &lt;&lt; <span class="st">"[LogManager] Config não encontrado: "</span> &lt;&lt; config_path
+                  &lt;&lt; <span class="st">" — usando padrões.\n"</span>;
+        <span class="kw">return</span>;
+    }
+
+    <span class="kw">auto</span> trim = [](<span class="kw">const</span> <span class="ty">std::string</span>&amp; s) -&gt; <span class="ty">std::string</span> {
+        <span class="kw">const</span> <span class="kw">auto</span> start = s.<span class="fn">find_first_not_of</span>(<span class="st">" \t\r\n"</span>);
+        <span class="kw">const</span> <span class="kw">auto</span> end   = s.<span class="fn">find_last_not_of</span>(<span class="st">" \t\r\n"</span>);
+        <span class="kw">return</span> (start == <span class="ty">std::string</span>::npos) ? <span class="st">""</span> : s.<span class="fn">substr</span>(start, end - start + <span class="nm">1</span>);
+    };
+
+    <span class="ty">std::string</span> line;
+    <span class="kw">while</span> (<span class="ty">std::getline</span>(file, line)) {
+        line = <span class="fn">trim</span>(line);
+        <span class="kw">if</span> (line.<span class="fn">empty</span>() || line[<span class="nm">0</span>] == <span class="st">'#'</span> || line[<span class="nm">0</span>] == <span class="st">';'</span>) <span class="kw">continue</span>;
+
+        <span class="kw">const</span> <span class="kw">auto</span> eq = line.<span class="fn">find</span>(<span class="st">'='</span>);
+        <span class="kw">if</span> (eq == <span class="ty">std::string</span>::npos) <span class="kw">continue</span>;
+
+        <span class="kw">const</span> <span class="ty">std::string</span> key   = <span class="fn">trim</span>(line.<span class="fn">substr</span>(<span class="nm">0</span>, eq));
+        <span class="kw">const</span> <span class="ty">std::string</span> value = <span class="fn">trim</span>(line.<span class="fn">substr</span>(eq + <span class="nm">1</span>));
+
+        <span class="kw">if</span>      (key == <span class="st">"LOG_DIRECTORY"</span>)     config_.log_directory = value;
+        <span class="kw">else if</span> (key == <span class="st">"MAX_FILE_SIZE_MB"</span>)  config_.max_file_size_bytes = <span class="ty">std::stoull</span>(value) * <span class="nm">1024</span> * <span class="nm">1024</span>;
+        <span class="kw">else if</span> (key == <span class="st">"BUFFER_MAX_ENTRIES"</span>)config_.buffer_max_entries  = <span class="ty">std::stoull</span>(value);
+        <span class="kw">else if</span> (key == <span class="st">"FLUSH_INTERVAL_MS"</span>) config_.flush_interval_ms   = <span class="ty">std::stoi</span>(value);
+        <span class="kw">else if</span> (key == <span class="st">"MAX_BACKUP_FILES"</span>)  config_.max_backup_files    = <span class="ty">std::stoi</span>(value);
+        <span class="kw">else if</span> (key == <span class="st">"CONSOLE_OUTPUT"</span>)    config_.console_output      = (value == <span class="st">"true"</span> || value == <span class="st">"1"</span>);
+        <span class="kw">else if</span> (key == <span class="st">"COLOR_OUTPUT"</span>)      config_.color_output        = (value == <span class="st">"true"</span> || value == <span class="st">"1"</span>);
+        <span class="kw">else if</span> (key == <span class="st">"MIN_LEVEL"</span>) {
+            <span class="kw">if</span>      (value == <span class="st">"DEBUG"</span>)    config_.min_level = <span class="ty">LogLevel</span>::<span class="mc">DEBUG</span>;
+            <span class="kw">else if</span> (value == <span class="st">"INFO"</span>)     config_.min_level = <span class="ty">LogLevel</span>::<span class="mc">INFO</span>;
+            <span class="kw">else if</span> (value == <span class="st">"WARNING"</span>)  config_.min_level = <span class="ty">LogLevel</span>::<span class="mc">WARNING</span>;
+            <span class="kw">else if</span> (value == <span class="st">"ERROR"</span>)    config_.min_level = <span class="ty">LogLevel</span>::<span class="mc">ERROR</span>;
+            <span class="kw">else if</span> (value == <span class="st">"CRITICAL"</span>) config_.min_level = <span class="ty">LogLevel</span>::<span class="mc">CRITICAL</span>;
+        }
+        <span class="kw">else if</span> (key == <span class="st">"DISABLE_CATEGORY"</span>) {
+            <span class="ty">std::istringstream</span> iss(value);
+            <span class="ty">std::string</span> token;
+            <span class="kw">while</span> (<span class="ty">std::getline</span>(iss, token, <span class="st">','</span>)) {
+                token = <span class="fn">trim</span>(token);
+                <span class="kw">for</span> (<span class="kw">const</span> <span class="kw">auto</span>&amp; [cat, name] : <span class="mc">CATEGORY_FILENAMES</span>) {
+                    <span class="kw">if</span> (name == token) {
+                        config_.category_enabled[cat] = <span class="kw">false</span>;
+                    }
+                }
+            }
+        }
+    }
+}
+
+<span class="ty">void</span> <span class="ty">LogManager</span>::<span class="fn">CreateLogDirectories</span>() {
+    <span class="ty">std::error_code</span> ec;
+    <span class="ty">std::filesystem</span>::<span class="fn">create_directories</span>(config_.log_directory, ec);
+    <span class="ty">std::filesystem</span>::<span class="fn">create_directories</span>(config_.log_directory + <span class="st">"/backup"</span>, ec);
+}
+
+} <span class="c">// namespace FieldsOnline</span></pre>
+    </div>
+  </div>
+
+  <!-- ── Tab 2: log_config.ini ── -->
+  <div class="tab-panel" id="panel-2">
+    <div class="code-header">
+      <div class="code-header-left">
+        <div class="traffic-lights"><div class="tl tl-red"></div><div class="tl tl-yellow"></div><div class="tl tl-green"></div></div>
+        <span class="code-filename">log_config.ini</span>
+        <span class="code-lang-badge lang-ini">INI</span>
+      </div>
+      <button class="copy-btn" onclick="copyCode(2)"><span>📋</span> Copiar</button>
+    </div>
+    <div class="code-box">
+<pre id="code-2"><span class="ini-cm"># ═══════════════════════════════════════════════════════════════════════════════
+# Fields Online — Configuração do Sistema de Logs (log_config.ini)
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# Este arquivo controla o comportamento do LogManager em tempo de execução.
+# Localização: Server/Logs/log_config.ini
+#
+# IMPORTANTE: Alterações neste arquivo requerem reinicialização do servidor
+#             para surtirem efeito (lido apenas no Initialize()).
+# ═══════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ini-cm"># ─────────────────────────────────────────────────────────────────────────────
+# [DIRETÓRIOS]
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="ini-cm"># Pasta raiz onde os arquivos de log serão criados.
+# Caminho relativo ao diretório de execução do servidor (Server/).
+# Subpasta /backup é criada automaticamente para arquivos rotacionados.
+# Padrão: Logs</span>
+<span class="ini-k">LOG_DIRECTORY</span> = <span class="ini-v">Logs</span>
+
+<span class="ini-cm"># ─────────────────────────────────────────────────────────────────────────────
+# [NÍVEL DE SEVERIDADE]
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="ini-cm"># Nível mínimo de log a ser registrado.
+# Mensagens abaixo deste nível são silenciosamente descartadas.
+#
+# Opções disponíveis (em ordem crescente de severidade):
+#   DEBUG    — Muito detalhado, apenas para desenvolvimento local
+#   INFO     — Operações normais (recomendado para produção)
+#   WARNING  — Situações incomuns
+#   ERROR    — Erros funcionais
+#   CRITICAL — Falhas graves (sempre registrado, ignora este filtro)
+#
+# PRODUÇÃO: Use INFO ou WARNING para reduzir I/O em disco
+# DESENVOLVIMENTO: Use DEBUG para máxima visibilidade</span>
+<span class="ini-k">MIN_LEVEL</span> = <span class="ini-v">INFO</span>
+
+<span class="ini-cm"># ─────────────────────────────────────────────────────────────────────────────
+# [ARQUIVOS DE LOG]
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="ini-cm"># Tamanho máximo de cada arquivo .log antes da rotação automática (em MB).
+# Ao atingir este limite, o arquivo é renomeado para .log.1, .log.2, etc.
+# Arquivos rotacionados além de MAX_BACKUP_FILES são descartados.
+# Recomendado: 10 MB para equilibrar legibilidade e uso de disco.</span>
+<span class="ini-k">MAX_FILE_SIZE_MB</span> = <span class="ini-v">10</span>
+
+<span class="ini-cm"># Número máximo de backups mantidos por categoria/arquivo.
+# Exemplo com MAX_BACKUP_FILES = 5:
+#   auth_2026-04-05.log      ← arquivo ativo
+#   auth_2026-04-05.log.1    ← backup mais recente
+#   auth_2026-04-05.log.2
+#   auth_2026-04-05.log.3
+#   auth_2026-04-05.log.4
+#   auth_2026-04-05.log.5    ← backup mais antigo
+#   (log.6 seria removido na próxima rotação)</span>
+<span class="ini-k">MAX_BACKUP_FILES</span> = <span class="ini-v">10</span>
+
+<span class="ini-cm"># ─────────────────────────────────────────────────────────────────────────────
+# [PERFORMANCE]
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="ini-cm"># Número máximo de entradas no buffer assíncrono antes de descartar as mais antigas.
+# Protege contra consumo excessivo de memória em picos de atividade.
+# Um servidor com 500 jogadores raramente ultrapassa 1000 entradas por ciclo.
+# Padrão: 10000</span>
+<span class="ini-k">BUFFER_MAX_ENTRIES</span> = <span class="ini-v">10000</span>
+
+<span class="ini-cm"># Intervalo em milissegundos entre cada ciclo de escrita da worker thread.
+# Valores menores = escrita mais frequente = maior uso de I/O
+# Valores maiores = menos I/O = maior latência entre log e arquivo
+# Recomendado: 500ms (meio segundo — bom equilíbrio para MMORPG)</span>
+<span class="ini-k">FLUSH_INTERVAL_MS</span> = <span class="ini-v">500</span>
+
+<span class="ini-cm"># ─────────────────────────────────────────────────────────────────────────────
+# [CONSOLE]
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="ini-cm"># Exibir mensagens de log no console (stdout) além de gravar em arquivo.
+# Útil para monitoramento em tempo real via Server.bat.
+# Em produção com monitoramento externo (Grafana, etc.), pode desativar.
+# true | false</span>
+<span class="ini-k">CONSOLE_OUTPUT</span> = <span class="ini-v">true</span>
+
+<span class="ini-cm"># Usar códigos de escape ANSI para colorir a saída no console.
+# Cores por nível: DEBUG=Cyan, INFO=Verde, WARNING=Amarelo, ERROR=Vermelho, CRITICAL=Magenta
+# Desativar se o terminal não suportar ANSI (Windows sem VT100 mode).
+# true | false</span>
+<span class="ini-k">COLOR_OUTPUT</span> = <span class="ini-v">true</span>
+
+<span class="ini-cm"># ─────────────────────────────────────────────────────────────────────────────
+# [CATEGORIAS DESABILITADAS]
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="ini-cm"># Lista de categorias separadas por vírgula que NÃO serão registradas.
+# Útil para desativar logs de alto volume (ex: combat) sem parar o servidor.
+#
+# Categorias disponíveis:
+#   system | auth | combat | trade | chat | admin | error | network | database | security
+#
+# Exemplo — desativar logs de combate e chat em produção para reduzir I/O:
+# DISABLE_CATEGORY = combat,chat
+#
+# Deixar em branco = todas as categorias habilitadas (recomendado)</span>
+<span class="ini-k">DISABLE_CATEGORY</span> =
+
+<span class="ini-cm"># ─────────────────────────────────────────────────────────────────────────────
+# [ESTRUTURA DE ARQUIVOS GERADOS]
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# O LogManager cria a seguinte estrutura em Server/Logs/:
+#
+# Server/
+# └── Logs/
+#     ├── auth_2026-04-05.log       ← login/logout/registro
+#     ├── auth_2026-04-05.log.1     ← backup após rotação
+#     ├── combat_2026-04-05.log     ← dano, kills, PvP
+#     ├── database_2026-04-05.log   ← operações no banco
+#     ├── error_2026-04-05.log      ← erros e exceções
+#     ├── network_2026-04-05.log    ← conexões/desconexões
+#     ├── security_2026-04-05.log   ← bans, IP blocking
+#     ├── system_2026-04-05.log     ← startup/shutdown
+#     ├── trade_2026-04-05.log      ← transações
+#     ├── chat_2026-04-05.log       ← mensagens de chat
+#     ├── admin_2026-04-05.log      ← comandos admin
+#     └── backup/                   ← arquivos rotacionados arquivados
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# [FORMATO DE CADA LINHA]
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# [YYYY-MM-DD HH:MM:SS.mmm] [LEVEL   ] [CATEGORY  ] [EVENT_TYPE      ] IP=xxx             ACC=xxx              CHAR=xxx             | Mensagem
+#
+# Exemplo real:
+# [2026-04-05 21:06:03.142] [INFO    ] [AUTH      ] [LOGIN_SUCCESS   ] IP=192.168.1.1      ACC=caio123          CHAR=Guerreiro       | Login realizado com sucesso
+# [2026-04-05 21:07:15.887] [WARNING ] [SECURITY  ] [SECURITY_EVENT  ] IP=203.0.113.5      ACC=hacker99         CHAR=-               | Motivo: MAX_FAILED_LOGINS | Ação: IP_BLOCKED_180S
+# [2026-04-05 21:08:44.001] [ERROR   ] [DATABASE  ] [DB_SAVE_FAILED  ] IP=SERVER           ACC=system           CHAR=Paladino        | Falha ao salvar personagem: timeout na conexão</span></pre>
+    </div>
+  </div>
+
+  <!-- ── Tab 3: log_integration.rb ── -->
+  <div class="tab-panel" id="panel-3">
+    <div class="code-header">
+      <div class="code-header-left">
+        <div class="traffic-lights"><div class="tl tl-red"></div><div class="tl tl-yellow"></div><div class="tl tl-green"></div></div>
+        <span class="code-filename">log_integration.rb</span>
+        <span class="code-lang-badge lang-ruby">Ruby</span>
+      </div>
+      <button class="copy-btn" onclick="copyCode(3)"><span>📋</span> Copiar</button>
+    </div>
+    <div class="code-box">
+<pre id="code-3"><span class="rb-cm">#==============================================================================
+# ** VS_LogManager_Integration
+#------------------------------------------------------------------------------
+# Integração do LogManager C++ ao servidor Fields Online (VXA-OS).
+#
+# Esta solução oferece DUAS opções de integração:
+#
+# [OPÇÃO A] Logger Ruby Nativo (recomendado para início)
+#   Reimplementação Ruby completa com todos os recursos do C++ LogManager,
+#   compatível diretamente com o VXA-OS sem precisar compilar C++.
+#
+# [OPÇÃO B] Bridge Ruby → C++ via FFI (para máxima performance)
+#   Usa a gem 'ffi' para chamar a DLL/SO compilada do LogManager C++.
+#   Requer compilar LogManager.cpp como shared library primeiro.
+#
+# Instalação:
+#   1. Substitua Server/Scripts/Database/logger.rb por este arquivo
+#   2. Copie Logs/log_config.ini para Server/Logs/
+#   3. O logger é automaticamente inicializado junto com $network
+#
+# Autor: Fields Online Dev Team
+# Versão: 2.0.0
+#==============================================================================</span>
+
+<span class="rb-cm"># ─────────────────────────────────────────────────────────────────────────────
+# OPÇÃO A: Logger Ruby Nativo — drop-in replacement para o logger.rb original
+# ─────────────────────────────────────────────────────────────────────────────</span>
+
+<span class="rb-kw">require</span> <span class="rb-str">'thread'</span>
+<span class="rb-kw">require</span> <span class="rb-str">'fileutils'</span>
+
+<span class="rb-cm">#==============================================================================
+# ** LogLevel
+#------------------------------------------------------------------------------
+# Enumeração de níveis de severidade (espelha o enum C++ LogLevel).
+#==============================================================================</span>
+<span class="rb-kw">module</span> <span class="rb-cn">LogLevel</span>
+  <span class="rb-cn">DEBUG</span>    = <span class="rb-nm">0</span>  <span class="rb-cm"># Detalhes de debug</span>
+  <span class="rb-cn">INFO</span>     = <span class="rb-nm">1</span>  <span class="rb-cm"># Operações normais</span>
+  <span class="rb-cn">WARNING</span>  = <span class="rb-nm">2</span>  <span class="rb-cm"># Situações incomuns</span>
+  <span class="rb-cn">ERROR</span>    = <span class="rb-nm">3</span>  <span class="rb-cm"># Erros funcionais</span>
+  <span class="rb-cn">CRITICAL</span> = <span class="rb-nm">4</span>  <span class="rb-cm"># Falhas graves</span>
+<span class="rb-kw">end</span>
+
+<span class="rb-cm">#==============================================================================
+# ** LogCategory
+#------------------------------------------------------------------------------
+# Categorias de eventos do Fields Online (espelha o enum C++ LogCategory).
+#==============================================================================</span>
+<span class="rb-kw">module</span> <span class="rb-cn">LogCategory</span>
+  <span class="rb-cn">SYSTEM</span>    = <span class="rb-sym">:system</span>
+  <span class="rb-cn">AUTH</span>      = <span class="rb-sym">:auth</span>
+  <span class="rb-cn">COMBAT</span>    = <span class="rb-sym">:combat</span>
+  <span class="rb-cn">TRADE</span>     = <span class="rb-sym">:trade</span>
+  <span class="rb-cn">CHAT</span>      = <span class="rb-sym">:chat</span>
+  <span class="rb-cn">ADMIN</span>     = <span class="rb-sym">:admin</span>
+  <span class="rb-cn">ERROR_LOG</span> = <span class="rb-sym">:error</span>
+  <span class="rb-cn">NETWORK</span>   = <span class="rb-sym">:network</span>
+  <span class="rb-cn">DATABASE</span>  = <span class="rb-sym">:database</span>
+  <span class="rb-cn">SECURITY</span>  = <span class="rb-sym">:security</span>
+<span class="rb-kw">end</span>
+
+<span class="rb-cm">#==============================================================================
+# ** Logger (VS_LogManager)
+#------------------------------------------------------------------------------
+# Sistema de logging thread-safe com escrita assíncrona para o Fields Online.
+#==============================================================================</span>
+<span class="rb-kw">class</span> <span class="rb-cn">Logger</span>
+
+  <span class="rb-cm"># Configurações padrão (sobrescritas pelo log_config.ini se existir)</span>
+  <span class="rb-cn">CONFIG_DEFAULTS</span> = {
+    log_directory:       <span class="rb-str">'Logs'</span>,
+    min_level:           <span class="rb-cn">LogLevel</span>::<span class="rb-cn">INFO</span>,
+    max_file_size_bytes: <span class="rb-nm">10</span> * <span class="rb-nm">1024</span> * <span class="rb-nm">1024</span>,
+    buffer_max_entries:  <span class="rb-nm">10_000</span>,
+    flush_interval_ms:   <span class="rb-nm">500</span>,
+    max_backup_files:    <span class="rb-nm">10</span>,
+    console_output:      <span class="rb-kw">true</span>,
+    color_output:        <span class="rb-kw">true</span>,
+    disabled_categories: []
+  }.<span class="rb-fn">freeze</span>
+
+  <span class="rb-cn">LEVEL_COLORS</span> = {
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">DEBUG</span>    =&gt; <span class="rb-str">"\e[36m"</span>,
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">INFO</span>     =&gt; <span class="rb-str">"\e[32m"</span>,
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">WARNING</span>  =&gt; <span class="rb-str">"\e[33m"</span>,
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">ERROR</span>    =&gt; <span class="rb-str">"\e[31m"</span>,
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">CRITICAL</span> =&gt; <span class="rb-str">"\e[35;1m"</span>
+  }.<span class="rb-fn">freeze</span>
+
+  <span class="rb-cn">LEVEL_NAMES</span> = {
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">DEBUG</span>    =&gt; <span class="rb-str">'DEBUG'</span>,
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">INFO</span>     =&gt; <span class="rb-str">'INFO'</span>,
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">WARNING</span>  =&gt; <span class="rb-str">'WARNING'</span>,
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">ERROR</span>    =&gt; <span class="rb-str">'ERROR'</span>,
+    <span class="rb-cn">LogLevel</span>::<span class="rb-cn">CRITICAL</span> =&gt; <span class="rb-str">'CRITICAL'</span>
+  }.<span class="rb-fn">freeze</span>
+
+  <span class="rb-cn">COLOR_RESET</span> = <span class="rb-str">"\e[0m"</span>.<span class="rb-fn">freeze</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Inicialização
+  #   config_path : caminho para o arquivo log_config.ini
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">initialize</span>(config_path = <span class="rb-str">'Logs/log_config.ini'</span>)
+    @config  = <span class="rb-cn">CONFIG_DEFAULTS</span>.<span class="rb-fn">dup</span>
+    @buffer  = <span class="rb-cn">Queue</span>.<span class="rb-fn">new</span>
+    @mutex   = <span class="rb-cn">Mutex</span>.<span class="rb-fn">new</span>
+    @running = <span class="rb-kw">true</span>
+
+    <span class="rb-fn">load_config</span>(config_path)
+    <span class="rb-fn">create_log_directories</span>
+
+    @worker_thread = <span class="rb-cn">Thread</span>.<span class="rb-fn">new</span> { <span class="rb-fn">worker_loop</span> }
+    @worker_thread.abort_on_exception = <span class="rb-kw">false</span>
+
+    <span class="rb-fn">log_info</span>(<span class="rb-str">'SERVER_START'</span>, <span class="rb-str">'SERVER'</span>, <span class="rb-str">'system'</span>, <span class="rb-str">''</span>,
+             <span class="rb-str">'=== Fields Online Logger v2.0 Iniciado ==='</span>)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Compatibilidade com o logger.rb original
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">add</span>(type, color, text)
+    category = <span class="rb-fn">resolve_legacy_category</span>(type)
+    <span class="rb-fn">log_info</span>(<span class="rb-str">'LEGACY'</span>, <span class="rb-str">'SERVER'</span>, <span class="rb-str">'system'</span>, <span class="rb-str">''</span>, text, category)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">save_all</span>
+    <span class="rb-fn">force_flush</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm"># ─────────────────────────────────────────────────────────────────────────
+  # Métodos principais de logging (API nova)
+  # ─────────────────────────────────────────────────────────────────────────</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Registra evento informativo (operações normais)
+  # @param event_type [String] Tipo do evento (ex: "LOGIN", "LEVEL_UP")
+  # @param client_ip  [String] IP do cliente ou "SERVER"
+  # @param account    [String] Nome da conta
+  # @param character  [String] Nome do personagem (pode ser vazio)
+  # @param message    [String] Texto descritivo
+  # @param category   [Symbol] Categoria do log (default: SYSTEM)
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">log_info</span>(event_type, client_ip, account, character, message,
+               category = <span class="rb-cn">LogCategory</span>::<span class="rb-cn">SYSTEM</span>)
+    <span class="rb-kw">return if</span> @config[<span class="rb-sym">:min_level</span>] &gt; <span class="rb-cn">LogLevel</span>::<span class="rb-cn">INFO</span>
+    <span class="rb-fn">enqueue_entry</span>(<span class="rb-cn">LogLevel</span>::<span class="rb-cn">INFO</span>, category, client_ip, account, character,
+                  event_type, message)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Registra aviso (situação incomum, não crítica)
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">log_warning</span>(event_type, client_ip, account, character, message,
+                  category = <span class="rb-cn">LogCategory</span>::<span class="rb-cn">SYSTEM</span>)
+    <span class="rb-kw">return if</span> @config[<span class="rb-sym">:min_level</span>] &gt; <span class="rb-cn">LogLevel</span>::<span class="rb-cn">WARNING</span>
+    <span class="rb-fn">enqueue_entry</span>(<span class="rb-cn">LogLevel</span>::<span class="rb-cn">WARNING</span>, category, client_ip, account, character,
+                  event_type, message)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Registra erro (falha que afeta funcionalidade)
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">log_error</span>(event_type, client_ip, account, character, message,
+                category = <span class="rb-cn">LogCategory</span>::<span class="rb-cn">ERROR_LOG</span>)
+    <span class="rb-kw">return if</span> @config[<span class="rb-sym">:min_level</span>] &gt; <span class="rb-cn">LogLevel</span>::<span class="rb-cn">ERROR</span>
+    <span class="rb-fn">enqueue_entry</span>(<span class="rb-cn">LogLevel</span>::<span class="rb-cn">ERROR</span>, category, client_ip, account, character,
+                  event_type, message)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Registra evento crítico (flush IMEDIATO garantido)
+  # @note  CRITICAL sempre registra, independente do min_level configurado.
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">log_critical</span>(event_type, client_ip, account, character, message,
+                   category = <span class="rb-cn">LogCategory</span>::<span class="rb-cn">ERROR_LOG</span>)
+    <span class="rb-fn">enqueue_entry</span>(<span class="rb-cn">LogLevel</span>::<span class="rb-cn">CRITICAL</span>, category, client_ip, account, character,
+                  event_type, message)
+    <span class="rb-fn">flush_pending</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm"># ─────────────────────────────────────────────────────────────────────────
+  # Métodos especializados para o Fields Online
+  # ─────────────────────────────────────────────────────────────────────────</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Registra evento de autenticação (login/logout)
+  # @example Uso no game_account.rb:
+  #   $network.log.log_auth_event(true, @ip, @user, @name)
+  #   $network.log.log_auth_event(false, @ip, @user, '', 'WRONG_PASSWORD')
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">log_auth_event</span>(success, client_ip, account, character, reason = <span class="rb-str">''</span>)
+    <span class="rb-kw">if</span> success
+      <span class="rb-fn">log_info</span>(<span class="rb-str">'LOGIN_SUCCESS'</span>, client_ip, account, character,
+               <span class="rb-str">'Login realizado com sucesso'</span>, <span class="rb-cn">LogCategory</span>::<span class="rb-cn">AUTH</span>)
+    <span class="rb-kw">else</span>
+      msg = <span class="rb-str">"Falha no login#{reason.empty? ? '' : " — Motivo: #{reason}"}"</span>
+      <span class="rb-fn">log_warning</span>(<span class="rb-str">'LOGIN_FAILED'</span>, client_ip, account, character,
+                  msg, <span class="rb-cn">LogCategory</span>::<span class="rb-cn">AUTH</span>)
+    <span class="rb-kw">end</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Registra erro capturado do Server.bat (stderr Ruby)
+  # @example Capturar exceções no main.rb:
+  #   rescue => e
+  #     $network.log.log_server_bat_error(e.message, e.backtrace.first)
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">log_server_bat_error</span>(error_text, line_info = <span class="rb-str">''</span>)
+    msg = <span class="rb-str">"[Server.bat] #{error_text}"</span>
+    msg += <span class="rb-str">" | Origem: #{line_info}"</span> <span class="rb-kw">unless</span> line_info.<span class="rb-fn">empty?</span>
+    <span class="rb-fn">log_error</span>(<span class="rb-str">'SERVER_BAT_ERROR'</span>, <span class="rb-str">'SERVER'</span>, <span class="rb-str">'system'</span>, <span class="rb-str">''</span>, msg)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Registra evento de combate
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">log_combat_event</span>(attacker_ip, attacker_name, target_name,
+                       damage, skill_name = <span class="rb-str">''</span>, killed = <span class="rb-kw">false</span>)
+    msg = <span class="rb-str">"#{attacker_name} → #{target_name} | Dano: #{damage}"</span>
+    msg += <span class="rb-str">" | Skill: #{skill_name}"</span> <span class="rb-kw">unless</span> skill_name.<span class="rb-fn">empty?</span>
+    msg += <span class="rb-str">' | *** KILL ***'</span> <span class="rb-kw">if</span> killed
+    <span class="rb-fn">log_info</span>(killed ? <span class="rb-str">'PVP_KILL'</span> : <span class="rb-str">'PVP_DAMAGE'</span>,
+             attacker_ip, attacker_name, attacker_name,
+             msg, <span class="rb-cn">LogCategory</span>::<span class="rb-cn">COMBAT</span>)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Registra evento de segurança (IP blocking, ban, exploit)
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">log_security_event</span>(client_ip, account, reason, action)
+    msg = <span class="rb-str">"Motivo: #{reason} | Ação: #{action}"</span>
+    <span class="rb-fn">log_warning</span>(<span class="rb-str">'SECURITY_EVENT'</span>, client_ip, account, <span class="rb-str">''</span>, msg, <span class="rb-cn">LogCategory</span>::<span class="rb-cn">SECURITY</span>)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">force_flush</span>
+    <span class="rb-fn">flush_pending</span>
+    sleep(<span class="rb-nm">0.1</span>)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-cm">#----------------------------------------------------------------------------
+  # * Encerra o logger de forma segura (flush final)
+  # @note Chamar no Signal.trap do main.rb antes do EventMachine.stop
+  #----------------------------------------------------------------------------</span>
+  <span class="rb-kw">def</span> <span class="rb-fn">shutdown</span>
+    <span class="rb-fn">log_info</span>(<span class="rb-str">'SERVER_STOP'</span>, <span class="rb-str">'SERVER'</span>, <span class="rb-str">'system'</span>, <span class="rb-str">''</span>,
+             <span class="rb-str">'=== Fields Online Logger Encerrando — Flush final ==='</span>)
+    @running = <span class="rb-kw">false</span>
+    <span class="rb-fn">force_flush</span>
+    @worker_thread.<span class="rb-fn">kill</span> <span class="rb-kw">if</span> @worker_thread.<span class="rb-fn">alive?</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">private</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">enqueue_entry</span>(level, category, client_ip, account, character,
+                    event_type, message)
+    <span class="rb-kw">return if</span> @config[<span class="rb-sym">:disabled_categories</span>].<span class="rb-fn">include?</span>(category)
+    <span class="rb-kw">if</span> @buffer.<span class="rb-fn">size</span> &gt;= @config[<span class="rb-sym">:buffer_max_entries</span>]
+      @buffer.<span class="rb-fn">pop</span> <span class="rb-kw">rescue</span> <span class="rb-kw">nil</span>
+    <span class="rb-kw">end</span>
+    @buffer.<span class="rb-fn">push</span>({
+      timestamp:  <span class="rb-cn">Time</span>.<span class="rb-fn">now</span>,
+      level:      level,
+      category:   category,
+      client_ip:  client_ip,
+      account:    account,
+      character:  character,
+      event_type: event_type,
+      message:    message
+    })
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">worker_loop</span>
+    <span class="rb-kw">while</span> @running
+      sleep(@config[<span class="rb-sym">:flush_interval_ms</span>] / <span class="rb-nm">1000.0</span>)
+      <span class="rb-fn">flush_pending</span>
+    <span class="rb-kw">end</span>
+    <span class="rb-fn">flush_pending</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">flush_pending</span>
+    entries_to_write = []
+    entries_to_write &lt;&lt; @buffer.<span class="rb-fn">pop</span> <span class="rb-kw">until</span> @buffer.<span class="rb-fn">empty?</span>
+    entries_to_write.<span class="rb-fn">each</span> { |entry| <span class="rb-fn">write_entry</span>(entry) }
+  <span class="rb-kw">rescue</span> =&gt; e
+    <span class="rb-cn">STDERR</span>.<span class="rb-fn">puts</span> <span class="rb-str">"[Logger] Erro no flush: #{e.message}"</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">write_entry</span>(entry)
+    formatted = <span class="rb-fn">format_entry</span>(entry)
+
+    <span class="rb-kw">if</span> @config[<span class="rb-sym">:console_output</span>]
+      <span class="rb-kw">if</span> @config[<span class="rb-sym">:color_output</span>]
+        color = <span class="rb-cn">LEVEL_COLORS</span>[entry[<span class="rb-sym">:level</span>]] || <span class="rb-str">''</span>
+        <span class="rb-fn">puts</span> <span class="rb-str">"#{color}#{formatted}#{COLOR_RESET}"</span>
+      <span class="rb-kw">else</span>
+        <span class="rb-fn">puts</span> formatted
+      <span class="rb-kw">end</span>
+    <span class="rb-kw">end</span>
+
+    date_str = entry[<span class="rb-sym">:timestamp</span>].<span class="rb-fn">strftime</span>(<span class="rb-str">'%Y-%m-%d'</span>)
+    filepath = <span class="rb-fn">log_file_path</span>(entry[<span class="rb-sym">:category</span>], date_str)
+    <span class="rb-fn">rotate_if_needed</span>(filepath)
+
+    @mutex.<span class="rb-fn">synchronize</span> <span class="rb-kw">do</span>
+      <span class="rb-cn">File</span>.<span class="rb-fn">open</span>(filepath, <span class="rb-str">'a'</span>) { |f| f.<span class="rb-fn">puts</span>(formatted) }
+    <span class="rb-kw">end</span>
+  <span class="rb-kw">rescue</span> =&gt; e
+    <span class="rb-cn">STDERR</span>.<span class="rb-fn">puts</span> <span class="rb-str">"[Logger] Erro ao escrever log: #{e.message}"</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">format_entry</span>(entry)
+    ts    = entry[<span class="rb-sym">:timestamp</span>].<span class="rb-fn">strftime</span>(<span class="rb-str">'%Y-%m-%d %H:%M:%S'</span>) +
+            <span class="rb-fn">format</span>(<span class="rb-str">'.%03d'</span>, (entry[<span class="rb-sym">:timestamp</span>].tv_nsec / <span class="rb-nm">1_000_000</span>) % <span class="rb-nm">1000</span>)
+    level = (<span class="rb-cn">LEVEL_NAMES</span>[entry[<span class="rb-sym">:level</span>]] || <span class="rb-str">'UNKNOWN'</span>).<span class="rb-fn">ljust</span>(<span class="rb-nm">8</span>)
+    cat   = entry[<span class="rb-sym">:category</span>].<span class="rb-fn">to_s</span>.<span class="rb-fn">upcase</span>.<span class="rb-fn">ljust</span>(<span class="rb-nm">10</span>)
+    evt   = (entry[<span class="rb-sym">:event_type</span>] || <span class="rb-str">'-'</span>).<span class="rb-fn">ljust</span>(<span class="rb-nm">16</span>)
+    ip    = (entry[<span class="rb-sym">:client_ip</span>].<span class="rb-fn">to_s</span>.<span class="rb-fn">empty?</span>  ? <span class="rb-str">'-'</span> : entry[<span class="rb-sym">:client_ip</span>]).<span class="rb-fn">ljust</span>(<span class="rb-nm">16</span>)
+    acc   = (entry[<span class="rb-sym">:account</span>].<span class="rb-fn">to_s</span>.<span class="rb-fn">empty?</span>    ? <span class="rb-str">'-'</span> : entry[<span class="rb-sym">:account</span>]).<span class="rb-fn">ljust</span>(<span class="rb-nm">16</span>)
+    char  = (entry[<span class="rb-sym">:character</span>].<span class="rb-fn">to_s</span>.<span class="rb-fn">empty?</span>  ? <span class="rb-str">'-'</span> : entry[<span class="rb-sym">:character</span>]).<span class="rb-fn">ljust</span>(<span class="rb-nm">16</span>)
+
+    <span class="rb-str">"[#{ts}] [#{level}] [#{cat}] [#{evt}] IP=#{ip} ACC=#{acc} CHAR=#{char} | #{entry[:message]}"</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">log_file_path</span>(category, date_str)
+    <span class="rb-str">"#{@config[:log_directory]}/#{category}_#{date_str}.log"</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">rotate_if_needed</span>(filepath)
+    <span class="rb-kw">return unless</span> <span class="rb-cn">File</span>.<span class="rb-fn">exist?</span>(filepath)
+    <span class="rb-kw">return if</span> <span class="rb-cn">File</span>.<span class="rb-fn">size</span>(filepath) &lt; @config[<span class="rb-sym">:max_file_size_bytes</span>]
+
+    max = @config[<span class="rb-sym">:max_backup_files</span>]
+    oldest = <span class="rb-str">"#{filepath}.#{max}"</span>
+    <span class="rb-cn">File</span>.<span class="rb-fn">delete</span>(oldest) <span class="rb-kw">if</span> <span class="rb-cn">File</span>.<span class="rb-fn">exist?</span>(oldest)
+    (max - <span class="rb-nm">1</span>).<span class="rb-fn">downto</span>(<span class="rb-nm">1</span>) <span class="rb-kw">do</span> |i|
+      old_path = <span class="rb-str">"#{filepath}.#{i}"</span>
+      new_path = <span class="rb-str">"#{filepath}.#{i + 1}"</span>
+      <span class="rb-cn">File</span>.<span class="rb-fn">rename</span>(old_path, new_path) <span class="rb-kw">if</span> <span class="rb-cn">File</span>.<span class="rb-fn">exist?</span>(old_path)
+    <span class="rb-kw">end</span>
+    <span class="rb-cn">File</span>.<span class="rb-fn">rename</span>(filepath, <span class="rb-str">"#{filepath}.1"</span>)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">create_log_directories</span>
+    <span class="rb-cn">FileUtils</span>.<span class="rb-fn">mkdir_p</span>(@config[<span class="rb-sym">:log_directory</span>])
+    <span class="rb-cn">FileUtils</span>.<span class="rb-fn">mkdir_p</span>(<span class="rb-str">"#{@config[:log_directory]}/backup"</span>)
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">load_config</span>(config_path)
+    <span class="rb-kw">return unless</span> <span class="rb-cn">File</span>.<span class="rb-fn">exist?</span>(config_path)
+
+    <span class="rb-cn">File</span>.<span class="rb-fn">readlines</span>(config_path).<span class="rb-fn">each</span> <span class="rb-kw">do</span> |line|
+      line.<span class="rb-fn">strip!</span>
+      <span class="rb-kw">next if</span> line.<span class="rb-fn">empty?</span> || line.<span class="rb-fn">start_with?</span>(<span class="rb-str">'#'</span>, <span class="rb-str">';'</span>)
+      key, value = line.<span class="rb-fn">split</span>(<span class="rb-str">'='</span>, <span class="rb-nm">2</span>).<span class="rb-fn">map</span>(&amp;<span class="rb-sym">:strip</span>)
+      <span class="rb-kw">next unless</span> key &amp;&amp; value
+
+      <span class="rb-kw">case</span> key
+      <span class="rb-kw">when</span> <span class="rb-str">'LOG_DIRECTORY'</span>      <span class="rb-kw">then</span> @config[<span class="rb-sym">:log_directory</span>]       = value
+      <span class="rb-kw">when</span> <span class="rb-str">'MAX_FILE_SIZE_MB'</span>   <span class="rb-kw">then</span> @config[<span class="rb-sym">:max_file_size_bytes</span>] = value.<span class="rb-fn">to_i</span> * <span class="rb-nm">1024</span> * <span class="rb-nm">1024</span>
+      <span class="rb-kw">when</span> <span class="rb-str">'BUFFER_MAX_ENTRIES'</span> <span class="rb-kw">then</span> @config[<span class="rb-sym">:buffer_max_entries</span>]  = value.<span class="rb-fn">to_i</span>
+      <span class="rb-kw">when</span> <span class="rb-str">'FLUSH_INTERVAL_MS'</span>  <span class="rb-kw">then</span> @config[<span class="rb-sym">:flush_interval_ms</span>]   = value.<span class="rb-fn">to_i</span>
+      <span class="rb-kw">when</span> <span class="rb-str">'MAX_BACKUP_FILES'</span>   <span class="rb-kw">then</span> @config[<span class="rb-sym">:max_backup_files</span>]    = value.<span class="rb-fn">to_i</span>
+      <span class="rb-kw">when</span> <span class="rb-str">'CONSOLE_OUTPUT'</span>     <span class="rb-kw">then</span> @config[<span class="rb-sym">:console_output</span>]      = (value == <span class="rb-str">'true'</span>)
+      <span class="rb-kw">when</span> <span class="rb-str">'COLOR_OUTPUT'</span>       <span class="rb-kw">then</span> @config[<span class="rb-sym">:color_output</span>]        = (value == <span class="rb-str">'true'</span>)
+      <span class="rb-kw">when</span> <span class="rb-str">'MIN_LEVEL'</span>
+        @config[<span class="rb-sym">:min_level</span>] = {
+          <span class="rb-str">'DEBUG'</span>    =&gt; <span class="rb-cn">LogLevel</span>::<span class="rb-cn">DEBUG</span>,
+          <span class="rb-str">'INFO'</span>     =&gt; <span class="rb-cn">LogLevel</span>::<span class="rb-cn">INFO</span>,
+          <span class="rb-str">'WARNING'</span>  =&gt; <span class="rb-cn">LogLevel</span>::<span class="rb-cn">WARNING</span>,
+          <span class="rb-str">'ERROR'</span>    =&gt; <span class="rb-cn">LogLevel</span>::<span class="rb-cn">ERROR</span>,
+          <span class="rb-str">'CRITICAL'</span> =&gt; <span class="rb-cn">LogLevel</span>::<span class="rb-cn">CRITICAL</span>
+        }[value] || <span class="rb-cn">LogLevel</span>::<span class="rb-cn">INFO</span>
+      <span class="rb-kw">when</span> <span class="rb-str">'DISABLE_CATEGORY'</span>
+        @config[<span class="rb-sym">:disabled_categories</span>] = value.<span class="rb-fn">split</span>(<span class="rb-str">','</span>).<span class="rb-fn">map</span> { |c| c.<span class="rb-fn">strip</span>.<span class="rb-fn">to_sym</span> }
+      <span class="rb-kw">end</span>
+    <span class="rb-kw">end</span>
+  <span class="rb-kw">end</span>
+
+  <span class="rb-kw">def</span> <span class="rb-fn">resolve_legacy_category</span>(type)
+    <span class="rb-kw">return</span> <span class="rb-cn">LogCategory</span>::<span class="rb-cn">ADMIN</span> <span class="rb-kw">if</span> type == <span class="rb-cn">Enums</span>::<span class="rb-cn">Group</span>::<span class="rb-cn">ADMIN</span> <span class="rb-kw">rescue</span> <span class="rb-kw">nil</span>
+    <span class="rb-kw">case</span> type.<span class="rb-fn">to_s</span>.<span class="rb-fn">downcase</span>
+    <span class="rb-kw">when</span> <span class="rb-str">'error'</span>, <span class="rb-str">'erro'</span> <span class="rb-kw">then</span> <span class="rb-cn">LogCategory</span>::<span class="rb-cn">ERROR_LOG</span>
+    <span class="rb-kw">when</span> <span class="rb-str">'auth'</span>, <span class="rb-str">'login'</span> <span class="rb-kw">then</span> <span class="rb-cn">LogCategory</span>::<span class="rb-cn">AUTH</span>
+    <span class="rb-kw">when</span> <span class="rb-str">'combat'</span>        <span class="rb-kw">then</span> <span class="rb-cn">LogCategory</span>::<span class="rb-cn">COMBAT</span>
+    <span class="rb-kw">when</span> <span class="rb-str">'admin'</span>         <span class="rb-kw">then</span> <span class="rb-cn">LogCategory</span>::<span class="rb-cn">ADMIN</span>
+    <span class="rb-kw">else</span>                      <span class="rb-cn">LogCategory</span>::<span class="rb-cn">SYSTEM</span>
+    <span class="rb-kw">end</span>
+  <span class="rb-kw">end</span>
+<span class="rb-kw">end</span>
+
+<span class="rb-cm"># =============================================================================
+# INTEGRAÇÃO COM main.rb — Atualização do Signal.trap para Graceful Shutdown
+# =============================================================================
+#
+# No Server/Scripts/main.rb, substituir:
+#
+#   Signal.trap('INT')  { EM.add_timer(0) { $network.save_game_data; EventMachine.stop } }
+#   Signal.trap('TERM') { EM.add_timer(0) { $network.save_game_data; EventMachine.stop } }
+#
+# Por:
+#
+#   Signal.trap('INT') do
+#     EM.add_timer(0) do
+#       $network.log.shutdown      # Flush final dos logs
+#       $network.save_game_data    # Salva dados dos jogadores
+#       EventMachine.stop
+#     end
+#   end
+#   Signal.trap('TERM') do
+#     EM.add_timer(0) do
+#       $network.log.shutdown
+#       $network.save_game_data
+#       EventMachine.stop
+#     end
+#   end
+#
+# =============================================================================
+# CAPTURA DE EXCEÇÕES NO main.rb — Logar erros do Server.bat
+# =============================================================================
+#
+# Envolver o bloco EventMachine.run em rescue:
+#
+#   begin
+#     EventMachine.run do
+#       # ... código atual ...
+#     end
+#   rescue => e
+#     if $network&.log
+#       $network.log.log_server_bat_error(e.message, e.backtrace.first.to_s)
+#       $network.log.shutdown
+#     end
+#     raise e
+#   end</span></pre>
+    </div>
+  </div>
+
+  <!-- ── Tab 4: test_logmanager.cpp ── -->
+  <div class="tab-panel" id="panel-4">
+    <div class="code-header">
+      <div class="code-header-left">
+        <div class="traffic-lights"><div class="tl tl-red"></div><div class="tl tl-yellow"></div><div class="tl tl-green"></div></div>
+        <span class="code-filename">test_logmanager.cpp</span>
+        <span class="code-lang-badge lang-cpp">C++17</span>
+      </div>
+      <button class="copy-btn" onclick="copyCode(4)"><span>📋</span> Copiar</button>
+    </div>
+    <div class="code-box">
+<pre id="code-4"><span class="c">/**
+ * @file    test_logmanager.cpp
+ * @brief   Testes do LogManager C++ para Fields Online
+ * @author  Fields Online Dev Team
+ * @version 1.0.0
+ *
+ * @details Testa: inicialização, todos os níveis de log, categorias,
+ *          concorrência com múltiplas threads, rotação de arquivo e shutdown.
+ *
+ * @compile g++ -std=c++17 -O2 -pthread -o test_log test_logmanager.cpp LogManager.cpp
+ * @run     ./test_log
+ */</span>
+
+<span class="pp">#include "LogManager.h"</span>
+<span class="pp">#include &lt;iostream&gt;</span>
+<span class="pp">#include &lt;cassert&gt;</span>
+<span class="pp">#include &lt;thread&gt;</span>
+<span class="pp">#include &lt;vector&gt;</span>
+<span class="pp">#include &lt;fstream&gt;</span>
+<span class="pp">#include &lt;filesystem&gt;</span>
+<span class="pp">#include &lt;chrono&gt;</span>
+
+<span class="kw">using namespace</span> <span class="ns">FieldsOnline</span>;
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Utilitários de teste
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="kw">static</span> <span class="ty">int</span> tests_run    = <span class="nm">0</span>;
+<span class="kw">static</span> <span class="ty">int</span> tests_passed = <span class="nm">0</span>;
+<span class="kw">static</span> <span class="ty">int</span> tests_failed = <span class="nm">0</span>;
+
+<span class="pp">#define TEST(name)                                                    \
+    void test_##name();                                               \
+    struct Runner_##name {                                            \
+        Runner_##name() {                                             \
+            ++tests_run;                                              \
+            std::cout &lt;&lt; "  [TEST] " #name "... ";                   \
+            try {                                                     \
+                test_##name();                                        \
+                std::cout &lt;&lt; "\033[32mPASSED\033[0m\n";              \
+                ++tests_passed;                                       \
+            } catch (const std::exception&amp; e) {                      \
+                std::cout &lt;&lt; "\033[31mFAILED: " &lt;&lt; e.what()          \
+                          &lt;&lt; "\033[0m\n";                             \
+                ++tests_failed;                                       \
+            }                                                         \
+        }                                                             \
+    } runner_##name;                                                  \
+    void test_##name()</span>
+
+<span class="c">// Verifica se um arquivo de log existe</span>
+<span class="ty">bool</span> <span class="fn">log_file_exists</span>(<span class="kw">const</span> <span class="ty">std::string</span>&amp; category_name) {
+    <span class="kw">auto</span> today = <span class="ty">std::chrono::system_clock</span>::<span class="fn">now</span>();
+    <span class="kw">auto</span> t     = <span class="ty">std::chrono::system_clock</span>::<span class="fn">to_time_t</span>(today);
+    <span class="ty">std::tm</span> tm_info = {};
+<span class="pp">#ifdef _WIN32</span>
+    <span class="fn">localtime_s</span>(&amp;tm_info, &amp;t);
+<span class="pp">#else</span>
+    <span class="fn">localtime_r</span>(&amp;t, &amp;tm_info);
+<span class="pp">#endif</span>
+    <span class="ty">char</span> buf[<span class="nm">11</span>];
+    <span class="fn">std::strftime</span>(buf, <span class="kw">sizeof</span>(buf), <span class="st">"%Y-%m-%d"</span>, &amp;tm_info);
+    <span class="ty">std::string</span> path = <span class="st">"Logs_Test/"</span> + category_name + <span class="st">"_"</span> + buf + <span class="st">".log"</span>;
+    <span class="kw">return</span> <span class="ty">std::filesystem</span>::<span class="fn">exists</span>(path);
+}
+
+<span class="c">// Conta linhas em um arquivo</span>
+<span class="ty">size_t</span> <span class="fn">count_lines_containing</span>(<span class="kw">const</span> <span class="ty">std::string</span>&amp; filepath, <span class="kw">const</span> <span class="ty">std::string</span>&amp; keyword) {
+    <span class="ty">std::ifstream</span> f(filepath);
+    <span class="kw">if</span> (!f.<span class="fn">is_open</span>()) <span class="kw">return</span> <span class="nm">0</span>;
+    <span class="ty">size_t</span> count = <span class="nm">0</span>;
+    <span class="ty">std::string</span> line;
+    <span class="kw">while</span> (<span class="ty">std::getline</span>(f, line)) {
+        <span class="kw">if</span> (line.<span class="fn">find</span>(keyword) != <span class="ty">std::string</span>::npos) ++count;
+    }
+    <span class="kw">return</span> count;
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Definição dos testes
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="fn">TEST</span>(inicializacao_basica) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    <span class="ty">bool</span> ok = log.<span class="fn">Initialize</span>(<span class="st">"Logs_Test/log_config_test.ini"</span>);
+    <span class="fn">assert</span>(ok &amp;&amp; <span class="st">"Initialize() deve retornar true"</span>);
+    <span class="fn">assert</span>(<span class="ty">std::filesystem</span>::<span class="fn">exists</span>(<span class="st">"Logs_Test"</span>) &amp;&amp; <span class="st">"Diretório Logs_Test deve ser criado"</span>);
+}
+
+<span class="fn">TEST</span>(idempotencia_initialize) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    <span class="ty">bool</span> ok = log.<span class="fn">Initialize</span>(<span class="st">"Logs_Test/log_config_test.ini"</span>);
+    <span class="fn">assert</span>(ok &amp;&amp; <span class="st">"Segunda chamada de Initialize deve retornar true sem erro"</span>);
+}
+
+<span class="fn">TEST</span>(log_info_gera_arquivo) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    log.<span class="fn">LogInfo</span>(<span class="st">"TEST_INFO"</span>, <span class="st">"127.0.0.1"</span>, <span class="st">"test_user"</span>, <span class="st">"TestChar"</span>,
+                <span class="st">"Mensagem de teste INFO"</span>, <span class="ty">LogCategory</span>::<span class="mc">SYSTEM</span>);
+    log.<span class="fn">ForceFlush</span>();
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"system"</span>) &amp;&amp; <span class="st">"Arquivo system_*.log deve existir após LogInfo"</span>);
+}
+
+<span class="fn">TEST</span>(log_warning_categoria_auth) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    log.<span class="fn">LogWarning</span>(<span class="st">"LOGIN_FAILED"</span>, <span class="st">"10.0.0.1"</span>, <span class="st">"hacker"</span>, <span class="st">""</span>,
+                   <span class="st">"Senha incorreta — tentativa 3/5"</span>, <span class="ty">LogCategory</span>::<span class="mc">AUTH</span>);
+    log.<span class="fn">ForceFlush</span>();
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"auth"</span>) &amp;&amp; <span class="st">"Arquivo auth_*.log deve existir após LogWarning AUTH"</span>);
+}
+
+<span class="fn">TEST</span>(log_error_categoria_database) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    log.<span class="fn">LogError</span>(<span class="st">"DB_SAVE_FAILED"</span>, <span class="st">"SERVER"</span>, <span class="st">"system"</span>, <span class="st">"Guerreiro"</span>,
+                 <span class="st">"Timeout ao salvar personagem após 30s"</span>, <span class="ty">LogCategory</span>::<span class="mc">DATABASE</span>);
+    log.<span class="fn">ForceFlush</span>();
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"database"</span>) &amp;&amp; <span class="st">"Arquivo database_*.log deve existir"</span>);
+}
+
+<span class="fn">TEST</span>(log_critical_flush_imediato) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    <span class="ty">size_t</span> pending_antes = log.<span class="fn">GetPendingEntries</span>();
+    log.<span class="fn">LogCritical</span>(<span class="st">"OOM_ERROR"</span>, <span class="st">"SERVER"</span>, <span class="st">"system"</span>, <span class="st">""</span>,
+                    <span class="st">"Falha ao alocar buffer — memória insuficiente"</span>);
+    <span class="ty">size_t</span> pending_depois = log.<span class="fn">GetPendingEntries</span>();
+    <span class="fn">assert</span>(pending_depois &lt;= pending_antes + <span class="nm">1</span> &amp;&amp;
+           <span class="st">"LogCritical deve fazer flush imediato, buffer não deve crescer"</span>);
+}
+
+<span class="fn">TEST</span>(log_auth_event_sucesso) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    log.<span class="fn">LogAuthEvent</span>(<span class="kw">true</span>,  <span class="st">"192.168.1.50"</span>, <span class="st">"caio123"</span>,  <span class="st">"Paladino"</span>);
+    log.<span class="fn">LogAuthEvent</span>(<span class="kw">false</span>, <span class="st">"192.168.1.51"</span>, <span class="st">"bad_user"</span>, <span class="st">""</span>, <span class="st">"WRONG_PASSWORD"</span>);
+    log.<span class="fn">ForceFlush</span>();
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"auth"</span>) &amp;&amp; <span class="st">"Arquivo auth_*.log deve existir após LogAuthEvent"</span>);
+}
+
+<span class="fn">TEST</span>(log_server_bat_error) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    log.<span class="fn">LogServerBatError</span>(
+        <span class="st">"undefined method `update' for nil:NilClass"</span>,
+        <span class="st">"Scripts/Client/game_client.rb:542:in `update_game'"</span>
+    );
+    log.<span class="fn">ForceFlush</span>();
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"error"</span>) &amp;&amp; <span class="st">"Arquivo error_*.log deve existir após LogServerBatError"</span>);
+}
+
+<span class="fn">TEST</span>(log_combat_event) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    log.<span class="fn">LogCombatEvent</span>(<span class="st">"192.168.1.100"</span>, <span class="st">"Guerreiro"</span>, <span class="st">"Goblin"</span>, <span class="nm">150</span>, <span class="st">"Slash"</span>, <span class="kw">false</span>);
+    log.<span class="fn">LogCombatEvent</span>(<span class="st">"192.168.1.100"</span>, <span class="st">"Guerreiro"</span>, <span class="st">"Goblin"</span>, <span class="nm">85</span>,  <span class="st">"Slash"</span>, <span class="kw">true</span>);
+    log.<span class="fn">ForceFlush</span>();
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"combat"</span>) &amp;&amp; <span class="st">"Arquivo combat_*.log deve existir após LogCombatEvent"</span>);
+}
+
+<span class="fn">TEST</span>(log_trade_event) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    log.<span class="fn">LogTradeEvent</span>(<span class="st">"192.168.1.10"</span>, <span class="st">"Guerreiro"</span>, <span class="st">"Maga"</span>,
+                      <span class="st">"Espada de Fogo +5 &lt;-&gt; 10000 Gold + Cajado Mágico"</span>);
+    log.<span class="fn">ForceFlush</span>();
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"trade"</span>) &amp;&amp; <span class="st">"Arquivo trade_*.log deve existir após LogTradeEvent"</span>);
+}
+
+<span class="fn">TEST</span>(log_security_event) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    log.<span class="fn">LogSecurityEvent</span>(<span class="st">"203.0.113.42"</span>, <span class="st">"bot_account"</span>,
+                         <span class="st">"MAX_FAILED_LOGINS"</span>, <span class="st">"IP_BLOCKED_180S"</span>);
+    log.<span class="fn">ForceFlush</span>();
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"security"</span>) &amp;&amp; <span class="st">"Arquivo security_*.log deve existir"</span>);
+}
+
+<span class="fn">TEST</span>(concorrencia_multi_thread) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    <span class="kw">const</span> <span class="ty">int</span> <span class="mc">NUM_THREADS</span>  = <span class="nm">20</span>;
+    <span class="kw">const</span> <span class="ty">int</span> <span class="mc">LOGS_PER_T</span>   = <span class="nm">50</span>;
+
+    <span class="ty">std::vector</span>&lt;<span class="ty">std::thread</span>&gt; threads;
+    threads.<span class="fn">reserve</span>(<span class="mc">NUM_THREADS</span>);
+
+    <span class="kw">for</span> (<span class="ty">int</span> t = <span class="nm">0</span>; t &lt; <span class="mc">NUM_THREADS</span>; ++t) {
+        threads.<span class="fn">emplace_back</span>([&amp;log, t]() {
+            <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; <span class="mc">LOGS_PER_T</span>; ++i) {
+                <span class="ty">std::string</span> ip  = <span class="st">"10.0."</span> + <span class="ty">std::to_string</span>(t) + <span class="st">".1"</span>;
+                <span class="ty">std::string</span> acc = <span class="st">"user_t"</span> + <span class="ty">std::to_string</span>(t);
+                <span class="ty">std::string</span> msg = <span class="st">"Log concorrente thread="</span> + <span class="ty">std::to_string</span>(t)
+                                + <span class="st">" i="</span> + <span class="ty">std::to_string</span>(i);
+                log.<span class="fn">LogInfo</span>(<span class="st">"CONCURRENT_TEST"</span>, ip, acc, <span class="st">""</span>, msg, <span class="ty">LogCategory</span>::<span class="mc">SYSTEM</span>);
+            }
+        });
+    }
+
+    <span class="kw">for</span> (<span class="kw">auto</span>&amp; th : threads) th.<span class="fn">join</span>();
+    log.<span class="fn">ForceFlush</span>();
+
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"system"</span>) &amp;&amp;
+           <span class="st">"Log deve funcionar com 20 threads concorrentes sem crash"</span>);
+
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"\n    [INFO] "</span> &lt;&lt; (<span class="mc">NUM_THREADS</span> * <span class="mc">LOGS_PER_T</span>)
+              &lt;&lt; <span class="st">" logs concorrentes processados sem data race\n    "</span>;
+}
+
+<span class="fn">TEST</span>(set_min_level_runtime) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+
+    log.<span class="fn">SetMinLevel</span>(<span class="ty">LogLevel</span>::<span class="mc">ERROR</span>);
+    log.<span class="fn">LogInfo</span>(<span class="st">"SHOULD_NOT_LOG"</span>, <span class="st">"1.1.1.1"</span>, <span class="st">"test"</span>, <span class="st">""</span>, <span class="st">"Esta mensagem NÃO deve aparecer"</span>);
+    log.<span class="fn">LogWarning</span>(<span class="st">"SHOULD_NOT_LOG"</span>, <span class="st">"1.1.1.1"</span>, <span class="st">"test"</span>, <span class="st">""</span>, <span class="st">"Esta mensagem NÃO deve aparecer"</span>);
+    log.<span class="fn">LogError</span>(<span class="st">"SHOULD_LOG"</span>, <span class="st">"1.1.1.1"</span>, <span class="st">"test"</span>, <span class="st">""</span>, <span class="st">"Esta mensagem DEVE aparecer"</span>);
+    log.<span class="fn">ForceFlush</span>();
+
+    log.<span class="fn">SetMinLevel</span>(<span class="ty">LogLevel</span>::<span class="mc">INFO</span>);
+    <span class="fn">assert</span>(<span class="kw">true</span> &amp;&amp; <span class="st">"SetMinLevel deve funcionar sem crash"</span>);
+}
+
+<span class="fn">TEST</span>(set_category_disabled) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+
+    log.<span class="fn">SetCategoryEnabled</span>(<span class="ty">LogCategory</span>::<span class="mc">CHAT</span>, <span class="kw">false</span>);
+    log.<span class="fn">LogInfo</span>(<span class="st">"CHAT_MSG"</span>, <span class="st">"5.5.5.5"</span>, <span class="st">"chatter"</span>, <span class="st">"Char"</span>, <span class="st">"Mensagem de chat desabilitada"</span>,
+                <span class="ty">LogCategory</span>::<span class="mc">CHAT</span>);
+    log.<span class="fn">ForceFlush</span>();
+
+    log.<span class="fn">SetCategoryEnabled</span>(<span class="ty">LogCategory</span>::<span class="mc">CHAT</span>, <span class="kw">true</span>);
+    <span class="fn">assert</span>(<span class="kw">true</span> &amp;&amp; <span class="st">"SetCategoryEnabled deve funcionar sem crash"</span>);
+}
+
+<span class="fn">TEST</span>(pending_entries_counter) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nm">0</span>; i &lt; <span class="nm">5</span>; ++i) {
+        log.<span class="fn">LogInfo</span>(<span class="st">"PENDING_TEST"</span>, <span class="st">"1.2.3.4"</span>, <span class="st">"test"</span>, <span class="st">""</span>,
+                    <span class="st">"Entrada pendente #"</span> + <span class="ty">std::to_string</span>(i));
+    }
+
+    <span class="ty">size_t</span> pending = log.<span class="fn">GetPendingEntries</span>();
+    <span class="fn">assert</span>(pending &gt;= <span class="nm">0</span> &amp;&amp; <span class="st">"GetPendingEntries deve retornar valor não negativo"</span>);
+    log.<span class="fn">ForceFlush</span>();
+}
+
+<span class="fn">TEST</span>(shutdown_gracioso) {
+    <span class="kw">auto</span>&amp; log = <span class="ty">LogManager</span>::<span class="fn">Instance</span>();
+    log.<span class="fn">LogInfo</span>(<span class="st">"SHUTDOWN_TEST"</span>, <span class="st">"SERVER"</span>, <span class="st">"system"</span>, <span class="st">""</span>,
+                <span class="st">"Teste de shutdown gracioso — última entrada"</span>);
+    log.<span class="fn">Shutdown</span>();
+
+    <span class="fn">assert</span>(<span class="fn">log_file_exists</span>(<span class="st">"system"</span>) &amp;&amp; <span class="st">"Arquivo deve existir após shutdown"</span>);
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"\n    [OK] Shutdown gracioso concluído — nenhum log perdido\n    "</span>;
+}
+
+<span class="c">// ═════════════════════════════════════════════════════════════════════════════
+//  Main
+// ═════════════════════════════════════════════════════════════════════════════</span>
+
+<span class="ty">int</span> <span class="fn">main</span>() {
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"\n"</span>;
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"╔═══════════════════════════════════════════════════════╗\n"</span>;
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"║   Fields Online — LogManager Test Suite               ║\n"</span>;
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"╚═══════════════════════════════════════════════════════╝\n\n"</span>;
+
+    <span class="ty">std::filesystem</span>::<span class="fn">create_directories</span>(<span class="st">"Logs_Test"</span>);
+    {
+        <span class="ty">std::ofstream</span> cfg(<span class="st">"Logs_Test/log_config_test.ini"</span>);
+        cfg &lt;&lt; <span class="st">"LOG_DIRECTORY = Logs_Test\n"</span>
+            &lt;&lt; <span class="st">"MIN_LEVEL = DEBUG\n"</span>
+            &lt;&lt; <span class="st">"MAX_FILE_SIZE_MB = 1\n"</span>
+            &lt;&lt; <span class="st">"BUFFER_MAX_ENTRIES = 500\n"</span>
+            &lt;&lt; <span class="st">"FLUSH_INTERVAL_MS = 100\n"</span>
+            &lt;&lt; <span class="st">"MAX_BACKUP_FILES = 3\n"</span>
+            &lt;&lt; <span class="st">"CONSOLE_OUTPUT = true\n"</span>
+            &lt;&lt; <span class="st">"COLOR_OUTPUT = true\n"</span>;
+    }
+
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"Executando "</span> &lt;&lt; tests_run &lt;&lt; <span class="st">" testes...\n\n"</span>;
+
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"\n╔═══════════════════════════════════════════════════════╗\n"</span>;
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"║   RESULTADO FINAL                                     ║\n"</span>;
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"╠═══════════════════════════════════════════════════════╣\n"</span>;
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"║   Total:   "</span> &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">3</span>) &lt;&lt; tests_run    &lt;&lt; <span class="st">" testes                              ║\n"</span>;
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"║   \033[32mPASSED\033[0m:  "</span> &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">3</span>) &lt;&lt; tests_passed &lt;&lt; <span class="st">" testes                              ║\n"</span>;
+    <span class="kw">if</span> (tests_failed &gt; <span class="nm">0</span>) {
+        <span class="ty">std::cout</span> &lt;&lt; <span class="st">"║   \033[31mFAILED\033[0m:  "</span> &lt;&lt; <span class="ty">std::setw</span>(<span class="nm">3</span>) &lt;&lt; tests_failed &lt;&lt; <span class="st">" testes                              ║\n"</span>;
+    } <span class="kw">else</span> {
+        <span class="ty">std::cout</span> &lt;&lt; <span class="st">"║   \033[32mTodos os testes passaram! ✓\033[0m                       ║\n"</span>;
+    }
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"╚═══════════════════════════════════════════════════════╝\n\n"</span>;
+
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"Arquivos de log gerados em Logs_Test/:\n"</span>;
+    <span class="kw">for</span> (<span class="kw">const</span> <span class="kw">auto</span>&amp; entry : <span class="ty">std::filesystem::directory_iterator</span>(<span class="st">"Logs_Test"</span>)) {
+        <span class="kw">if</span> (entry.<span class="fn">path</span>().<span class="fn">extension</span>() == <span class="st">".log"</span>) {
+            <span class="ty">std::cout</span> &lt;&lt; <span class="st">"  → "</span> &lt;&lt; entry.<span class="fn">path</span>().<span class="fn">filename</span>().<span class="fn">string</span>()
+                      &lt;&lt; <span class="st">" ("</span> &lt;&lt; entry.<span class="fn">file_size</span>() &lt;&lt; <span class="st">" bytes)\n"</span>;
+        }
+    }
+    <span class="ty">std::cout</span> &lt;&lt; <span class="st">"\n"</span>;
+
+    <span class="kw">return</span> (tests_failed == <span class="nm">0</span>) ? <span class="nm">0</span> : <span class="nm">1</span>;
+}</pre>
+    </div>
+  </div>
+
+</div>
+
+<!-- Hidden raw text for copy -->
+<textarea id="raw-0" style="display:none;">/**
+ * @file    LogManager.h
+ * @brief   Sistema de logging thread-safe e assíncrono para Fields Online MMORPG
+ * @author  Fields Online Dev Team
+ * @version 2.0.0
+ * @date    2026-04-05
+ */
+
+#ifndef FIELDS_ONLINE_LOG_MANAGER_H
+#define FIELDS_ONLINE_LOG_MANAGER_H
+
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <mutex>
+#include <queue>
+#include <thread>
+#include <condition_variable>
+#include <atomic>
+#include <map>
+#include <chrono>
+#include <filesystem>
+#include <functional>
+
+namespace FieldsOnline {
+
+constexpr size_t DEFAULT_MAX_FILE_SIZE_BYTES = 10ULL * 1024 * 1024;
+constexpr size_t DEFAULT_BUFFER_MAX_ENTRIES  = 10000;
+constexpr int    DEFAULT_FLUSH_INTERVAL_MS   = 500;
+constexpr int    DEFAULT_MAX_BACKUP_FILES    = 10;
+
+enum class LogLevel : int {
+    DEBUG    = 0,
+    INFO     = 1,
+    WARNING  = 2,
+    ERROR    = 3,
+    CRITICAL = 4
+};
+
+enum class LogCategory : int {
+    SYSTEM    = 0,
+    AUTH      = 1,
+    COMBAT    = 2,
+    TRADE     = 3,
+    CHAT      = 4,
+    ADMIN     = 5,
+    ERROR_LOG = 6,
+    NETWORK   = 7,
+    DATABASE  = 8,
+    SECURITY  = 9
+};
+
+struct LogEntry {
+    std::chrono::system_clock::time_point timestamp;
+    LogLevel    level;
+    LogCategory category;
+    std::string client_ip;
+    std::string account;
+    std::string character;
+    std::string event_type;
+    std::string message;
+};
+
+struct LogConfig {
+    std::string log_directory        = "Logs";
+    LogLevel    min_level            = LogLevel::INFO;
+    size_t      max_file_size_bytes  = DEFAULT_MAX_FILE_SIZE_BYTES;
+    size_t      buffer_max_entries   = DEFAULT_BUFFER_MAX_ENTRIES;
+    int         flush_interval_ms    = DEFAULT_FLUSH_INTERVAL_MS;
+    int         max_backup_files     = DEFAULT_MAX_BACKUP_FILES;
+    bool        console_output       = true;
+    bool        color_output         = true;
+    std::map<LogCategory, bool> category_enabled;
+};
+
+class LogManager {
+public:
+    static LogManager& Instance();
+    LogManager(const LogManager&)            = delete;
+    LogManager& operator=(const LogManager&) = delete;
+    LogManager(LogManager&&)                 = delete;
+    LogManager& operator=(LogManager&&)      = delete;
+
+    bool Initialize(const std::string& config_path = "Logs/log_config.ini");
+    void Shutdown();
+
+    void LogInfo(const std::string& event_type, const std::string& client_ip,
+                 const std::string& account, const std::string& character,
+                 const std::string& message, LogCategory category = LogCategory::SYSTEM);
+    void LogWarning(const std::string& event_type, const std::string& client_ip,
+                    const std::string& account, const std::string& character,
+                    const std::string& message, LogCategory category = LogCategory::SYSTEM);
+    void LogError(const std::string& event_type, const std::string& client_ip,
+                  const std::string& account, const std::string& character,
+                  const std::string& message, LogCategory category = LogCategory::ERROR_LOG);
+    void LogCritical(const std::string& event_type, const std::string& client_ip,
+                     const std::string& account, const std::string& character,
+                     const std::string& message, LogCategory category = LogCategory::ERROR_LOG);
+
+    void LogAuthEvent(bool success, const std::string& client_ip,
+                      const std::string& account, const std::string& character,
+                      const std::string& reason = "");
+    void LogServerBatError(const std::string& error_text, const std::string& line_info = "");
+    void LogCombatEvent(const std::string& attacker_ip, const std::string& attacker_name,
+                        const std::string& target_name, int damage,
+                        const std::string& skill_name = "", bool killed = false);
+    void LogTradeEvent(const std::string& player1_ip, const std::string& player1_name,
+                       const std::string& player2_name, const std::string& items_traded);
+    void LogSecurityEvent(const std::string& client_ip, const std::string& account,
+                          const std::string& reason, const std::string& action);
+
+    void   ForceFlush();
+    size_t GetPendingEntries() const;
+    void   SetMinLevel(LogLevel level);
+    void   SetCategoryEnabled(LogCategory category, bool enabled);
+
+private:
+    LogManager();
+    ~LogManager();
+    void        EnqueueEntry(LogEntry entry);
+    void        WorkerThreadLoop();
+    void        FlushBuffer();
+    void        WriteEntry(const LogEntry& entry);
+    std::string GetLogFilePath(LogCategory category, const std::string& date_str) const;
+    void        RotateFileIfNeeded(const std::string& filepath);
+    std::string FormatEntry(const LogEntry& entry) const;
+    std::string FormatTimestamp(const std::chrono::system_clock::time_point& tp) const;
+    static std::string LevelToString(LogLevel level);
+    static std::string CategoryToString(LogCategory category);
+    static const char* GetLevelColor(LogLevel level);
+    void        LoadConfig(const std::string& config_path);
+    void        CreateLogDirectories();
+
+    LogConfig                            config_;
+    std::queue<LogEntry>                 buffer_;
+    mutable std::mutex                   buffer_mutex_;
+    std::condition_variable              buffer_cv_;
+    std::thread                          worker_thread_;
+    std::atomic<bool>                    running_;
+    std::atomic<bool>                    initialized_;
+    std::map<std::string, std::ofstream> open_files_;
+    mutable std::mutex                   files_mutex_;
+    static const std::map<LogCategory, std::string> CATEGORY_FILENAMES;
+};
+
+} // namespace FieldsOnline
+
+#endif // FIELDS_ONLINE_LOG_MANAGER_H</textarea>
+
+<script>
+  function switchTab(index) {
+    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i === index);
+    });
+    document.querySelectorAll('.tab-panel').forEach((panel, i) => {
+      panel.classList.toggle('active', i === index);
+    });
+  }
+
+  function getPlainText(tabIndex) {
+    const pre = document.getElementById('code-' + tabIndex);
+    if (!pre) return '';
+    return pre.innerText || pre.textContent;
+  }
+
+  function copyCode(tabIndex) {
+    const text = getPlainText(tabIndex);
+    const btn = document.querySelectorAll('.copy-btn')[tabIndex];
+
+    navigator.clipboard.writeText(text).then(() => {
+      btn.classList.add('copied');
+      btn.innerHTML = '<span>✅</span> Copiado!';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<span>📋</span> Copiar';
+      }, 2000);
+    }).catch(() => {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      btn.classList.add('copied');
+      btn.innerHTML = '<span>✅</span> Copiado!';
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = '<span>📋</span> Copiar';
+      }, 2000);
+    });
+  }
+</script>
+
+</body>
+</html>
