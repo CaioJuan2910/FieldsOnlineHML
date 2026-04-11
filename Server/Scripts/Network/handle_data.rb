@@ -11,9 +11,6 @@ module Handle_Data
 
   #----------------------------------------------------------------------------
   # * Valida se uma string recebida do cliente é utilizável.
-  #   Define o método que estava ausente e causava o erro original.
-  #   Rejeita apenas: nil, não-string e string vazia.
-  #   NÃO usa regex agressiva para não bloquear caracteres de senha.
   #----------------------------------------------------------------------------
   def valid_string?(str)
     return false unless str.is_a?(String)
@@ -21,10 +18,6 @@ module Handle_Data
     true
   end
 
-  #----------------------------------------------------------------------------
-  # * Roteador principal de mensagens recebidas do cliente.
-  #   Separa mensagens de menu (pré-jogo) das mensagens em jogo.
-  #----------------------------------------------------------------------------
   def handle_messages(client, buffer)
     begin
       header = buffer.read_byte
@@ -39,9 +32,6 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Roteador de mensagens no menu (login, criação de conta/personagem, etc.)
-  #----------------------------------------------------------------------------
   def handle_messages_menu(client, header, buffer)
     case header
     when Enums::Packet::LOGIN
@@ -55,13 +45,9 @@ module Handle_Data
     when Enums::Packet::USE_ACTOR
       handle_use_actor(client, buffer)
     end
-    # Atualiza o tempo de inatividade a cada mensagem recebida no menu
     client.inactivity_time = Time.now + INACTIVITY_TIME
   end
 
-  #----------------------------------------------------------------------------
-  # * Roteador de mensagens durante o jogo (movimento, chat, combate, etc.)
-  #----------------------------------------------------------------------------
   def handle_messages_game(client, header, buffer)
     case header
     when Enums::Packet::PLAYER_MOVE
@@ -143,56 +129,42 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o login do cliente.
-  #   Usa Database.método() — NUNCA $database.
-  #----------------------------------------------------------------------------
   def handle_login(client, buffer)
-    # Força encoding UTF-8 e remove caracteres problemáticos de injeção
     user    = buffer.read_string.force_encoding('UTF-8').delete('[/\\\\\\]')
     pass    = buffer.read_string
     version = buffer.read_short
-    # Bloqueia tentativas de hacking (muitas tentativas com falha)
     if login_hacking_attempt?(client)
       client.close_connection
       return
-    # Versão do cliente incompatível com o servidor
     elsif version != Configs::GAME_VERSION
       send_failed_login(client, Enums::Login::OLD_VERSION)
       client.close_connection_after_writing
       return
-    # IP bloqueado
     elsif ip_blocked?(client.ip)
       send_failed_login(client, Enums::Login::IP_BLOCKED)
       client.close_connection_after_writing
       return
-    # Conta não existe — usa Database.account_exist? (módulo, sempre disponível)
     elsif !Database.account_exist?(user)
       send_failed_login(client, Enums::Login::INVALD_USER)
       add_attempt(client)
       client.close_connection_after_writing
       return
-    # Detecta múltiplas contas do mesmo IP
     elsif multi_accounts?(user, client.ip)
       send_failed_login(client, Enums::Login::MULTI_ACCOUNT)
       client.close_connection_after_writing
       return
     end
-    # Carrega os dados da conta via Database.load_account (módulo, sempre disponível)
     account = Database.load_account(user)
-    # Senha incorreta
     if pass != account.pass
       send_failed_login(client, Enums::Login::INVALID_PASS)
       add_attempt(client)
       client.close_connection_after_writing
       return
-    # Conta banida
     elsif banned?(account.id_db)
       send_failed_login(client, Enums::Login::ACC_BANNED)
       client.close_connection_after_writing
       return
     end
-    # Login bem-sucedido — carrega os dados da conta no cliente
     client.user          = user
     client.account_id_db = account.id_db
     client.pass          = account.pass
@@ -201,23 +173,17 @@ module Handle_Data
     client.actors        = account.actors
     client.friends       = account.friends
     client.handshake     = true
-    # Carrega o banco do jogador via Database.load_bank (módulo, sempre disponível)
     Database.load_bank(client)
     send_login(client)
     @blocked_ips.delete(client.ip)
     puts("#{user} logou com o IP #{client.ip}.")
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a criação de uma nova conta.
-  #   Usa Database.método() — NUNCA $database.
-  #----------------------------------------------------------------------------
   def handle_create_account(client, buffer)
     user    = buffer.read_string.strip.force_encoding('UTF-8')
     pass    = buffer.read_string
     email   = buffer.read_string
     version = buffer.read_short
-    # Bloqueia tentativas de spam/hacking
     if client.spawning?
       return
     elsif create_account_hacking_attempt?(client, user, pass, email)
@@ -231,24 +197,18 @@ module Handle_Data
       send_failed_login(client, Enums::Login::IP_BLOCKED)
       client.close_connection_after_writing
       return
-    # Verifica se a conta já existe via Database.account_exist? (módulo, sempre disponível)
     elsif Database.account_exist?(user)
       send_create_account(client, Enums::Register::ACC_EXIST)
       client.close_connection_after_writing
       return
     end
     client.antispam_time = Time.now + 0.5
-    # Cria a conta via Database.create_account (módulo, sempre disponível)
     Database.create_account(user, pass, email)
     send_create_account(client, Enums::Register::SUCCESSFUL)
     client.close_connection_after_writing
     puts("Conta #{user} criada.")
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a criação de um novo personagem (actor).
-  #   Usa Database.método() — NUNCA $database.
-  #----------------------------------------------------------------------------
   def handle_create_actor(client, buffer)
     actor_id        = buffer.read_byte
     name            = titleize(buffer.read_string.strip)
@@ -270,21 +230,15 @@ module Handle_Data
     return if sex > Enums::Sex::FEMALE
     return if character_index >= $data_classes[class_id].graphics[sex].size
     return if max_params + points > Configs::START_POINTS
-    # Verifica se o nome do personagem já existe via Database.player_exist? (módulo, sempre disponível)
     if Database.player_exist?(name)
       send_failed_create_actor(client)
       return
     end
     client.antispam_time = Time.now + 0.5
-    # Cria o personagem via Database.create_player (módulo, sempre disponível)
     Database.create_player(client, actor_id, name, character_index, class_id, sex, params, points)
     send_create_actor(client, actor_id, client.actors[actor_id])
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a remoção de um personagem (actor).
-  #   Usa Database.método() — NUNCA $database.
-  #----------------------------------------------------------------------------
   def handle_remove_actor(client, buffer)
     actor_id = buffer.read_byte
     pass     = buffer.read_string
@@ -294,28 +248,19 @@ module Handle_Data
       add_attempt(client)
       return
     end
-    # Remove o personagem via Database.remove_player (módulo, sempre disponível)
     Database.remove_player(client.actors[actor_id].id_db)
     client.remove_actor_guild(client.actors[actor_id].guild_name, client.actors[actor_id].name)
     client.actors.delete(actor_id)
     send_remove_actor(client, actor_id)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a seleção e entrada em jogo de um personagem (actor).
-  #   Usa Database.método() — NUNCA $database.
-  #----------------------------------------------------------------------------
   def handle_use_actor(client, buffer)
     actor_id = buffer.read_byte
     return unless client.actors.has_key?(actor_id)
-    # Carrega os dados do personagem selecionado
     client.load_data(actor_id)
-    # Notifica os outros jogadores do mesmo mapa
     send_player_data(client, client.map_id)
     @maps[client.map_id].total_players += 1
-    # Registra o jogador como online via Database.change_whos_online (módulo, sempre disponível)
     Database.change_whos_online(client.id_db, :insert)
-    # Entra no jogo e envia todos os dados necessários ao cliente
     client.join_game(actor_id)
     send_use_actor(client)
     send_global_switches(client)
@@ -326,22 +271,21 @@ module Handle_Data
   end
 
   #----------------------------------------------------------------------------
-  # * Processa o movimento do jogador.
-  #   Movimento diagonal HABILITADO: direções ímpares usam move_diagonal,
-  #   direções pares usam move_straight.
-  #   Enums::Dir: DOWN=2, LEFT=4, RIGHT=6, UP=8 (pares = reto)
-  #               DOWN_LEFT=1, DOWN_RIGHT=3, UP_LEFT=7, UP_RIGHT=9 (ímpares = diagonal)
+  # * Processa o movimento do jogador recebido do cliente.
+  #   Suporta movimento cardinal (2,4,6,8) e diagonal (1,3,7,9).
+  #   move_diagonal(d) espera 1 argumento — o servidor converte internamente.
   #----------------------------------------------------------------------------
   def handle_player_movement(client, buffer)
     d = buffer.read_byte
-    # Valida direção para prevenir hacks de movimento
+    # Valida direção: apenas valores entre DOWN_LEFT (1) e UP_RIGHT (9)
     return if d < Enums::Dir::DOWN_LEFT || d > Enums::Dir::UP_RIGHT
     client.stop_count = Time.now + 0.170
-    # Movimento diagonal: direções ímpares (DOWN_LEFT, DOWN_RIGHT, UP_LEFT, UP_RIGHT)
     if d.odd?
+      # Movimento diagonal: 1=DOWN_LEFT, 3=DOWN_RIGHT, 7=UP_LEFT, 9=UP_RIGHT
+      # O servidor converte internamente para horz/vert dentro de move_diagonal(d)
       client.move_diagonal(d)
     else
-      # Movimento reto: direções pares (DOWN, LEFT, RIGHT, UP)
+      # Movimento cardinal: 2=baixo, 4=esquerda, 6=direita, 8=cima
       client.move_straight(d)
     end
     if client.move_succeed
@@ -351,12 +295,7 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa mensagens de chat enviadas pelo jogador.
-  #   Força UTF-8 para evitar erros de encoding no console.
-  #----------------------------------------------------------------------------
   def handle_chat_message(client, buffer)
-    # Força UTF-8 para evitar erro de encoding no console
     message   = buffer.read_string.force_encoding('UTF-8')
     talk_type = buffer.read_byte
     name      = buffer.read_string
@@ -365,7 +304,6 @@ module Handle_Data
     return if client.spawning?
     return if client.muted?
     client.antispam_time = Time.now + 0.5
-    # Comando especial: lista jogadores online
     if message == '/who'
       whos_online(client)
       return
@@ -386,9 +324,6 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o ataque do jogador (normal ou à distância).
-  #----------------------------------------------------------------------------
   def handle_player_attack(client)
     return if client.attacking?
     if client.using_range_weapon?
@@ -396,34 +331,24 @@ module Handle_Data
     elsif client.using_normal_weapon?
       client.attack_normal
     end
-    # Verifica eventos de interação ao atacar
     if client.movable?
       client.check_event_trigger_here([0])
       client.check_event_trigger_there([0, 1, 2])
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o uso de um item do inventário.
-  #----------------------------------------------------------------------------
   def handle_use_item(client, buffer)
     item_id = buffer.read_short
     return if client.using_item?
     client.use_item($data_items[item_id])
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o uso de uma skill.
-  #----------------------------------------------------------------------------
   def handle_use_skill(client, buffer)
     skill_id = buffer.read_short
     return if client.using_item?
     client.use_item($data_skills[skill_id])
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o envio de um balloon (ícone de expressão) pelo jogador.
-  #----------------------------------------------------------------------------
   def handle_balloon(client, buffer)
     balloon_id = buffer.read_byte
     return if balloon_id > 10
@@ -432,9 +357,6 @@ module Handle_Data
     send_balloon(client, Enums::Target::PLAYER, balloon_id)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o uso de um item/skill da hotbar.
-  #----------------------------------------------------------------------------
   def handle_use_hotbar(client, buffer)
     id = buffer.read_byte
     return unless client.hotbar[id]
@@ -444,9 +366,6 @@ module Handle_Data
     client.use_item(item)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o drop (largada) de um item no chão pelo jogador.
-  #----------------------------------------------------------------------------
   def handle_add_drop(client, buffer)
     item_id = buffer.read_short
     kind    = buffer.read_byte
@@ -462,10 +381,6 @@ module Handle_Data
     @maps[client.map_id].add_drop(item_id, kind, amount, client.x, client.y)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a coleta (pick up) de um item do chão pelo jogador.
-  #   Alcance de coleta: 2 tiles (configurado em pick_up_drop?).
-  #----------------------------------------------------------------------------
   def handle_remove_drop(client, buffer)
     drop_id = buffer.read_byte
     drop    = @maps[client.map_id].drops[drop_id]
@@ -482,9 +397,6 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a distribuição de pontos de atributo do jogador.
-  #----------------------------------------------------------------------------
   def handle_player_param(client, buffer)
     param_id = buffer.read_byte
     return if client.points == 0
@@ -497,9 +409,6 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a troca de equipamento do jogador.
-  #----------------------------------------------------------------------------
   def handle_player_equip(client, buffer)
     slot_id = buffer.read_byte
     item_id = buffer.read_short
@@ -509,9 +418,6 @@ module Handle_Data
     client.change_equip(slot_id, item_id)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a atualização de um slot da hotbar do jogador.
-  #----------------------------------------------------------------------------
   def handle_player_hotbar(client, buffer)
     id      = buffer.read_byte
     type    = buffer.read_byte
@@ -520,30 +426,20 @@ module Handle_Data
     client.change_hotbar(id, type, item_id)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a mudança de alvo (target) do jogador.
-  #----------------------------------------------------------------------------
   def handle_target(client, buffer)
     type      = buffer.read_byte
     target_id = buffer.read_short
     client.change_target(target_id, type)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a abertura da janela de amigos.
-  #   Separa amigos online dos offline para exibição ordenada.
-  #----------------------------------------------------------------------------
   def handle_open_friends(client)
     online_friends  = client.friends.select { |name| find_player(name) }
     offline_friends = client.friends - online_friends
-    client.friends               = online_friends + offline_friends
-    client.online_friends_size   = online_friends.size
+    client.friends             = online_friends + offline_friends
+    client.online_friends_size = online_friends.size
     send_open_friends(client, online_friends)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a remoção de um amigo da lista.
-  #----------------------------------------------------------------------------
   def handle_remove_friend(client, buffer)
     index = buffer.read_byte
     client.friends.delete_at(index)
@@ -551,9 +447,6 @@ module Handle_Data
     send_remove_friend(client, index)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a criação de uma guilda.
-  #----------------------------------------------------------------------------
   def handle_create_guild(client, buffer)
     flag = []
     name = titleize(buffer.read_string.strip)
@@ -568,26 +461,17 @@ module Handle_Data
     create_guild(client, name, flag)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a abertura da janela de guilda.
-  #----------------------------------------------------------------------------
   def handle_open_guild(client)
     return unless client.in_guild?
     open_guild(client)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a transferência de liderança da guilda.
-  #----------------------------------------------------------------------------
   def handle_guild_leader(client, buffer)
     name = buffer.read_string
     return unless client.in_guild? && client.guild_leader?
     change_guild_leader(client, name)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a atualização do aviso (notice) da guilda.
-  #----------------------------------------------------------------------------
   def handle_guild_notice(client, buffer)
     notice = buffer.read_string.force_encoding('UTF-8')
     return unless client.in_guild?
@@ -598,9 +482,6 @@ module Handle_Data
     change_guild_notice(client, notice)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a remoção de um membro da guilda pelo líder.
-  #----------------------------------------------------------------------------
   def handle_remove_guild_member(client, buffer)
     name   = buffer.read_string
     return unless client.in_guild? && client.guild_leader?
@@ -612,9 +493,6 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o envio de convite de guilda a outro jogador.
-  #----------------------------------------------------------------------------
   def handle_guild_request(client, buffer)
     player = find_player(buffer.read_string)
     return unless client.in_guild? && client.guild_leader?
@@ -632,10 +510,6 @@ module Handle_Data
     send_request(player, Enums::Request::GUILD, client)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a saída do jogador da guilda.
-  #   Se for o líder, remove a guilda inteira.
-  #----------------------------------------------------------------------------
   def handle_leave_guild(client)
     return unless client.in_guild?
     if client.guild_leader?
@@ -645,17 +519,10 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a saída do jogador do grupo (party).
-  #----------------------------------------------------------------------------
   def handle_leave_party(client)
     client.leave_party
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a escolha do jogador em um evento (input numérico ou seleção).
-  #   Recebe valor entre 0 e 99.999.999 (comando Armazenar Número).
-  #----------------------------------------------------------------------------
   def handle_choice(client, buffer)
     index = buffer.read_int
     return unless client.has_text?
@@ -663,9 +530,6 @@ module Handle_Data
     client.message_interpreter.fiber.resume
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a transferência de itens entre inventário e banco.
-  #----------------------------------------------------------------------------
   def handle_bank_item(client, buffer)
     item_id   = buffer.read_short
     kind      = buffer.read_byte
@@ -683,9 +547,6 @@ module Handle_Data
     client.lose_item(item, amount)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a transferência de gold entre inventário e banco.
-  #----------------------------------------------------------------------------
   def handle_bank_gold(client, buffer)
     amount = buffer.read_int
     return unless client.in_bank?
@@ -695,9 +556,6 @@ module Handle_Data
     client.lose_gold(amount)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o fechamento de janelas abertas (banco, loja, troca, etc.).
-  #----------------------------------------------------------------------------
   def handle_close_window(client)
     client.close_bank
     client.close_shop
@@ -706,9 +564,6 @@ module Handle_Data
     client.close_teleport
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a compra de um item na loja.
-  #----------------------------------------------------------------------------
   def handle_buy_item(client, buffer)
     index  = buffer.read_byte
     amount = buffer.read_short.abs
@@ -724,9 +579,6 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a venda de um item na loja.
-  #----------------------------------------------------------------------------
   def handle_sell_item(client, buffer)
     item_id = buffer.read_short
     kind    = buffer.read_byte
@@ -740,9 +592,6 @@ module Handle_Data
     end
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a escolha de destino no sistema de teleporte.
-  #----------------------------------------------------------------------------
   def handle_choice_teleport(client, buffer)
     index = buffer.read_byte
     return unless client.in_teleport?
@@ -757,21 +606,13 @@ module Handle_Data
     client.lose_gold(Configs::TELEPORTS[client.teleport_id][index][:gold])
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o avanço para o próximo comando de evento (após mensagem/texto).
-  #   Limpa o interpreter antes do resume para permitir novos eventos.
-  #----------------------------------------------------------------------------
   def handle_next_event_command(client)
     return unless client.has_text?
     interpreter = client.message_interpreter
-    # Limpa o interpreter antes do resume para permitir novos eventos
     client.message_interpreter = nil
     interpreter.fiber.resume
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o envio de uma requisição (troca, grupo, amizade, guilda).
-  #----------------------------------------------------------------------------
   def handle_request(client, buffer)
     type      = buffer.read_byte
     player_id = buffer.read_short
@@ -819,9 +660,6 @@ module Handle_Data
     send_request(@clients[player_id], type, client)
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a aceitação de uma requisição pelo jogador.
-  #----------------------------------------------------------------------------
   def handle_accept_request(client)
     case client.request.type
     when Enums::Request::TRADE
@@ -838,10 +676,6 @@ module Handle_Data
     client.clear_request
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a recusa de uma requisição pelo jogador.
-  #   Notifica o solicitante sobre a recusa quando aplicável.
-  #----------------------------------------------------------------------------
   def handle_decline_request(client)
     case client.request.type
     when Enums::Request::TRADE, Enums::Request::PARTY, Enums::Request::FRIEND, Enums::Request::GUILD
@@ -852,9 +686,6 @@ module Handle_Data
     client.clear_request
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a adição/remoção de itens na janela de troca (trade).
-  #----------------------------------------------------------------------------
   def handle_trade_item(client, buffer)
     item_id   = buffer.read_short
     kind      = buffer.read_byte
@@ -871,9 +702,6 @@ module Handle_Data
     client.close_trade_request
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa a adição/remoção de gold na janela de troca (trade).
-  #----------------------------------------------------------------------------
   def handle_trade_gold(client, buffer)
     amount = buffer.read_int
     return unless client.in_trade?
@@ -883,23 +711,14 @@ module Handle_Data
     client.close_trade_request
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa o logout do jogador (volta ao menu de seleção de personagem).
-  #   Reinicia o timer de inatividade ao voltar ao menu.
-  #----------------------------------------------------------------------------
   def handle_logout(client)
     client.load_original_graphic
     send_logout(client)
     client.update_current_actor
     client.leave_game
-    # Reinicia o timer de inatividade ao voltar ao menu
     client.inactivity_time = Time.now + INACTIVITY_TIME
   end
 
-  #----------------------------------------------------------------------------
-  # * Processa comandos administrativos (admin e monitor).
-  #   Força UTF-8 para evitar erros de encoding em strings de comando.
-  #----------------------------------------------------------------------------
   def handle_admin_command(client, buffer)
     command = buffer.read_byte
     str     = buffer.read_string.force_encoding('UTF-8')
