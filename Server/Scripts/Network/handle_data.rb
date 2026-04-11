@@ -8,6 +8,18 @@
 
 module Handle_Data
 
+  # Valida se uma string recebida do cliente é segura para processar.
+  # Evita injeção de dados maliciosos, strings nulas ou caracteres de controle.
+  def valid_string?(str)
+    # Rejeita valores nulos ou que não sejam strings
+    return false unless str.is_a?(String)
+    # Rejeita strings vazias
+    return false if str.empty?
+    # Rejeita caracteres de controle (0x00-0x1F) e símbolos perigosos
+    return false if str.match?(/[\x00-\x1F<>'"\\\/]/)
+    true
+  end
+
 	def handle_messages(client, buffer)
 		begin
 			header = buffer.read_byte
@@ -23,6 +35,8 @@ module Handle_Data
 	end
 
 	def handle_messages_menu(client, header, buffer)
+		# Aguarda o banco de dados estar pronto antes de processar qualquer pacote de menu
+		return unless $database
 		case header
 		when Enums::Packet::LOGIN
 			handle_login(client, buffer)
@@ -39,6 +53,8 @@ module Handle_Data
 	end
 
 	def handle_messages_game(client, header, buffer)
+		# Aguarda o banco de dados estar pronto antes de processar qualquer pacote de jogo
+		return unless $database
 		case header
 		when Enums::Packet::PLAYER_MOVE
 			handle_player_movement(client, buffer)
