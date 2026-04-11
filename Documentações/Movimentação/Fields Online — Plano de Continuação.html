@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fields Online — Plano de Continuação</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     RESET & BASE
+  ============================================================ */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary:    #0f0f1a;
+    --bg-secondary:  #13131f;
+    --bg-card:       #1a1a2e;
+    --bg-card-hover: #1e1e35;
+    --gold:          #c9a84c;
+    --gold-light:    #e0c06a;
+    --gold-dim:      #8a6e2f;
+    --green:         #4caf50;
+    --green-dim:     #2d6e30;
+    --blue:          #5b9bd5;
+    --blue-dim:      #2e5580;
+    --red:           #e05252;
+    --red-dim:       #7a2020;
+    --orange:        #e08c3a;
+    --orange-dim:    #7a4a10;
+    --yellow:        #d4b84a;
+    --yellow-dim:    #6e5a18;
+    --gray:          #6b7280;
+    --gray-dim:      #374151;
+    --text-primary:  #e8e8f0;
+    --text-secondary:#a0a0b8;
+    --text-muted:    #5a5a78;
+    --border:        #2a2a42;
+    --border-bright: #3a3a58;
+    --radius:        12px;
+    --radius-sm:     8px;
+    --shadow:        0 4px 24px rgba(0,0,0,0.5);
+    --shadow-gold:   0 0 20px rgba(201,168,76,0.15);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ============================================================
+     SCROLLBAR
+  ============================================================ */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--gold-dim);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  /* ============================================================
+     LAYOUT
+  ============================================================ */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ============================================================
+     HEADER
+  ============================================================ */
+  .site-header {
+    background: linear-gradient(180deg, #0a0a14 0%, var(--bg-secondary) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 0 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .site-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .site-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  }
+
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .header-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 2px;
+    background: var(--gold);
+    border-radius: 1px;
+  }
+
+  .header-title {
+    font-size: clamp(32px, 5vw, 52px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #ffffff 0%, var(--gold-light) 60%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 12px;
+  }
+
+  .header-subtitle {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-bottom: 28px;
+  }
+
+  .header-subtitle strong {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border: 1px solid;
+  }
+
+  .badge-green {
+    background: rgba(76,175,80,0.12);
+    border-color: rgba(76,175,80,0.35);
+    color: var(--green);
+  }
+
+  .badge-orange {
+    background: rgba(224,140,58,0.12);
+    border-color: rgba(224,140,58,0.35);
+    color: var(--orange);
+  }
+
+  .badge-gold {
+    background: rgba(201,168,76,0.12);
+    border-color: rgba(201,168,76,0.35);
+    color: var(--gold);
+  }
+
+  /* ============================================================
+     MAIN CONTENT
+  ============================================================ */
+  main { padding: 48px 0 80px; }
+
+  /* ============================================================
+     SECTION HEADERS
+  ============================================================ */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .section-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f0f1a;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  .section-title span {
+    color: var(--gold);
+  }
+
+  .section-divider {
+    height: 1px;
+    background: linear-gradient(90deg, var(--border-bright), transparent);
+    margin: 56px 0;
+  }
+
+  /* ============================================================
+     CARDS
+  ============================================================ */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--border-bright);
+    box-shadow: var(--shadow), 0 0 0 1px rgba(201,168,76,0.05);
+  }
+
+  .card-green  { border-left: 4px solid var(--green); }
+  .card-gold   { border-left: 4px solid var(--gold); }
+  .card-blue   { border-left: 4px solid var(--blue); }
+  .card-red    { border-left: 4px solid var(--red); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ============================================================
+     COMPLETED TABLE
+  ============================================================ */
+  .completed-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .completed-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 16px 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .completed-table td {
+    padding: 14px 16px 14px 0;
+    font-size: 14px;
+    border-bottom: 1px solid rgba(42,42,66,0.5);
+    vertical-align: top;
+  }
+
+  .completed-table tr:last-child td { border-bottom: none; }
+
+  .completed-table td:first-child {
+    font-weight: 700;
+    color: var(--gold);
+    font-size: 13px;
+    white-space: nowrap;
+    width: 70px;
+  }
+
+  .completed-table td:nth-child(2) {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .completed-table td:nth-child(3) {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    padding: 14px 10px;
+  }
+
+  .status-done {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(76,175,80,0.12);
+    border: 1px solid rgba(76,175,80,0.3);
+    color: var(--green);
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  /* ============================================================
+     IMPROVEMENT BLOCKS
+  ============================================================ */
+  .block-grid {
+    display: grid;
+    gap: 20px;
+  }
+
+  .improvement-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+
+  .improvement-item:hover {
+    border-color: var(--border-bright);
+  }
+
+  .improvement-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .improvement-id {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.25);
+    padding: 3px 9px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .improvement-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .priority-critica {
+    background: rgba(224,82,82,0.12);
+    border-color: rgba(224,82,82,0.35);
+    color: var(--red);
+  }
+
+  .priority-alta {
+    background: rgba(224,140,58,0.12);
+    border-color: rgba(224,140,58,0.35);
+    color: var(--orange);
+  }
+
+  .priority-media {
+    background: rgba(212,184,74,0.12);
+    border-color: rgba(212,184,74,0.35);
+    color: var(--yellow);
+  }
+
+  .priority-baixa {
+    background: rgba(107,114,128,0.12);
+    border-color: rgba(107,114,128,0.35);
+    color: var(--gray);
+  }
+
+  .improvement-body {
+    display: grid;
+    gap: 10px;
+  }
+
+  .problem-box, .solution-box {
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .problem-box {
+    background: rgba(224,82,82,0.06);
+    border-left: 3px solid rgba(224,82,82,0.4);
+    color: var(--text-secondary);
+  }
+
+  .solution-box {
+    background: rgba(76,175,80,0.06);
+    border-left: 3px solid rgba(76,175,80,0.4);
+    color: var(--text-secondary);
+  }
+
+  .box-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .problem-box .box-label { color: var(--red); }
+  .solution-box .box-label { color: var(--green); }
+
+  /* ============================================================
+     PRIORITY TABLE
+  ============================================================ */
+  .priority-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius-sm);
+  }
+
+  .priority-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+  }
+
+  .priority-table thead tr {
+    background: rgba(201,168,76,0.06);
+    border-bottom: 2px solid var(--gold-dim);
+  }
+
+  .priority-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    padding: 14px 16px;
+    white-space: nowrap;
+  }
+
+  .priority-table td {
+    padding: 13px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+
+  .priority-table tbody tr {
+    transition: background 0.15s;
+  }
+
+  .priority-table tbody tr:hover {
+    background: rgba(255,255,255,0.02);
+  }
+
+  .priority-table tbody tr:last-child td { border-bottom: none; }
+
+  .row-num {
+    font-weight: 800;
+    color: var(--text-muted);
+    font-size: 12px;
+    width: 40px;
+  }
+
+  .id-cell {
+    font-weight: 700;
+    color: var(--gold);
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+  }
+
+  .desc-cell {
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .file-cell {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: 'Courier New', monospace;
+    white-space: nowrap;
+  }
+
+  .impact-cell {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  /* ============================================================
+     PHASE HORIZON
+  ============================================================ */
+  .horizon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .horizon-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 16px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+
+  .horizon-item:hover {
+    border-color: var(--border-bright);
+    transform: translateY(-1px);
+  }
+
+  .horizon-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-red    { background: var(--red);    box-shadow: 0 0 8px rgba(224,82,82,0.5); }
+  .dot-orange { background: var(--orange); box-shadow: 0 0 8px rgba(224,140,58,0.5); }
+
+  .horizon-content { flex: 1; }
+
+  .horizon-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  .horizon-priority {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .hp-red    { color: var(--red); }
+  .hp-orange { color: var(--orange); }
+
+  /* ============================================================
+     FOOTER
+  ============================================================ */
+  .site-footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 32px 0;
+    position: relative;
+  }
+
+  .site-footer::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  }
+
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+
+  .footer-logo {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+
+  .footer-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .footer-link {
+    color: var(--gold-dim);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer-link:hover { color: var(--gold); }
+
+  /* ============================================================
+     BLOCK HEADERS
+  ============================================================ */
+  .block-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+  }
+
+  .block-label-green {
+    background: rgba(76,175,80,0.1);
+    border: 1px solid rgba(76,175,80,0.3);
+    color: var(--green);
+  }
+
+  .block-label-gold {
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--gold);
+  }
+
+  .block-label-blue {
+    background: rgba(91,155,213,0.1);
+    border: 1px solid rgba(91,155,213,0.3);
+    color: var(--blue);
+  }
+
+  /* ============================================================
+     BLOCKS GRID
+  ============================================================ */
+  .blocks-outer {
+    display: grid;
+    gap: 32px;
+  }
+
+  /* ============================================================
+     RESPONSIVE
+  ============================================================ */
+  @media (max-width: 640px) {
+    .container { padding: 0 16px; }
+    .card { padding: 20px 16px; }
+    .completed-table td:nth-child(3) { display: none; }
+    .header-title { font-size: 28px; }
+    .horizon-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ============================================================
+     UTILITY
+  ============================================================ */
+  .mt-4  { margin-top: 4px; }
+  .mt-8  { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+
+  code {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--gold-light);
+  }
+
+  /* Subtle top accent bar */
+  .top-accent {
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-dim));
+  }
+</style>
+</head>
+<body>
+
+<!-- Top accent bar -->
+<div class="top-accent"></div>
+
+<!-- ============================================================
+     HEADER
+============================================================ -->
+<header class="site-header">
+  <div class="container">
+    <div class="header-eyebrow">Fields Online · RPG Maker VX Ace + VXA-OS</div>
+    <h1 class="header-title">Plano de Continuação</h1>
+    <p class="header-subtitle">
+      Sistema de Movimentação → <strong>Fase 1 Core</strong> · Abril 2026
+    </p>
+    <div class="badge-row">
+      <span class="badge badge-green">✅ 2 Melhorias Concluídas hoje</span>
+      <span class="badge badge-orange">🔄 12 Pendentes</span>
+      <span class="badge badge-gold">⚡ Fase 1 em Progresso</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     MAIN
+============================================================ -->
+<main>
+  <div class="container">
+
+    <!-- ========================================================
+         SEÇÃO 1 — SESSÃO ATUAL
+    ======================================================== -->
+    <section>
+      <div class="section-header">
+        <div class="section-number">1</div>
+        <h2 class="section-title"><span>Sessão Atual</span> — Hoje</h2>
+      </div>
+
+      <div class="card card-green">
+        <div class="card-header">
+          <div class="card-title">✅ Sessão de Hoje — Concluído</div>
+          <div class="card-subtitle">handle_data.rb · 2 itens</div>
+        </div>
+        <table class="completed-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>Arquivo</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>HD-01</td>
+              <td>stop_count diferenciado diagonal (0.240s vs 0.170s)</td>
+              <td>handle_data.rb</td>
+              <td><span class="status-done">✅ CONCLUÍDO</span></td>
+            </tr>
+            <tr>
+              <td>HD-02</td>
+              <td>Rejeitar direção 5 (whitelist explícita)</td>
+              <td>handle_data.rb</td>
+              <td><span class="status-done">✅ CONCLUÍDO</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ========================================================
+         SEÇÃO 2 — PRÓXIMAS MELHORIAS
+    ======================================================== -->
+    <section>
+      <div class="section-header">
+        <div class="section-number">2</div>
+        <h2 class="section-title"><span>Próximas Melhorias</span> de Movimentação</h2>
+      </div>
+
+      <div class="blocks-outer">
+
+        <!-- BLOCO A — handle_data.rb -->
+        <div class="card card-green">
+          <div class="card-header">
+            <div>
+              <span class="block-label block-label-green">🟢 Bloco A — Servidor</span>
+              <div class="card-title mt-8">handle_data.rb</div>
+            </div>
+            <div class="card-subtitle">2 melhorias pendentes</div>
+          </div>
+          <div class="block-grid">
+
+            <!-- HD-03 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">HD-03</span>
+                <span class="improvement-name">Antispam no Movimento</span>
+                <span class="priority-badge priority-media">● MÉDIA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Sem verificação de <code>antispam_time</code> no movimento. Cliente modificado pode enviar centenas de pacotes <code>PLAYER_MOVE/s</code> sobrecarregando o servidor.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Verificar <code>client.antispam_time</code> no início de <code>handle_player_movement</code> e atualizar após processamento (~0.10s mínimo entre pacotes).
+                </div>
+              </div>
+            </div>
+
+            <!-- HD-04 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">HD-04</span>
+                <span class="improvement-name">Confirmação de Posição Anti-Desync</span>
+                <span class="priority-badge priority-media">● MÉDIA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Servidor não envia confirmação de posição ao cliente. Com pacotes perdidos, posição cliente/servidor diverge gradualmente.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Quando <code>move_succeed</code> for <code>false</code>, enviar <code>send_player_position(client)</code> para forçar correção no cliente.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- BLOCO B — Diagonal_Movement -->
+        <div class="card card-gold">
+          <div class="card-header">
+            <div>
+              <span class="block-label block-label-gold">🟡 Bloco B — Cliente</span>
+              <div class="card-title mt-8">[FO] Diagonal_Movement</div>
+            </div>
+            <div class="card-subtitle">5 melhorias pendentes</div>
+          </div>
+          <div class="block-grid">
+
+            <!-- DM-01 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">DM-01</span>
+                <span class="improvement-name">Correção de Velocidade Diagonal (Fator √2)</span>
+                <span class="priority-badge priority-alta">● ALTA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Movimento diagonal envia pacotes com mesmo <code>stop_count</code> que cardinal, fazendo personagem cobrir ~41% mais distância/segundo na diagonal.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Cliente adiciona delay extra com multiplicador <code>1/√2 ≈ 0.707</code>. Servidor já foi ajustado com HD-01 (0.240s).
+                </div>
+              </div>
+            </div>
+
+            <!-- DM-02 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">DM-02</span>
+                <span class="improvement-name">Rate Limiting no Input Diagonal</span>
+                <span class="priority-badge priority-alta">● ALTA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Input diagonal pode ser enviado múltiplas vezes no mesmo frame por conta do sistema de input do RGSS3.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Adicionar cooldown de input (<code>last_move_frame</code>) para garantir apenas 1 pacote por frame de movimento.
+                </div>
+              </div>
+            </div>
+
+            <!-- DM-03 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">DM-03</span>
+                <span class="improvement-name">Previsão Local de Passabilidade Diagonal</span>
+                <span class="priority-badge priority-alta">● ALTA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Cliente envia qualquer diagonal ao servidor sem checar se é passável. Servidor rejeita, mas cliente já animou o passo → rubber-banding visual.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Chamar <code>passable?(x, y, horz) && passable?(x, y, vert)</code> antes de <code>send_movement(diagonal)</code>. Só envia se ambas as direções forem passáveis.
+                </div>
+              </div>
+            </div>
+
+            <!-- DM-04 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">DM-04</span>
+                <span class="improvement-name">Sincronização de Direção ao Parar</span>
+                <span class="priority-badge priority-media">● MÉDIA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Ao soltar a tecla diagonal, o sprite pode ficar com facing incorreto (diagonal não é direção válida para facing no VXA-OS).
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Ao parar, converter direção diagonal para a direção cardinal dominante (última tecla pressionada).
+                </div>
+              </div>
+            </div>
+
+            <!-- DM-05 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">DM-05</span>
+                <span class="improvement-name">Diagonal Bloqueada por Paredes em L</span>
+                <span class="priority-badge priority-baixa">● BAIXA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Em cantos de parede em formato L, o jogador consegue "escorregar" através do canto se ambas as direções individualmente forem passáveis.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Verificar também a tile diagonal diretamente com <code>passable?(x+dx, y+dy, 0)</code> como check adicional.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- BLOCO C — Smooth_Movement -->
+        <div class="card card-blue">
+          <div class="card-header">
+            <div>
+              <span class="block-label block-label-blue">🔵 Bloco C — Cliente</span>
+              <div class="card-title mt-8">[FO] Smooth_Movement</div>
+            </div>
+            <div class="card-subtitle">5 melhorias pendentes</div>
+          </div>
+          <div class="block-grid">
+
+            <!-- SM-01 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">SM-01</span>
+                <span class="improvement-name">Lerp de NetPlayers (outros jogadores)</span>
+                <span class="priority-badge priority-critica">● CRÍTICA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Outros jogadores online ainda se "teletransportam" tile a tile sem interpolação visual, pois o lerp só está aplicado ao jogador local.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Aplicar <code>smooth_x/smooth_y</code> nos sprites de <code>Game_NetPlayer</code> usando o mesmo sistema de lerp já implementado.
+                </div>
+              </div>
+            </div>
+
+            <!-- SM-02 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">SM-02</span>
+                <span class="improvement-name">Snap em Teleportes (Anti-Warp Visual)</span>
+                <span class="priority-badge priority-alta">● ALTA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Quando <code>Game_NetPlayer</code> sofre teleporte, o lerp interpola através do mapa inteiro causando "deslize" visual caótico.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Detectar distância &gt; 3 tiles entre posição visual e lógica e aplicar snap direto (<code>smooth_x = real_x</code> imediatamente).
+                </div>
+              </div>
+            </div>
+
+            <!-- SM-03 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">SM-03</span>
+                <span class="improvement-name">Lerp Speed Dinâmica por Velocidade do Personagem</span>
+                <span class="priority-badge priority-media">● MÉDIA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Personagem rápido (<code>move_speed</code> alto) tem lerp lento demais — posição visual fica sempre "atrás" da lógica, parecendo lag.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Calcular <code>lerp_speed</code> como <code>base_speed * (move_speed / 4.0)</code> para transições proporcionais.
+                </div>
+              </div>
+            </div>
+
+            <!-- SM-04 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">SM-04</span>
+                <span class="improvement-name">Detecção Real de MOBs (via Nota do Evento)</span>
+                <span class="priority-badge priority-media">● MÉDIA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  <code>MOB_LERP_SPEED</code> existe na config mas nunca é usado — todos os eventos usam <code>EVENT_LERP_SPEED</code>, incluindo MOBs.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Verificar <code>@event.note</code> ou nome do evento por tag <code>&lt;mob&gt;</code> para aplicar <code>MOB_LERP_SPEED</code> automaticamente.
+                </div>
+              </div>
+            </div>
+
+            <!-- SM-05 -->
+            <div class="improvement-item">
+              <div class="improvement-header">
+                <span class="improvement-id">SM-05</span>
+                <span class="improvement-name">Inicialização Lazy e Segura de smooth_x/y</span>
+                <span class="priority-badge priority-baixa">● BAIXA</span>
+              </div>
+              <div class="improvement-body">
+                <div class="problem-box">
+                  <span class="box-label">⚠ Problema</span>
+                  Em edge cases de teleporte/carregamento, <code>@smooth_x</code> pode ser <code>nil</code> se <code>init_public_members</code> não foi chamado antes de <code>update</code>.
+                </div>
+                <div class="solution-box">
+                  <span class="box-label">✓ Solução</span>
+                  Adicionar guard <code>@smooth_x ||= @x.to_f</code> no início de <code>fo_update_smooth_position</code>.
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div><!-- /blocks-outer -->
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ========================================================
+         SEÇÃO 3 — TABELA DE ORDEM
+    ======================================================== -->
+    <section>
+      <div class="section-header">
+        <div class="section-number">3</div>
+        <h2 class="section-title"><span>Ordem de Implementação</span> Recomendada</h2>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 12 Itens Pendentes — Ordenados por Prioridade</div>
+          <div class="card-subtitle">Sequência sugerida</div>
+        </div>
+        <div class="priority-table-wrap">
+          <table class="priority-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Prioridade</th>
+                <th>ID</th>
+                <th>Descrição</th>
+                <th>Arquivo</th>
+                <th>Impacto</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="row-num">01</td>
+                <td><span class="priority-badge priority-critica">● CRÍTICA</span></td>
+                <td class="id-cell">SM-01</td>
+                <td class="desc-cell">Lerp de NetPlayers</td>
+                <td class="file-cell">[FO] Smooth_Movement</td>
+                <td class="impact-cell">👥 Multiplayer visual</td>
+              </tr>
+              <tr>
+                <td class="row-num">02</td>
+                <td><span class="priority-badge priority-alta">● ALTA</span></td>
+                <td class="id-cell">DM-01</td>
+                <td class="desc-cell">Velocidade diagonal √2</td>
+                <td class="file-cell">[FO] Diagonal_Movement</td>
+                <td class="impact-cell">⚡ Anti-speedhack</td>
+              </tr>
+              <tr>
+                <td class="row-num">03</td>
+                <td><span class="priority-badge priority-alta">● ALTA</span></td>
+                <td class="id-cell">DM-02</td>
+                <td class="desc-cell">Rate limiting input</td>
+                <td class="file-cell">[FO] Diagonal_Movement</td>
+                <td class="impact-cell">🛡️ Anti-spam</td>
+              </tr>
+              <tr>
+                <td class="row-num">04</td>
+                <td><span class="priority-badge priority-alta">● ALTA</span></td>
+                <td class="id-cell">DM-03</td>
+                <td class="desc-cell">Previsão passabilidade</td>
+                <td class="file-cell">[FO] Diagonal_Movement</td>
+                <td class="impact-cell">🎮 Anti rubber-band</td>
+              </tr>
+              <tr>
+                <td class="row-num">05</td>
+                <td><span class="priority-badge priority-alta">● ALTA</span></td>
+                <td class="id-cell">SM-02</td>
+                <td class="desc-cell">Snap em teleportes</td>
+                <td class="file-cell">[FO] Smooth_Movement</td>
+                <td class="impact-cell">✨ Visual</td>
+              </tr>
+              <tr>
+                <td class="row-num">06</td>
+                <td><span class="priority-badge priority-media">● MÉDIA</span></td>
+                <td class="id-cell">HD-03</td>
+                <td class="desc-cell">Antispam movimento</td>
+                <td class="file-cell">handle_data.rb</td>
+                <td class="impact-cell">🛡️ Segurança servidor</td>
+              </tr>
+              <tr>
+                <td class="row-num">07</td>
+                <td><span class="priority-badge priority-media">● MÉDIA</span></td>
+                <td class="id-cell">HD-04</td>
+                <td class="desc-cell">Confirmação posição</td>
+                <td class="file-cell">handle_data.rb</td>
+                <td class="impact-cell">🔄 Anti-desync</td>
+              </tr>
+              <tr>
+                <td class="row-num">08</td>
+                <td><span class="priority-badge priority-media">● MÉDIA</span></td>
+                <td class="id-cell">DM-04</td>
+                <td class="desc-cell">Facing ao parar</td>
+                <td class="file-cell">[FO] Diagonal_Movement</td>
+                <td class="impact-cell">🎮 Visual</td>
+              </tr>
+              <tr>
+                <td class="row-num">09</td>
+                <td><span class="priority-badge priority-media">● MÉDIA</span></td>
+                <td class="id-cell">SM-03</td>
+                <td class="desc-cell">Lerp speed dinâmica</td>
+                <td class="file-cell">[FO] Smooth_Movement</td>
+                <td class="impact-cell">✨ Suavidade</td>
+              </tr>
+              <tr>
+                <td class="row-num">10</td>
+                <td><span class="priority-badge priority-media">● MÉDIA</span></td>
+                <td class="id-cell">SM-04</td>
+                <td class="desc-cell">Detecção MOBs</td>
+                <td class="file-cell">[FO] Smooth_Movement</td>
+                <td class="impact-cell">🐉 MOBs</td>
+              </tr>
+              <tr>
+                <td class="row-num">11</td>
+                <td><span class="priority-badge priority-baixa">● BAIXA</span></td>
+                <td class="id-cell">DM-05</td>
+                <td class="desc-cell">Diagonal paredes L</td>
+                <td class="file-cell">[FO] Diagonal_Movement</td>
+                <td class="impact-cell">🧱 Passabilidade</td>
+              </tr>
+              <tr>
+                <td class="row-num">12</td>
+                <td><span class="priority-badge priority-baixa">● BAIXA</span></td>
+                <td class="id-cell">SM-05</td>
+                <td class="desc-cell">Init lazy smooth_x/y</td>
+                <td class="file-cell">[FO] Smooth_Movement</td>
+                <td class="impact-cell">🔒 Estabilidade</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ========================================================
+         SEÇÃO 4 — HORIZONTE FASE 1
+    ======================================================== -->
+    <section>
+      <div class="section-header">
+        <div class="section-number">4</div>
+        <h2 class="section-title"><span>Horizonte:</span> Fase 1 Core</h2>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🗺️ Próximos Scripts — Após Movimentação</div>
+          <div class="card-subtitle">Fase 1 · Fundação · Semanas 1–8</div>
+        </div>
+        <div class="horizon-grid">
+
+          <div class="horizon-item">
+            <div class="horizon-dot dot-red"></div>
+            <div class="horizon-content">
+              <div class="horizon-name">[FO] Sprite_HUD Melhorado</div>
+              <div class="horizon-priority hp-red">🔴 CRÍTICA — HP/MP/XP bars modernizadas</div>
+            </div>
+          </div>
+
+          <div class="horizon-item">
+            <div class="horizon-dot dot-red"></div>
+            <div class="horizon-content">
+              <div class="horizon-name">[FO] Minimap Quadrado</div>
+              <div class="horizon-priority hp-red">🔴 CRÍTICA — Minimap funcional</div>
+            </div>
+          </div>
+
+          <div class="horizon-item">
+            <div class="horizon-dot dot-red"></div>
+            <div class="horizon-content">
+              <div class="horizon-name">[FO] Skill Cooldown</div>
+              <div class="horizon-priority hp-red">🔴 CRÍTICA — Cooldown visual de habilidades</div>
+            </div>
+          </div>
+
+          <div class="horizon-item">
+            <div class="horizon-dot dot-red"></div>
+            <div class="horizon-content">
+              <div class="horizon-name">[FO] Damage Popup</div>
+              <div class="horizon-priority hp-red">🔴 CRÍTICA — Indicador de dano flutuante</div>
+            </div>
+          </div>
+
+          <div class="horizon-item">
+            <div class="horizon-dot dot-red"></div>
+            <div class="horizon-content">
+              <div class="horizon-name">[FO] Sprite_Drop Melhorado</div>
+              <div class="horizon-priority hp-red">🔴 CRÍTICA — Melhorias no sistema de drop</div>
+            </div>
+          </div>
+
+          <div class="horizon-item">
+            <div class="horizon-dot dot-orange"></div>
+            <div class="horizon-content">
+              <div class="horizon-name">[FO] Resolução Customizada</div>
+              <div class="horizon-priority hp-orange">🟡 ALTA — Sair do 544×416 padrão</div>
+            </div>
+          </div>
+
+          <div class="horizon-item">
+            <div class="horizon-dot dot-orange"></div>
+            <div class="horizon-content">
+              <div class="horizon-name">[FO] Mouse Collect</div>
+              <div class="horizon-priority hp-orange">🟡 ALTA — Coletar itens com clique/alcance</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /container -->
+</main>
+
+<!-- ============================================================
+     FOOTER
+============================================================ -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">⚔️ Fields Online</div>
+      <div class="footer-meta">
+        RPG Maker VX Ace + VXA-OS ·
+        <a class="footer-link" href="https://github.com/CaioJuan2910/FieldsOnlineHML" target="_blank" rel="noopener">
+          github.com/CaioJuan2910/FieldsOnlineHML
+        </a>
+      </div>
+      <div class="footer-meta">
+        Fase 1 — Fundação · Semanas 1–8 · Atualizado em Abril 2026
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
