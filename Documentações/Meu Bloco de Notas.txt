@@ -1,6 +1,7 @@
-Chat, vamos iniciar a construção do nosso MMORPG em 2D, utilizando a ferramenta RPG Maker VX ACE, com a plataforma do Valentine o VXA-OS, nosso MMORPG terá como inspiração os MMORPG Tibia Online, MU Online, Ragnarok Online, Saga Diablo e o World of Warcraft. Faça uma pesquisa e entenda como funciona a ferramenta de RPG Maker VX ACE, além disso aprenta também sobre o VXA-OS, pode usar esse diretório:
+Chat, vamos iniciar a construção do nosso MMORPG em 2D, utilizando a ferramenta RPG Maker VX ACE, com a plataforma do Valentine o VXA-OS, nosso MMORPG terá como inspiração os MMORPG Tibia Online, MU Online, Ragnarok Online, Diablo e o World of Warcraft. Faça uma pesquisa e entenda como funciona a ferramenta de RPG Maker VX ACE, além disso aprenta também sobre o VXA-OS, pode usar esse diretório:
  
 Client: https://github.com/CaioJuan2910/FieldsOnlineHML/tree/main/Client
-Serve: https://github.com/CaioJuan2910/FieldsOnlineHML/tree/main/Server 
+Serve: https://github.com/CaioJuan2910/FieldsOnlineHML/tree/main/Server
+Documentações: https://github.com/CaioJuan2910/FieldsOnlineHML/tree/main/Documenta%C3%A7%C3%B5es
 
 ======================================================
