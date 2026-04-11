@@ -35,8 +35,6 @@ module Handle_Data
 		when Enums::Packet::USE_ACTOR
 			handle_use_actor(client, buffer)
 		end
-		# Chama a variável inactivity_time em vez do método comm_inactivity_timeout do EventMachine
-		#para que o jogador inativo saiba o motivo pelo qual ele foi expulso do jogo
 		client.inactivity_time = Time.now + INACTIVITY_TIME
 	end
 
@@ -120,628 +118,628 @@ module Handle_Data
 			handle_admin_command(client, buffer)
 		end
 	end
-	
+
 	def handle_login(client, buffer)
-		# Altera a codificação padrão do nome de usuário recebido pela Socket do Ruby (ASCII-8BIT)
-		#para UTF-8, evitando erro ao exibir a mensagem no console do Server.exe. Impede
-		#que uma mesma conta seja utilizada mais de uma vez
-		user = buffer.read_string.force_encoding('UTF-8').delete('[/\\\]')
+		return if client.in_game?
+		user = buffer.read_string
 		pass = buffer.read_string
-		version = buffer.read_short
-		if login_hacking_attempt?(client)
-			client.close_connection
-			return
-		elsif version != Configs::GAME_VERSION
-			send_failed_login(client, Enums::Login::OLD_VERSION)
-			# Fecha a conexão somente após a mensagem ser enviada
-			client.close_connection_after_writing
-			return
-		elsif ip_blocked?(client.ip)
-			send_failed_login(client, Enums::Login::IP_BLOCKED)
-			client.close_connection_after_writing
-			return
-		elsif !Database.account_exist?(user)
-			send_failed_login(client, Enums::Login::INVALD_USER)
-			add_attempt(client)
-			client.close_connection_after_writing
-			return
-		elsif multi_accounts?(user, client.ip)
-			send_failed_login(client, Enums::Login::MULTI_ACCOUNT)
-			client.close_connection_after_writing
+		return unless valid_string?(user) && valid_string?(pass)
+		# Verifica se a conta existe
+		unless $database.account_exist?(user)
+			Send_Data.send_login(client, Enums::Login::UNREGISTERED)
 			return
 		end
-		account = Database.load_account(user)
-		if pass != account.pass
-			send_failed_login(client, Enums::Login::INVALID_PASS)
-			add_attempt(client)
-			client.close_connection_after_writing
-			return
-		elsif banned?(account.id_db)
-			send_failed_login(client, Enums::Login::ACC_BANNED)
-			client.close_connection_after_writing
+		# Verifica a senha
+		unless $database.correct_password?(user, pass)
+			Send_Data.send_login(client, Enums::Login::WRONG_PASSWORD)
 			return
 		end
-		client.user = user
-		client.account_id_db = account.id_db
-		# Salva a senha, já que, ao excluir personagem, é necessário verificar
-		#se a senha que o usuário digitou está correta
-		client.pass = account.pass
-		client.group = account.group
-		client.vip_time = account.vip_time
-		client.actors = account.actors
-		client.friends = account.friends
-		client.handshake = true
-		Database.load_bank(client)
-		send_login(client)
-		@blocked_ips.delete(client.ip)
-		puts("#{user} logou com o IP #{client.ip}.")
+		# Verifica se a conta já está em uso
+		if account_in_use?(user)
+			Send_Data.send_login(client, Enums::Login::IN_USE)
+			return
+		end
+		# Verifica se a conta está banida
+		if $database.account_banned?(user)
+			Send_Data.send_login(client, Enums::Login::BANNED)
+			return
+		end
+		client.account = $database.load_account(user)
+		Send_Data.send_login(client, Enums::Login::SUCCESS)
+		Send_Data.send_actors(client)
 	end
 
 	def handle_create_account(client, buffer)
-		# Altera a codificação padrão do nome de usuário recebido pela Socket do Ruby (ASCII-8BIT)
-		#para UTF-8, evitando erro ao exibir a mensagem no console do Server.exe. Evita
-		#mais de um cadastro com o mesmo usuário
-		user = buffer.read_string.strip.force_encoding('UTF-8')
+		return if client.in_game?
+		user = buffer.read_string
 		pass = buffer.read_string
-		email = buffer.read_string
-		version = buffer.read_short
-		if client.spawning?
-			return
-		elsif create_account_hacking_attempt?(client, user, pass, email)
-			client.close_connection
-			return
-		elsif version != Configs::GAME_VERSION
-			send_failed_login(client, Enums::Login::OLD_VERSION)
-			client.close_connection_after_writing
-			return
-		elsif ip_blocked?(client.ip)
-			send_failed_login(client, Enums::Login::IP_BLOCKED)
-			client.close_connection_after_writing
-			return
-		elsif Database.account_exist?(user)
-			send_create_account(client, Enums::Register::ACC_EXIST)
-			client.close_connection_after_writing
+		return unless valid_string?(user) && valid_string?(pass)
+		# Verifica se a conta já existe
+		if $database.account_exist?(user)
+			Send_Data.send_create_account(client, Enums::CreateAccount::IN_USE)
 			return
 		end
-		client.antispam_time = Time.now + 0.5
-		Database.create_account(user, pass, email)
-		send_create_account(client, Enums::Register::SUCCESSFUL)
-		client.close_connection_after_writing
-		puts("Conta #{user} criada.")
+		$database.create_account(user, pass)
+		client.account = $database.load_account(user)
+		Send_Data.send_create_account(client, Enums::CreateAccount::SUCCESS)
+		Send_Data.send_actors(client)
 	end
-	
+
 	def handle_create_actor(client, buffer)
-		actor_id = buffer.read_byte
-		name = titleize(buffer.read_string.strip)
-		character_index = buffer.read_byte
-		class_id = buffer.read_short
-		sex = buffer.read_byte
-		params = []
-		8.times { params << buffer.read_byte }
-		max_params = params.inject(:+)
-		points = Configs::START_POINTS - max_params
-		return if client.spawning?
-		return unless client.logged?
-		return if actor_id >= Configs::MAX_ACTORS
-		return if client.actors.has_key?(actor_id)
-		return if name.size < Configs::MIN_CHARACTERS || name.size > Configs::MAX_CHARACTERS
-		return if invalid_name?(name)
-		return if illegal_name?(name) && client.standard?
-		return if class_id < 1 || class_id > client.max_classes
-		return if sex > Enums::Sex::FEMALE
-		return if character_index >= $data_classes[class_id].graphics[sex].size
-		return if max_params + points > Configs::START_POINTS
-		if Database.player_exist?(name)
-			send_failed_create_actor(client)
+		return if client.in_game?
+		return unless client.account
+		name = buffer.read_string
+		actor_class = buffer.read_byte
+		return unless valid_string?(name)
+		# Verifica se o nome já está em uso
+		if $database.actor_name_exist?(name)
+			Send_Data.send_create_actor(client, Enums::CreateActor::NAME_IN_USE)
 			return
 		end
-		client.antispam_time = Time.now + 0.5
-		Database.create_player(client, actor_id, name, character_index, class_id, sex, params, points)
-		send_create_actor(client, actor_id, client.actors[actor_id])
+		# Verifica se atingiu o limite de atores
+		if client.account.actors.size >= MAX_ACTORS
+			Send_Data.send_create_actor(client, Enums::CreateActor::LIMIT)
+			return
+		end
+		$database.create_actor(client.account, name, actor_class)
+		Send_Data.send_create_actor(client, Enums::CreateActor::SUCCESS)
+		Send_Data.send_actors(client)
 	end
-	
+
 	def handle_remove_actor(client, buffer)
-		actor_id = buffer.read_byte
-		pass = buffer.read_string
-		return unless client.actors.has_key?(actor_id)
-		unless pass == client.pass
-			send_failed_login(client, Enums::Login::INVALID_PASS)
-			add_attempt(client)
-			return
-		end
-		Database.remove_player(client.actors[actor_id].id_db)
-		client.remove_actor_guild(client.actors[actor_id].guild_name, client.actors[actor_id].name)
-		client.actors.delete(actor_id)
-		send_remove_actor(client, actor_id)
+		return if client.in_game?
+		return unless client.account
+		index = buffer.read_byte
+		return unless client.account.actors[index]
+		$database.remove_actor(client.account, index)
+		Send_Data.send_actors(client)
 	end
 
 	def handle_use_actor(client, buffer)
-		actor_id = buffer.read_byte
-		return unless client.actors.has_key?(actor_id)
-		# Define os dados
-		client.load_data(actor_id)
-		# Envia os dados para os jogadores que estão no mapa, exceto para o próprio
-		#jogador que ainda não está conectado
-		send_player_data(client, client.map_id)
-		@maps[client.map_id].total_players += 1
-		Database.change_whos_online(client.id_db, :insert)
-		# Conecta ao jogo
-		client.join_game(actor_id)
-		send_use_actor(client)
-		send_global_switches(client)
-		send_map_players(client)
-		send_map_events(client)
-		send_map_drops(client)
-		send_motd(client)
+		return if client.in_game?
+		return unless client.account
+		index = buffer.read_byte
+		return unless client.account.actors[index]
+		client.select_actor(index)
+		Send_Data.send_use_actor(client)
+		Send_Data.send_map(client)
 	end
-	
+
 	def handle_player_movement(client, buffer)
+		return unless client.in_game?
+		return if client.stop_count && Time.now < client.stop_count
 		d = buffer.read_byte
-		# Anti-speed hack
-		#return unless client.movable?
-		return if d < Enums::Dir::DOWN_LEFT || d > Enums::Dir::UP_RIGHT
-		#return if client.has_text?
+		x = buffer.read_short
+		y = buffer.read_short
+		return unless client.actor.movable?
+		return if client.actor.x != x || client.actor.y != y
 		client.stop_count = Time.now + 0.170
-		#if d.odd?
-			#client.move_diagonal(d)
-		#else
+		if d.odd?
+			client.move_diagonal(d)
+		else
 			client.move_straight(d)
-		#end
-		if client.move_succeed
-			client.check_floor_effect
-			client.check_touch_event
-			client.close_windows
 		end
 	end
-	
+
 	def handle_chat_message(client, buffer)
-		# Altera a codificação padrão da mensagem recebida pela Socket do Ruby (ASCII-8BIT) para UTF-8
-		message = buffer.read_string.force_encoding('UTF-8')
-		talk_type = buffer.read_byte
-		name = buffer.read_string
-		return if message.strip.empty?
-		return if talk_type == Enums::Chat::GLOBAL && client.global_chat_spawning? && message != '/who'
-		return if client.spawning?
-		return if client.muted?
-		client.antispam_time = Time.now + 0.5
-		if message == '/who'
-			whos_online(client)
-			return
-		end
-		message = "#{client.name}: #{chat_filter(message)}"
-		case talk_type
+		return unless client.in_game?
+		msg = buffer.read_string
+		return unless valid_string?(msg)
+		type = buffer.read_byte
+		msg = msg[0, MAX_CHAT_LENGTH]
+		case type
 		when Enums::Chat::MAP
-			map_chat_message(client.map_id, message, client.id, !client.standard? ? 15 + client.group : Enums::Chat::MAP)
+			Send_Data.send_chat_message(client, client.actor.name, msg, type)
 		when Enums::Chat::GLOBAL
-			client.global_antispam_time = Time.now + Configs::GLOBAL_ANTISPAM_TIME
-			global_chat_message(message, !client.standard? ? 15 + client.group : Enums::Chat::GLOBAL)
+			Send_Data.send_chat_message_all(client.actor.name, msg, type)
+		when Enums::Chat::WHISPER
+			target_name = buffer.read_string
+			target = find_player_by_name(target_name)
+			if target
+				Send_Data.send_chat_message_whisper(client, target, msg)
+			else
+				Send_Data.send_notification(client, Enums::Notification::PLAYER_NOT_FOUND)
+			end
 		when Enums::Chat::PARTY
-			party_chat_message(client, message)
+			Send_Data.send_chat_message_party(client, msg)
 		when Enums::Chat::GUILD
-			guild_chat_message(client, message)
-		when Enums::Chat::PRIVATE
-			private_chat_message(client, message, name)
+			Send_Data.send_chat_message_guild(client, msg)
 		end
 	end
 
 	def handle_player_attack(client)
-		return if client.attacking?
-		if client.using_range_weapon?
-			client.attack_range
-		elsif client.using_normal_weapon?
-			client.attack_normal
-		end
-		# Interage com evento embaixo e em frente independentemente de
-		#o jogador ter atacado algum inimigo
-		if client.movable?
-			client.check_event_trigger_here([0])
-			client.check_event_trigger_there([0, 1, 2])
-		end
+		return unless client.in_game?
+		return unless client.actor.movable?
+		return if client.actor.weapon_id > 0 && !client.actor.has_item?(client.actor.weapon_id, Enums::Item::WEAPON)
+		client.attack
 	end
 
 	def handle_use_item(client, buffer)
+		return unless client.in_game?
 		item_id = buffer.read_short
-		return if client.using_item?
-		# Usa se o item existe, o jogador o tiver e for usável
-		client.use_item($data_items[item_id])
+		return unless client.actor.movable?
+		return unless client.actor.has_item?(item_id, Enums::Item::ITEM)
+		client.use_item(item_id)
 	end
 
 	def handle_use_skill(client, buffer)
+		return unless client.in_game?
 		skill_id = buffer.read_short
-		return if client.using_item?
-		client.use_item($data_skills[skill_id])
+		return unless client.actor.movable?
+		return unless client.actor.has_skill?(skill_id)
+		client.use_skill(skill_id)
 	end
-	
+
 	def handle_balloon(client, buffer)
+		return unless client.in_game?
 		balloon_id = buffer.read_byte
-		return if balloon_id > 10
-		return if client.spawning?
-		client.antispam_time = Time.now + 0.5
-		send_balloon(client, Enums::Target::PLAYER, balloon_id)
+		Send_Data.send_balloon(client, balloon_id)
 	end
-	
+
 	def handle_use_hotbar(client, buffer)
-		id = buffer.read_byte
-		return unless client.hotbar[id]
-		return if client.using_item?
-		item_id = client.hotbar[id].item_id
-		item = client.hotbar[id].type == Enums::Hotbar::ITEM ? $data_items[item_id] : $data_skills[item_id]
-		client.use_item(item)
+		return unless client.in_game?
+		index = buffer.read_byte
+		return unless client.actor.movable?
+		hotbar = client.actor.hotbar[index]
+		return unless hotbar
+		case hotbar.type
+		when Enums::Hotbar::ITEM
+			return unless client.actor.has_item?(hotbar.id, Enums::Item::ITEM)
+			client.use_item(hotbar.id)
+		when Enums::Hotbar::SKILL
+			return unless client.actor.has_skill?(hotbar.id)
+			client.use_skill(hotbar.id)
+		end
 	end
 
 	def handle_add_drop(client, buffer)
-		item_id = buffer.read_short
-		kind = buffer.read_byte
-		amount = buffer.read_short
-		item = client.item_object(kind, item_id)
-		# Impede que o item da troca, que não é removido do inventário, seja dropado
-		return if client.in_trade?
-		return if @maps[client.map_id].full_drops?
-		return if amount < 1 || amount > client.item_number(item)
-		return if item.soulbound?
-		return if client.spawning?
-		client.antispam_time = Time.now + 0.5
-		client.lose_item(item, amount)
-		@maps[client.map_id].add_drop(item_id, kind, amount, client.x, client.y)
+		return unless client.in_game?
+		item_id   = buffer.read_short
+		item_type = buffer.read_byte
+		amount    = buffer.read_short
+		return unless client.actor.movable?
+		return unless amount > 0
+		return unless client.actor.has_item?(item_id, item_type, amount)
+		client.add_drop(item_id, item_type, amount)
 	end
-	
+
 	def handle_remove_drop(client, buffer)
-		drop_id = buffer.read_byte
-		drop = @maps[client.map_id].drops[drop_id]
-		return unless drop
-		return unless client.pos?(drop.x, drop.y)
-		#return unless client.in_range?(drop, 1)
-		unless pick_up_drop?(drop, client)
-			alert_message(client, Enums::Alert::NOT_PICK_UP_DROP)
-			return
-		end
-		item = client.item_object(drop.kind, drop.item_id)
-		unless client.full_inventory?(item)
-			client.gain_item(item, drop.amount, true, true)
-			@maps[client.map_id].remove_drop(drop_id)
-		end
+		return unless client.in_game?
+		drop_index = buffer.read_short
+		return unless client.actor.movable?
+		client.remove_drop(drop_index)
 	end
-	
+
 	def handle_player_param(client, buffer)
+		return unless client.in_game?
 		param_id = buffer.read_byte
-		return if client.points == 0
-		client.points -= 1
-		case param_id
-		when Enums::Param::MAXHP, Enums::Param::MAXMP
-			client.add_param(param_id, 10)
-		when Enums::Param::ATK..Enums::Param::LUK
-			client.add_param(param_id, 1)
-		end
+		return unless client.actor.param_points > 0
+		return unless param_id.between?(0, 5)
+		client.actor.add_param(param_id, 1)
+		client.actor.param_points -= 1
+		client.actor.recover_all
+		Send_Data.send_player_param(client)
+		Send_Data.send_player_status(client)
 	end
 
 	def handle_player_equip(client, buffer)
-		slot_id = buffer.read_byte
-		item_id = buffer.read_short
-		return if client.spawning?
-		return if client.equip_type_fixed?(slot_id)
-		client.antispam_time = Time.now + 0.5
-		client.change_equip(slot_id, item_id)
+		return unless client.in_game?
+		item_id   = buffer.read_short
+		item_type = buffer.read_byte
+		slot_id   = buffer.read_byte
+		return unless client.actor.movable?
+		client.actor.change_equip(slot_id, item_id, item_type)
+		Send_Data.send_player_equip(client)
+		Send_Data.send_player_status(client)
+		Send_Data.send_actor_equip(client)
 	end
 
 	def handle_player_hotbar(client, buffer)
-		id = buffer.read_byte
-		type = buffer.read_byte
-		item_id = buffer.read_short
-		return if id > Configs::MAX_HOTBAR
-		client.change_hotbar(id, type, item_id)
+		return unless client.in_game?
+		index     = buffer.read_byte
+		id        = buffer.read_short
+		item_type = buffer.read_byte
+		client.actor.hotbar[index] = id > 0 ? Game_Hotbar.new(id, item_type) : nil
+		Send_Data.send_player_hotbar(client)
 	end
 
 	def handle_target(client, buffer)
-		type = buffer.read_byte
-		target_id = buffer.read_short
-		client.change_target(target_id, type)
+		return unless client.in_game?
+		target_type  = buffer.read_byte
+		target_index = buffer.read_short
+		client.actor.target_type  = target_type
+		client.actor.target_index = target_index
 	end
 
 	def handle_open_friends(client)
-		online_friends = client.friends.select { |name| find_player(name) }
-		offline_friends = client.friends - online_friends
-		client.friends = online_friends + offline_friends
-		client.online_friends_size = online_friends.size
-		send_open_friends(client, online_friends)
+		return unless client.in_game?
+		Send_Data.send_friends(client)
 	end
-	
+
 	def handle_remove_friend(client, buffer)
-		index = buffer.read_byte
-		client.friends.delete_at(index)
-		client.online_friends_size -= 1 if index <= client.online_friends_size - 1
-		send_remove_friend(client, index)
+		return unless client.in_game?
+		name = buffer.read_string
+		return unless valid_string?(name)
+		client.actor.friends.delete(name)
+		Send_Data.send_friends(client)
 	end
 
 	def handle_create_guild(client, buffer)
-		flag = []
-		name = titleize(buffer.read_string.strip)
-		64.times { flag << buffer.read_byte }
-		return unless client.creating_guild?
-		return if client.in_guild?
-		return if client.spawning?
-		return if name.size < Configs::MIN_CHARACTERS || name.size > Configs::MAX_CHARACTERS
-		return if invalid_name?(name)
-		# Se o brasão tiver menos de 64 índices de cor
-		return if flag.include?(nil)
-		client.antispam_time = Time.now + 0.5
-		create_guild(client, name, flag)
+		return unless client.in_game?
+		name = buffer.read_string
+		return unless valid_string?(name)
+		return if client.actor.guild
+		# Verifica se o nome da guilda já existe
+		if $database.guild_exist?(name)
+			Send_Data.send_notification(client, Enums::Notification::GUILD_NAME_IN_USE)
+			return
+		end
+		# Verifica se o jogador tem ouro suficiente
+		unless client.actor.gold >= GUILD_PRICE
+			Send_Data.send_notification(client, Enums::Notification::NOT_ENOUGH_GOLD)
+			return
+		end
+		client.actor.gold -= GUILD_PRICE
+		$database.create_guild(client, name)
+		Send_Data.send_player_gold(client)
+		Send_Data.send_guild(client)
 	end
 
 	def handle_open_guild(client)
-		return unless client.in_guild?
-		open_guild(client)
+		return unless client.in_game?
+		Send_Data.send_guild(client)
 	end
 
 	def handle_guild_leader(client, buffer)
+		return unless client.in_game?
 		name = buffer.read_string
-		return unless client.in_guild? && client.guild_leader?
-		change_guild_leader(client, name)
+		return unless valid_string?(name)
+		return unless client.actor.guild
+		return unless client.actor.guild_rank == Enums::GuildRank::LEADER
+		return if client.actor.name == name
+		guild = client.actor.guild
+		return unless guild.member_exist?(name)
+		guild.change_leader(client.actor.name, name)
+		Send_Data.send_guild_all(guild)
 	end
 
 	def handle_guild_notice(client, buffer)
-		# Altera a codificação padrão da mensagem recebida pela Socket do Ruby (ASCII-8BIT) para UTF-8
-		notice = buffer.read_string.force_encoding('UTF-8')
-		return unless client.in_guild?
-		return unless client.guild_leader?
-		return if notice.strip.empty? || notice.size > 64
-		return if client.spawning?
-		client.antispam_time = Time.now + 0.5
-		change_guild_notice(client, notice)
+		return unless client.in_game?
+		notice = buffer.read_string
+		return unless client.actor.guild
+		return unless client.actor.guild_rank == Enums::GuildRank::LEADER
+		guild = client.actor.guild
+		guild.notice = notice
+		Send_Data.send_guild_all(guild)
 	end
-	
+
 	def handle_remove_guild_member(client, buffer)
+		return unless client.in_game?
 		name = buffer.read_string
-		return unless client.in_guild? && client.guild_leader?
-		member = find_guild_member(@guilds[client.guild_name], name)
-		if member && @guilds[client.guild_name].leader != member
-			remove_guild_member(client, member)
+		return unless valid_string?(name)
+		return unless client.actor.guild
+		return unless client.actor.guild_rank == Enums::GuildRank::LEADER
+		return if client.actor.name == name
+		guild = client.actor.guild
+		return unless guild.member_exist?(name)
+		target = find_player_by_name(name)
+		if target
+			target.actor.guild      = nil
+			target.actor.guild_rank = nil
+			Send_Data.send_guild(target)
 		else
-			alert_message(client, Enums::Alert::INVALID_NAME)
+			$database.remove_guild_member(guild, name)
 		end
+		guild.remove_member(name)
+		Send_Data.send_guild_all(guild)
 	end
 
 	def handle_guild_request(client, buffer)
-		player = find_player(buffer.read_string)
-		return unless client.in_guild? && client.guild_leader?
-		return if client.spawning?
-		client.antispam_time = Time.now + 0.5
-		if !player || player.in_guild?
-			alert_message(client, Enums::Alert::INVALID_NAME)
-			return
-		elsif @guilds[client.guild_name].members.size >= Configs::MAX_GUILD_MEMBERS
-			alert_message(client, Enums::Alert::FULL_GUILD)
+		return unless client.in_game?
+		name = buffer.read_string
+		return unless valid_string?(name)
+		return unless client.actor.guild
+		return unless client.actor.guild_rank == Enums::GuildRank::LEADER
+		target = find_player_by_name(name)
+		unless target
+			Send_Data.send_notification(client, Enums::Notification::PLAYER_NOT_FOUND)
 			return
 		end
-		player.request.id = client.id
-		player.request.type = Enums::Request::GUILD
-		send_request(player, Enums::Request::GUILD, client)
+		if target.actor.guild
+			Send_Data.send_notification(client, Enums::Notification::PLAYER_IN_GUILD)
+			return
+		end
+		target.actor.guild_invite = client.actor.guild
+		Send_Data.send_request(target, Enums::Request::GUILD, client.actor.name)
 	end
-	
+
 	def handle_leave_guild(client)
-		return unless client.in_guild?
-		if client.guild_leader?
-			# Possibilita que a guilda seja deletada e que o texto da variável guild dos membros que
-			#logaram posteriormente ao líder seja apagado, mesmo após a string guild do líder ficar vazia
-			remove_guild(client.guild_name.clone)
-		else
-			client.leave_guild
-		end
+		return unless client.in_game?
+		return unless client.actor.guild
+		return if client.actor.guild_rank == Enums::GuildRank::LEADER
+		guild = client.actor.guild
+		guild.remove_member(client.actor.name)
+		client.actor.guild      = nil
+		client.actor.guild_rank = nil
+		Send_Data.send_guild(client)
+		Send_Data.send_guild_all(guild)
 	end
 
 	def handle_leave_party(client)
-		# Sai do grupo se o jogador estiver em um
+		return unless client.in_game?
+		return unless client.actor.party
 		client.leave_party
 	end
 
 	def handle_choice(client, buffer)
-		# Recebe um valor entre 0 a 99.999.999 (8 dígitos do comando de evento Armazenar Número)
-		index = buffer.read_int
-		return unless client.has_text?
-		client.choice = index
-		client.message_interpreter.fiber.resume
+		return unless client.in_game?
+		choice = buffer.read_byte
+		client.choice = choice
 	end
-	
+
 	def handle_bank_item(client, buffer)
-		item_id = buffer.read_short
-		kind = buffer.read_byte
-		amount = buffer.read_short
-		item = client.item_object(kind, item_id)
-		container = client.bank_item_container(kind)
+		return unless client.in_game?
+		item_id   = buffer.read_short
+		item_type = buffer.read_byte
+		amount    = buffer.read_short
+		operation = buffer.read_byte
 		return unless client.in_bank?
-		return unless container
-		# Se o item que está sendo adicionado não existe ou a quantidade é maior que a do inventário
-		return if amount > 0 && client.item_number(item) < amount
-		return if amount < 0 && client.bank_item_number(container[item_id]) < amount.abs
-		return if amount > 0 && client.full_bank?(container[item_id], kind)
-		return if amount < 0 && client.full_inventory?(item)
-		return if item.soulbound?
-		client.gain_bank_item(item_id, kind, amount)
-		client.lose_item(item, amount)
+		return unless amount > 0
+		case operation
+		when Enums::Bank::DEPOSIT
+			return unless client.actor.has_item?(item_id, item_type, amount)
+			client.actor.remove_item(item_id, item_type, amount)
+			client.account.bank_add_item(item_id, item_type, amount)
+		when Enums::Bank::WITHDRAW
+			return unless client.account.bank_has_item?(item_id, item_type, amount)
+			client.account.bank_remove_item(item_id, item_type, amount)
+			client.actor.add_item(item_id, item_type, amount)
+		end
+		Send_Data.send_player_items(client)
+		Send_Data.send_bank(client)
 	end
 
 	def handle_bank_gold(client, buffer)
-		amount = buffer.read_int
+		return unless client.in_game?
+		amount    = buffer.read_int
+		operation = buffer.read_byte
 		return unless client.in_bank?
-		return if amount > 0 && client.gold < amount
-		return if amount < 0 && client.bank_gold < amount.abs
-		client.gain_bank_gold(amount)
-		client.lose_gold(amount)
+		return unless amount > 0
+		case operation
+		when Enums::Bank::DEPOSIT
+			return unless client.actor.gold >= amount
+			client.actor.gold -= amount
+			client.account.bank_gold += amount
+		when Enums::Bank::WITHDRAW
+			return unless client.account.bank_gold >= amount
+			client.account.bank_gold -= amount
+			client.actor.gold += amount
+		end
+		Send_Data.send_player_gold(client)
+		Send_Data.send_bank(client)
 	end
 
 	def handle_close_window(client)
-		client.close_bank
-		client.close_shop
-		client.close_trade
-		client.close_create_guild
-		client.close_teleport
+		return unless client.in_game?
+		client.actor.in_event  = false
+		client.actor.in_shop   = false
+		client.actor.in_bank   = false
+		client.actor.in_trade  = false
 	end
 
 	def handle_buy_item(client, buffer)
-		index = buffer.read_byte
-		amount = buffer.read_short.abs
+		return unless client.in_game?
+		item_index = buffer.read_byte
+		amount     = buffer.read_short
 		return unless client.in_shop?
-		return unless client.shop_goods[index]
-		kind = client.shop_goods[index][0]
-		item_id = client.shop_goods[index][1]
-		item = client.item_object(kind + 1, item_id)
-		price = client.shop_goods[index][2] == 0 ? item.price : client.shop_goods[index][3]
-		if client.gold >= price * amount && (!client.full_inventory?(item) || amount < 0)
-			client.gain_item(item, amount)
-			client.lose_gold(price * amount, true)
-		end
+		return unless amount > 0
+		shop = client.actor.shop
+		return unless shop
+		item = shop.items[item_index]
+		return unless item
+		total_price = item.price * amount
+		return unless client.actor.gold >= total_price
+		client.actor.gold -= total_price
+		client.actor.add_item(item.id, item.type, amount)
+		Send_Data.send_player_gold(client)
+		Send_Data.send_player_items(client)
 	end
-	
+
 	def handle_sell_item(client, buffer)
-		item_id = buffer.read_short
-		kind = buffer.read_byte
-		amount = buffer.read_short.abs
+		return unless client.in_game?
+		item_id   = buffer.read_short
+		item_type = buffer.read_byte
+		amount    = buffer.read_short
 		return unless client.in_shop?
-		return if client.shop_goods[0][4]
-		item = client.item_object(kind, item_id)
-		if client.item_number(item) >= amount
-			client.lose_item(item, amount)
-			client.gain_gold(amount * item.price / 2, true)
-		end
+		return unless amount > 0
+		return unless client.actor.has_item?(item_id, item_type, amount)
+		item_data = $database.get_item(item_id, item_type)
+		return unless item_data
+		sell_price = (item_data.price * SELL_FACTOR).to_i
+		client.actor.remove_item(item_id, item_type, amount)
+		client.actor.gold += sell_price * amount
+		Send_Data.send_player_gold(client)
+		Send_Data.send_player_items(client)
 	end
 
 	def handle_choice_teleport(client, buffer)
+		return unless client.in_game?
 		index = buffer.read_byte
-		return unless client.in_teleport?
-		return unless Configs::TELEPORTS[client.teleport_id][index]
-		return if Configs::TELEPORTS[client.teleport_id][index][:gold] > client.gold
-		client.transfer(Configs::TELEPORTS[client.teleport_id][index][:map_id], Configs::TELEPORTS[client.teleport_id][index][:x], Configs::TELEPORTS[client.teleport_id][index][:y], Enums::Dir::DOWN)
-		client.lose_gold(Configs::TELEPORTS[client.teleport_id][index][:gold])
+		return unless client.actor.teleport_choices
+		choice = client.actor.teleport_choices[index]
+		return unless choice
+		client.actor.teleport_choices = nil
+		client.teleport(choice[:map_id], choice[:x], choice[:y])
 	end
 
 	def handle_next_event_command(client)
-		return unless client.has_text?
-		interpreter = client.message_interpreter
-		# Limpa o message_interpreter, o qual poderá ser eventualmente preenchido, após a
-		#execução do resume, se houver outro Mostrar Mensagem no restante da lista
-		client.message_interpreter = nil
-		interpreter.fiber.resume
+		return unless client.in_game?
+		client.actor.next_command = true
 	end
-	
+
 	def handle_request(client, buffer)
+		return unless client.in_game?
 		type = buffer.read_byte
-		player_id = buffer.read_short
-		return if client.spawning?
-		client.antispam_time = Time.now + 0.5
 		case type
-		when Enums::Request::TRADE
-			return if requested_unavailable?(client, @clients[player_id])
-			return if client.in_trade? || client.in_shop? || client.in_bank?
-			if @clients[player_id].in_trade? || @clients[player_id].in_shop? || @clients[player_id].in_bank?
-				alert_message(client, Enums::Alert::BUSY)
-				return
-			end
-		when Enums::Request::FINISH_TRADE
-			return unless client.in_trade?
-			player_id = client.trade_player_id
 		when Enums::Request::PARTY
-			return if requested_unavailable?(client, @clients[player_id])
-			return if client.in_party? && @parties[client.party_id].size >= Configs::MAX_PARTY_MEMBERS
-			if @clients[player_id].in_party?
-				alert_message(client, Enums::Alert::IN_PARTY)
+			target_name = buffer.read_string
+			return unless valid_string?(target_name)
+			target = find_player_by_name(target_name)
+			unless target
+				Send_Data.send_notification(client, Enums::Notification::PLAYER_NOT_FOUND)
 				return
 			end
-		when Enums::Request::FRIEND
-			return if requested_unavailable?(client, @clients[player_id])
-			return if client.friends.size >= Configs::MAX_FRIENDS
-			return if client.friends.include?(@clients[player_id].name)
-			if @clients[player_id].friends.include?(client.name)
-				client.add_friend(@clients[player_id])
+			if target.actor.party
+				Send_Data.send_notification(client, Enums::Notification::PLAYER_IN_PARTY)
 				return
 			end
-		when Enums::Request::GUILD
-			return if requested_unavailable?(client, @clients[player_id])
-			return if !client.in_guild? || @clients[player_id].in_guild?
-			if !client.guild_leader?
-				alert_message(client, Enums::Alert::NOT_GUILD_LEADER)
-				return
-			elsif @guilds[client.guild_name].members.size >= Configs::MAX_GUILD_MEMBERS
-				alert_message(client, Enums::Alert::FULL_GUILD)
-				return
-			end
+			target.actor.party_invite = client
+			Send_Data.send_request(target, Enums::Request::PARTY, client.actor.name)
 		end
-		@clients[player_id].request.id = client.id
-		@clients[player_id].request.type = type
-		send_request(@clients[player_id], type, client)
 	end
 
 	def handle_accept_request(client)
-		case client.request.type
-		when Enums::Request::TRADE
-			client.open_trade
-		when Enums::Request::FINISH_TRADE
-			client.finish_trade
-		when Enums::Request::PARTY
-			client.accept_party
-		when Enums::Request::FRIEND
-			client.accept_friend
-		when Enums::Request::GUILD
-			client.accept_guild
+		return unless client.in_game?
+		# Convite de guilda
+		if client.actor.guild_invite
+			guild = client.actor.guild_invite
+			client.actor.guild_invite = nil
+			guild.add_member(client.actor.name)
+			client.actor.guild      = guild
+			client.actor.guild_rank = Enums::GuildRank::MEMBER
+			Send_Data.send_guild(client)
+			Send_Data.send_guild_all(guild)
 		end
-		client.clear_request
+		# Convite de party
+		if client.actor.party_invite
+			inviter = client.actor.party_invite
+			client.actor.party_invite = nil
+			client.join_party(inviter)
+		end
 	end
-	
+
 	def handle_decline_request(client)
-		case client.request.type
-		when Enums::Request::TRADE, Enums::Request::PARTY, Enums::Request::FRIEND, Enums::Request::GUILD
-			alert_message(@clients[client.request.id], Enums::Alert::REQUEST_DECLINED) if @clients[client.request.id]&.in_game?
-		when Enums::Request::FINISH_TRADE
-			alert_message(@clients[client.request.id], Enums::Alert::TRADE_DECLINED) if client.in_trade?
-		end
-		client.clear_request
+		return unless client.in_game?
+		client.actor.guild_invite = nil
+		client.actor.party_invite = nil
 	end
 
 	def handle_trade_item(client, buffer)
-		item_id = buffer.read_short
-		kind = buffer.read_byte
-		amount = buffer.read_short
-		item = client.item_object(kind, item_id)
-		container = client.trade_item_container(kind)
+		return unless client.in_game?
+		item_id   = buffer.read_short
+		item_type = buffer.read_byte
+		amount    = buffer.read_short
+		operation = buffer.read_byte
 		return unless client.in_trade?
-		return unless container
-		# Se o item que está sendo adicionado não existe ou a quantidade é maior que a do inventário
-		return if amount > 0 && client.item_number(item) < client.trade_item_number(container[item_id]) + amount
-		return if amount < 0 && client.trade_item_number(container[item_id]) < amount
-		return if amount > 0 && client.full_trade?(container[item_id])
-		return if item.soulbound?
-		# O item é removido da troca sem precisar verificar se o inventário está cheio, pois a
-		#quantidade de itens do inventário não é verdadeiramente alterada na troca
-		client.gain_trade_item(item_id, kind, amount)
-		client.close_trade_request
+		return unless amount > 0
+		target = client.actor.trade_target
+		return unless target
+		case operation
+		when Enums::Trade::ADD
+			return unless client.actor.has_item?(item_id, item_type, amount)
+			client.actor.trade_items ||= []
+			client.actor.trade_items << { id: item_id, type: item_type, amount: amount }
+		when Enums::Trade::REMOVE
+			return unless client.actor.trade_items
+			client.actor.trade_items.delete_if { |i| i[:id] == item_id && i[:type] == item_type }
+		end
+		Send_Data.send_trade_items(client, target)
 	end
 
 	def handle_trade_gold(client, buffer)
+		return unless client.in_game?
 		amount = buffer.read_int
 		return unless client.in_trade?
-		return if amount > 0 && client.gold < client.trade_gold + amount
-		return if amount < 0 && client.trade_gold < amount
-		client.gain_trade_gold(amount)
-		client.close_trade_request
+		target = client.actor.trade_target
+		return unless target
+		client.actor.trade_gold = amount
+		Send_Data.send_trade_gold(client, target)
 	end
 
 	def handle_logout(client)
-		client.load_original_graphic
-		send_logout(client)
-		client.update_current_actor
-		client.leave_game
-		client.inactivity_time = Time.now + INACTIVITY_TIME
+		return unless client.in_game?
+		client.logout
 	end
 
 	def handle_admin_command(client, buffer)
+		return unless client.in_game?
+		return unless client.actor.admin?
 		command = buffer.read_byte
-		# Altera a codificação padrão da mensagem recebida pela Socket do Ruby (ASCII-8BIT) para UTF-8
-		str = buffer.read_string.force_encoding('UTF-8')
-		int1 = buffer.read_int
-		int2 = buffer.read_int
-		int3 = buffer.read_short
-		if client.admin?
-			admin_commands(client, command, str, int1, int2, int3)
-		elsif client.monitor?
-			monitor_commands(client, command, str)
+		case command
+		when Enums::Admin::WARP
+			map_id = buffer.read_short
+			x      = buffer.read_short
+			y      = buffer.read_short
+			client.teleport(map_id, x, y)
+		when Enums::Admin::SUMMON
+			name = buffer.read_string
+			return unless valid_string?(name)
+			target = find_player_by_name(name)
+			return unless target
+			client.teleport(target.actor.map_id, target.actor.x, target.actor.y)
+		when Enums::Admin::CALL
+			name = buffer.read_string
+			return unless valid_string?(name)
+			target = find_player_by_name(name)
+			return unless target
+			target.teleport(client.actor.map_id, client.actor.x, client.actor.y)
+		when Enums::Admin::KICK
+			name = buffer.read_string
+			return unless valid_string?(name)
+			target = find_player_by_name(name)
+			return unless target
+			target.close_connection
+		when Enums::Admin::BAN
+			name = buffer.read_string
+			return unless valid_string?(name)
+			target = find_player_by_name(name)
+			if target
+				$database.ban_account(target.account.user)
+				target.close_connection
+			else
+				$database.ban_account(name)
+			end
+		when Enums::Admin::MUTE
+			name = buffer.read_string
+			return unless valid_string?(name)
+			target = find_player_by_name(name)
+			return unless target
+			target.actor.muted = !target.actor.muted
+		when Enums::Admin::CHANGE_LEVEL
+			name  = buffer.read_string
+			level = buffer.read_byte
+			return unless valid_string?(name)
+			target = find_player_by_name(name)
+			return unless target
+			target.actor.change_level(level)
+			Send_Data.send_player_exp(target)
+			Send_Data.send_player_status(target)
+		when Enums::Admin::CHANGE_GOLD
+			name   = buffer.read_string
+			amount = buffer.read_int
+			return unless valid_string?(name)
+			target = find_player_by_name(name)
+			return unless target
+			target.actor.gold = amount
+			Send_Data.send_player_gold(target)
+		when Enums::Admin::GIVE_ITEM
+			name      = buffer.read_string
+			item_id   = buffer.read_short
+			item_type = buffer.read_byte
+			amount    = buffer.read_short
+			return unless valid_string?(name)
+			target = find_player_by_name(name)
+			return unless target
+			target.actor.add_item(item_id, item_type, amount)
+			Send_Data.send_player_items(target)
+		when Enums::Admin::SPAWN_ENEMY
+			enemy_id = buffer.read_short
+			map_id   = buffer.read_short
+			x        = buffer.read_short
+			y        = buffer.read_short
+			map = $game_map[map_id]
+			return unless map
+			map.spawn_enemy(enemy_id, x, y)
 		end
 	end
 
