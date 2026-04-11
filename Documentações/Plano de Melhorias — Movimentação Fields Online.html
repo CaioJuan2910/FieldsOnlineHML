@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plano de Melhorias — Sistema de Movimentação · Fields Online</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f1a;
+    --bg2: #13131f;
+    --bg3: #1a1a2e;
+    --bg4: #1e1e32;
+    --gold: #c9a84c;
+    --gold-dim: rgba(201,168,76,0.15);
+    --green: #4caf50;
+    --green-dim: rgba(76,175,80,0.12);
+    --blue: #5b9bd5;
+    --blue-dim: rgba(91,155,213,0.12);
+    --red: #e05252;
+    --red-dim: rgba(224,82,82,0.15);
+    --orange: #e08c3a;
+    --orange-dim: rgba(224,140,58,0.15);
+    --gray: #6b7280;
+    --gray-dim: rgba(107,114,128,0.15);
+    --text: #e8e8f0;
+    --text-muted: #8888aa;
+    --text-dim: #5a5a7a;
+    --border: rgba(255,255,255,0.06);
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    font-size: 14px;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+  /* ── LAYOUT ── */
+  .page-wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+  }
+
+  .header::before {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--green));
+    margin: 0 auto 24px;
+    border-radius: 2px;
+  }
+
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+    opacity: 0.85;
+  }
+
+  .header-title {
+    font-size: clamp(22px, 4vw, 34px);
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+
+  .header-title span {
+    background: linear-gradient(135deg, var(--gold), #e8c96a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .header-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+  }
+
+  .header-subtitle strong {
+    color: var(--green);
+    font-weight: 600;
+  }
+
+  /* ── BADGES ROW ── */
+  .badges-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+  }
+
+  .badge-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border: 1px solid;
+  }
+
+  .badge-stat-blue {
+    background: var(--blue-dim);
+    border-color: rgba(91,155,213,0.3);
+    color: var(--blue);
+  }
+
+  .badge-stat-gold {
+    background: var(--gold-dim);
+    border-color: rgba(201,168,76,0.3);
+    color: var(--gold);
+  }
+
+  .badge-stat .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    margin-bottom: 40px;
+  }
+
+  .section-card {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .section-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .section-card.blue::before { background: linear-gradient(90deg, var(--blue), rgba(91,155,213,0.3)); }
+  .section-card.gold::before { background: linear-gradient(90deg, var(--gold), rgba(201,168,76,0.3)); }
+  .section-card.green::before { background: linear-gradient(90deg, var(--green), rgba(76,175,80,0.3)); }
+
+  .section-card.blue { border-left: 3px solid var(--blue); }
+  .section-card.gold { border-left: 3px solid var(--gold); }
+  .section-card.green { border-left: 3px solid var(--green); }
+
+  .section-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .section-header-left { display: flex; flex-direction: column; gap: 4px; }
+
+  .section-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
+  }
+
+  .section-subtitle {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .section-count {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 50px;
+    letter-spacing: 0.3px;
+  }
+
+  .blue .section-count { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(91,155,213,0.25); }
+  .gold .section-count { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(201,168,76,0.25); }
+  .green .section-count { background: var(--green-dim); color: var(--green); border: 1px solid rgba(76,175,80,0.25); }
+
+  /* ── IMPROVEMENT ITEMS ── */
+  .improvements-list {
+    padding: 8px 0;
+  }
+
+  .improvement-item {
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+    position: relative;
+  }
+
+  .improvement-item:last-child { border-bottom: none; }
+  .improvement-item:hover { background: rgba(255,255,255,0.02); }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .item-id {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    background: var(--bg4);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+    min-width: 200px;
+  }
+
+  /* ── PRIORITY BADGES ── */
+  .priority {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 50px;
+    flex-shrink: 0;
+  }
+
+  .priority-alta { background: var(--red-dim); color: var(--red); border: 1px solid rgba(224,82,82,0.3); }
+  .priority-media { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(224,140,58,0.3); }
+  .priority-baixa { background: var(--gray-dim); color: var(--gray); border: 1px solid rgba(107,114,128,0.3); }
+
+  /* ── PROBLEM / SOLUTION ── */
+  .item-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 680px) {
+    .item-body { grid-template-columns: 1fr; }
+  }
+
+  .item-block {
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+  }
+
+  .item-block-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .label-problem { color: var(--red); }
+  .label-solution { color: var(--green); }
+
+  .item-block-text {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+
+  .item-block-text code {
+    font-family: 'Courier New', monospace;
+    font-size: 11.5px;
+    background: var(--bg4);
+    color: #a8d8a8;
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid rgba(76,175,80,0.2);
+  }
+
+  .item-file {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--bg4);
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    font-family: 'Courier New', monospace;
+  }
+
+  .item-file::before {
+    content: '📄';
+    font-size: 10px;
+  }
+
+  /* ── TABLE SECTION ── */
+  .table-section {
+    margin-top: 48px;
+  }
+
+  .table-section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+
+  .table-section-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--gold-dim), rgba(201,168,76,0.05));
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .table-section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .table-section-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .table-wrapper {
+    background: var(--bg2);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+  }
+
+  thead tr {
+    background: var(--bg3);
+    border-bottom: 2px solid var(--border);
+  }
+
+  thead th {
+    padding: 13px 16px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s ease;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.025); }
+
+  tbody td {
+    padding: 11px 16px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    vertical-align: middle;
+  }
+
+  .td-order {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 700;
+    width: 36px;
+  }
+
+  .td-id {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    background: var(--bg4);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    display: inline-block;
+  }
+
+  .td-desc { color: var(--text); font-weight: 500; }
+
+  .td-file {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .td-file.servidor { color: var(--green); }
+  .td-file.cliente { color: var(--blue); }
+
+  .td-impact {
+    font-size: 11.5px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 40px 0;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+
+  .footer-text {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+  }
+
+  .footer-text span { color: var(--gold); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .page-wrapper { padding: 32px 16px 60px; }
+    .section-header { padding: 18px 20px 16px; }
+    .improvement-item { padding: 16px 20px; }
+    .item-title { font-size: 13px; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section { animation: fadeInUp 0.4s ease both; }
+  .section:nth-child(1) { animation-delay: 0.05s; }
+  .section:nth-child(2) { animation-delay: 0.12s; }
+  .section:nth-child(3) { animation-delay: 0.19s; }
+  .table-section { animation: fadeInUp 0.4s ease 0.25s both; }
+  .header { animation: fadeInUp 0.4s ease 0s both; }
+  .badges-row { animation: fadeInUp 0.4s ease 0.08s both; }
+
+  /* ── GLOW ACCENTS ── */
+  .section-card.blue { box-shadow: -3px 0 20px rgba(91,155,213,0.08); }
+  .section-card.gold { box-shadow: -3px 0 20px rgba(201,168,76,0.08); }
+  .section-card.green { box-shadow: -3px 0 20px rgba(76,175,80,0.08); }
+</style>
+</head>
+<body>
+<div class="page-wrapper">
+
+  <!-- ══ HEADER ══ -->
+  <header class="header">
+    <div class="header-eyebrow">Fields Online · RPG Maker VX Ace + VXA-OS</div>
+    <h1 class="header-title">Plano de Melhorias — <span>Sistema de Movimentação</span></h1>
+    <p class="header-subtitle">Fields Online &nbsp;·&nbsp; <strong>Revisão Técnica Completa</strong> &nbsp;·&nbsp; v2.0</p>
+  </header>
+
+  <!-- ══ BADGES ══ -->
+  <div class="badges-row">
+    <span class="badge-stat badge-stat-blue"><span class="dot"></span>3 Scripts Analisados</span>
+    <span class="badge-stat badge-stat-gold"><span class="dot"></span>14 Melhorias Mapeadas</span>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SEÇÃO 1 — Smooth_Movement
+  ══════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-card blue">
+      <div class="section-header">
+        <div class="section-header-left">
+          <div class="section-title">🎨 [FO] Smooth_Movement — Cliente</div>
+          <div class="section-subtitle">Interpolação de posição visual · Lerp de personagens, NPCs e MOBs</div>
+        </div>
+        <span class="section-count">5 melhorias identificadas</span>
+      </div>
+      <div class="improvements-list">
+
+        <!-- SM-01 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#SM-01</span>
+            <span class="priority priority-alta">ALTA</span>
+            <span class="item-title">Lerp Frame-Rate Independent</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">A interpolação <code>dx * speed</code> é dependente do framerate. A 30fps o lerp é mais lento que a 60fps — o personagem "arrasta" diferente dependendo da máquina.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Multiplicar o fator de lerp por <code>Graphics.delta_time</code> (tempo real por frame), tornando a suavização idêntica em qualquer framerate.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Smooth_Movement</span>
+        </div>
+
+        <!-- SM-02 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#SM-02</span>
+            <span class="priority priority-alta">ALTA</span>
+            <span class="item-title">Snap em Teleportes (Anti-Warp Visual)</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">Quando um <code>Game_NetPlayer</code> sofre teleporte (mudança brusca de mapa/posição), o lerp interpola através do mapa inteiro causando um "deslize" visual caótico.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Detectar distância &gt; 3 tiles entre posição visual e lógica e aplicar snap direto (<code>smooth_x = real_x</code> imediatamente), ignorando o lerp neste frame.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Smooth_Movement</span>
+        </div>
+
+        <!-- SM-03 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#SM-03</span>
+            <span class="priority priority-media">MÉDIA</span>
+            <span class="item-title">Lerp Speed Dinâmica por Velocidade do Personagem</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">Um personagem rápido (<code>move_speed</code> alto) tem lerp lento demais — a posição visual fica sempre "atrás" da posição lógica, parecendo lag.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Calcular <code>lerp_speed</code> como <code>base_speed * (move_speed / 4.0)</code> para que personagens mais rápidos tenham transições mais ágeis proporcionalmente.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Smooth_Movement</span>
+        </div>
+
+        <!-- SM-04 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#SM-04</span>
+            <span class="priority priority-media">MÉDIA</span>
+            <span class="item-title">Detecção Real de MOBs (via Nota do Evento)</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text"><code>MOB_LERP_SPEED</code> existe na config mas nunca é usado — todos os eventos usam <code>EVENT_LERP_SPEED</code>, incluindo MOBs, que deveriam ter lerp levemente diferente.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Verificar <code>@event.note</code> ou o nome do evento por tag como <code>&lt;mob&gt;</code> para aplicar <code>MOB_LERP_SPEED</code> automaticamente.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Smooth_Movement</span>
+        </div>
+
+        <!-- SM-05 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#SM-05</span>
+            <span class="priority priority-baixa">BAIXA</span>
+            <span class="item-title">Inicialização Lazy e Segura de smooth_x/y</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">Em edge cases de carregamento de save/teleporte, <code>@smooth_x</code> pode ser <code>nil</code> se <code>init_public_members</code> não tiver sido chamado antes de <code>update</code>.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Adicionar guard <code>@smooth_x ||= @x.to_f</code> no início de <code>fo_update_smooth_position</code> para garantir inicialização segura em qualquer ordem.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Smooth_Movement</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SEÇÃO 2 — Diagonal_Movement
+  ══════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-card gold">
+      <div class="section-header">
+        <div class="section-header-left">
+          <div class="section-title">⌨️ [FO] Diagonal_Movement — Cliente</div>
+          <div class="section-subtitle">Input diagonal · Passabilidade · Rate limiting · Sincronização</div>
+        </div>
+        <span class="section-count">5 melhorias identificadas</span>
+      </div>
+      <div class="improvements-list">
+
+        <!-- DM-01 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#DM-01</span>
+            <span class="priority priority-alta">ALTA</span>
+            <span class="item-title">Correção de Velocidade Diagonal (Fator √2)</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">Mover-se na diagonal envia pacotes com o mesmo <code>stop_count</code> que o movimento cardinal, fazendo o personagem cobrir ~41% mais distância por segundo na diagonal (violação da física básica).</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text"><strong>Cliente:</strong> Adicionar delay extra de 1 frame ao enviar movimento diagonal com multiplicador <code>1/√2 ≈ 0.707</code>. <strong>Servidor:</strong> Ajustar <code>stop_count</code> para <code>0.240s</code> no diagonal vs <code>0.170s</code> no cardinal.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Diagonal_Movement + handle_data.rb</span>
+        </div>
+
+        <!-- DM-02 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#DM-02</span>
+            <span class="priority priority-alta">ALTA</span>
+            <span class="item-title">Input Buffer de 2 Frames (Diagonal Tolerante)</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">Pressionar W e D com 1-2 frames de diferença não reconhece como diagonal — o personagem move-se para cima por 1 frame, depois vira diagonal. Parece "escorregamento".</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Manter um buffer de estado das teclas dos últimos 2 frames. Se W e D foram pressionados dentro de 2 frames, tratar como diagonal imediatamente.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Diagonal_Movement</span>
+        </div>
+
+        <!-- DM-03 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#DM-03</span>
+            <span class="priority priority-alta">ALTA</span>
+            <span class="item-title">Previsão Local de Passabilidade Diagonal</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">O cliente envia qualquer diagonal ao servidor sem checar se é passável. O servidor rejeita, mas o cliente já animou o passo localmente → rubber-banding visual.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Chamar <code>passable?(x, y, horz) &amp;&amp; passable?(x, y, vert)</code> antes de <code>send_movement(diagonal)</code>. Só envia ao servidor se ambas as direções forem passáveis.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Diagonal_Movement</span>
+        </div>
+
+        <!-- DM-04 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#DM-04</span>
+            <span class="priority priority-media">MÉDIA</span>
+            <span class="item-title">Rate Limiting de Input no Cliente</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">Não há nenhum controle de frequência de envio de pacotes no cliente. Em lag ou loop rápido, pode inundar o servidor com pacotes <code>PLAYER_MOVE</code>.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Adicionar <code>@move_send_cooldown = 0</code> e só enviar <code>send_movement</code> se <code>Time.now &gt;= @move_send_cooldown</code>, então definir <code>@move_send_cooldown = Time.now + 0.15</code>.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Diagonal_Movement</span>
+        </div>
+
+        <!-- DM-05 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#DM-05</span>
+            <span class="priority priority-baixa">BAIXA</span>
+            <span class="item-title">Guards Sincronizadas com o VXA-OS</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">As guards de <code>move_by_input</code> replicam manualmente as do <code>[VS] Game_Player</code> original. Se o VXA-OS atualizar, o script ficará desatualizado silenciosamente.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Chamar <code>fo_diag_original_move_by_input</code> como fallback e interceptar apenas após a decisão de movimento, reduzindo a superfície de dependência.</div>
+            </div>
+          </div>
+          <span class="item-file">[FO] Diagonal_Movement</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       SEÇÃO 3 — handle_data.rb
+  ══════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-card green">
+      <div class="section-header">
+        <div class="section-header-left">
+          <div class="section-title">🖥️ handle_data.rb — Servidor</div>
+          <div class="section-subtitle">Validação de pacotes · Antispam · Sincronização de posição</div>
+        </div>
+        <span class="section-count">4 melhorias identificadas</span>
+      </div>
+      <div class="improvements-list">
+
+        <!-- HD-01 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#HD-01</span>
+            <span class="priority priority-alta">ALTA</span>
+            <span class="item-title">stop_count Diferenciado para Diagonal</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">O servidor usa <code>stop_count = Time.now + 0.170</code> para TODOS os movimentos. Na diagonal, o personagem percorre distância ~41% maior no mesmo tempo — é literalmente mais rápido em diagonal.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text"><code>stop_count = Time.now + (d.odd? ? 0.240 : 0.170)</code> — diagonal espera mais antes do próximo movimento, normalizando a velocidade efetiva.</div>
+            </div>
+          </div>
+          <span class="item-file">handle_data.rb</span>
+        </div>
+
+        <!-- HD-02 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#HD-02</span>
+            <span class="priority priority-alta">ALTA</span>
+            <span class="item-title">Rejeitar Direção 5 Explicitamente</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">A validação atual aceita <code>d=5</code> (centro do numpad, não é direção), que passaria para <code>move_straight(5)</code> gerando comportamento indefinido no servidor.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Adicionar <code>return if d == 5</code> junto à validação de range, ou usar: <code>return unless [1,2,3,4,6,7,8,9].include?(d)</code> para whitelist explícita.</div>
+            </div>
+          </div>
+          <span class="item-file">handle_data.rb</span>
+        </div>
+
+        <!-- HD-03 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#HD-03</span>
+            <span class="priority priority-media">MÉDIA</span>
+            <span class="item-title">Antispam no Movimento</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">Não há verificação de <code>antispam_time</code> no movimento. Um cliente modificado pode enviar centenas de pacotes <code>PLAYER_MOVE</code> por segundo, sobrecarregando o servidor.</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Verificar <code>client.antispam_time</code> no início de <code>handle_player_movement</code> e atualizar após processamento (tempo mínimo entre pacotes: ~<code>0.10s</code>).</div>
+            </div>
+          </div>
+          <span class="item-file">handle_data.rb</span>
+        </div>
+
+        <!-- HD-04 -->
+        <div class="improvement-item">
+          <div class="item-header">
+            <span class="item-id">#HD-04</span>
+            <span class="priority priority-media">MÉDIA</span>
+            <span class="item-title">Confirmação de Posição Anti-Desync</span>
+          </div>
+          <div class="item-body">
+            <div class="item-block">
+              <div class="item-block-label label-problem">⚠ Problema</div>
+              <div class="item-block-text">Após movimento, o servidor não envia confirmação de posição ao cliente. Com pacotes perdidos ou movimentos rejeitados, a posição cliente/servidor diverge gradualmente (desync silencioso).</div>
+            </div>
+            <div class="item-block">
+              <div class="item-block-label label-solution">✓ Solução</div>
+              <div class="item-block-text">Quando <code>move_succeed</code> for <code>false</code>, enviar <code>send_player_position(client)</code> para forçar correção no cliente e eliminar o desync acumulado.</div>
+            </div>
+          </div>
+          <span class="item-file">handle_data.rb</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TABELA — Ordem de Implementação
+  ══════════════════════════════════════════ -->
+  <div class="table-section">
+    <div class="table-section-header">
+      <div class="table-section-icon">📋</div>
+      <div>
+        <div class="table-section-title">Ordem de Implementação Recomendada</div>
+        <div class="table-section-sub">Ordenado da melhoria mais crítica para a menos crítica · 14 itens no total</div>
+      </div>
+    </div>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Prioridade</th>
+            <th>ID</th>
+            <th>Descrição</th>
+            <th>Arquivo</th>
+            <th>Impacto Visual</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-order">01</td>
+            <td><span class="priority priority-alta">ALTA</span></td>
+            <td><span class="td-id">HD-01</span></td>
+            <td class="td-desc">stop_count diagonal 0.240s</td>
+            <td class="td-file servidor">Servidor</td>
+            <td class="td-impact" style="color:var(--gold)">⚡ Velocidade justa</td>
+          </tr>
+          <tr>
+            <td class="td-order">02</td>
+            <td><span class="priority priority-alta">ALTA</span></td>
+            <td><span class="td-id">HD-02</span></td>
+            <td class="td-desc">Rejeitar d=5 explicitamente</td>
+            <td class="td-file servidor">Servidor</td>
+            <td class="td-impact" style="color:var(--green)">🛡 Estabilidade</td>
+          </tr>
+          <tr>
+            <td class="td-order">03</td>
+            <td><span class="priority priority-alta">ALTA</span></td>
+            <td><span class="td-id">DM-01</span></td>
+            <td class="td-desc">Fator √2 no cliente</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--gold)">⚡ Velocidade justa</td>
+          </tr>
+          <tr>
+            <td class="td-order">04</td>
+            <td><span class="priority priority-alta">ALTA</span></td>
+            <td><span class="td-id">DM-03</span></td>
+            <td class="td-desc">Previsão de passabilidade diagonal</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--blue)">🔁 Anti rubber-band</td>
+          </tr>
+          <tr>
+            <td class="td-order">05</td>
+            <td><span class="priority priority-alta">ALTA</span></td>
+            <td><span class="td-id">SM-01</span></td>
+            <td class="td-desc">Lerp frame-rate independent</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--blue)">✨ Suavidade universal</td>
+          </tr>
+          <tr>
+            <td class="td-order">06</td>
+            <td><span class="priority priority-alta">ALTA</span></td>
+            <td><span class="td-id">SM-02</span></td>
+            <td class="td-desc">Snap em teleportes</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--blue)">🚫 Anti-warp visual</td>
+          </tr>
+          <tr>
+            <td class="td-order">07</td>
+            <td><span class="priority priority-alta">ALTA</span></td>
+            <td><span class="td-id">DM-02</span></td>
+            <td class="td-desc">Input buffer 2 frames</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--gold)">↗ Diagonal fluida</td>
+          </tr>
+          <tr>
+            <td class="td-order">08</td>
+            <td><span class="priority priority-media">MÉDIA</span></td>
+            <td><span class="td-id">HD-03</span></td>
+            <td class="td-desc">Antispam no movimento</td>
+            <td class="td-file servidor">Servidor</td>
+            <td class="td-impact" style="color:var(--green)">🛡 Segurança</td>
+          </tr>
+          <tr>
+            <td class="td-order">09</td>
+            <td><span class="priority priority-media">MÉDIA</span></td>
+            <td><span class="td-id">HD-04</span></td>
+            <td class="td-desc">Confirmação de posição</td>
+            <td class="td-file servidor">Servidor</td>
+            <td class="td-impact" style="color:var(--green)">🔄 Anti-desync</td>
+          </tr>
+          <tr>
+            <td class="td-order">10</td>
+            <td><span class="priority priority-media">MÉDIA</span></td>
+            <td><span class="td-id">SM-03</span></td>
+            <td class="td-desc">Lerp speed dinâmica</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--blue)">✨ Suavidade proporcional</td>
+          </tr>
+          <tr>
+            <td class="td-order">11</td>
+            <td><span class="priority priority-media">MÉDIA</span></td>
+            <td><span class="td-id">SM-04</span></td>
+            <td class="td-desc">Detecção real de MOBs</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--blue)">🐉 MOBs mais naturais</td>
+          </tr>
+          <tr>
+            <td class="td-order">12</td>
+            <td><span class="priority priority-media">MÉDIA</span></td>
+            <td><span class="td-id">DM-04</span></td>
+            <td class="td-desc">Rate limiting no cliente</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--green)">🛡 Segurança</td>
+          </tr>
+          <tr>
+            <td class="td-order">13</td>
+            <td><span class="priority priority-baixa">BAIXA</span></td>
+            <td><span class="td-id">SM-05</span></td>
+            <td class="td-desc">Inicialização lazy smooth_x/y</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--gray)">🔒 Estabilidade edge</td>
+          </tr>
+          <tr>
+            <td class="td-order">14</td>
+            <td><span class="priority priority-baixa">BAIXA</span></td>
+            <td><span class="td-id">DM-05</span></td>
+            <td class="td-desc">Guards sincronizadas VXA-OS</td>
+            <td class="td-file cliente">Cliente</td>
+            <td class="td-impact" style="color:var(--gray)">🔧 Manutenibilidade</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ FOOTER ══ -->
+  <footer class="footer">
+    <p class="footer-text">
+      <span>Fields Online</span> &nbsp;·&nbsp; Revisão Técnica v2.0 &nbsp;·&nbsp; RPG Maker VX Ace + VXA-OS &nbsp;·&nbsp; Abril 2026
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>
