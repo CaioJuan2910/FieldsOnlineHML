@@ -35,8 +35,6 @@ module Handle_Data
 	end
 
 	def handle_messages_menu(client, header, buffer)
-		# Aguarda o banco de dados estar pronto antes de processar qualquer pacote de menu
-		return unless $database
 		case header
 		when Enums::Packet::LOGIN
 			handle_login(client, buffer)
@@ -53,8 +51,6 @@ module Handle_Data
 	end
 
 	def handle_messages_game(client, header, buffer)
-		# Aguarda o banco de dados estar pronto antes de processar qualquer pacote de jogo
-		return unless $database
 		case header
 		when Enums::Packet::PLAYER_MOVE
 			handle_player_movement(client, buffer)
@@ -137,6 +133,7 @@ module Handle_Data
 
 	def handle_login(client, buffer)
 		return if client.in_game?
+		return unless $database  # Banco ainda não inicializado
 		user = buffer.read_string
 		pass = buffer.read_string
 		return unless valid_string?(user) && valid_string?(pass)
@@ -167,6 +164,7 @@ module Handle_Data
 
 	def handle_create_account(client, buffer)
 		return if client.in_game?
+		return unless $database  # Banco ainda não inicializado
 		user = buffer.read_string
 		pass = buffer.read_string
 		return unless valid_string?(user) && valid_string?(pass)
@@ -385,12 +383,10 @@ module Handle_Data
 		name = buffer.read_string
 		return unless valid_string?(name)
 		return if client.actor.guild
-		# Verifica se o nome da guilda já existe
 		if $database.guild_exist?(name)
 			Send_Data.send_notification(client, Enums::Notification::GUILD_NAME_IN_USE)
 			return
 		end
-		# Verifica se o jogador tem ouro suficiente
 		unless client.actor.gold >= GUILD_PRICE
 			Send_Data.send_notification(client, Enums::Notification::NOT_ENOUGH_GOLD)
 			return
@@ -616,7 +612,6 @@ module Handle_Data
 
 	def handle_accept_request(client)
 		return unless client.in_game?
-		# Convite de guilda
 		if client.actor.guild_invite
 			guild = client.actor.guild_invite
 			client.actor.guild_invite = nil
@@ -626,7 +621,6 @@ module Handle_Data
 			Send_Data.send_guild(client)
 			Send_Data.send_guild_all(guild)
 		end
-		# Convite de party
 		if client.actor.party_invite
 			inviter = client.actor.party_invite
 			client.actor.party_invite = nil
