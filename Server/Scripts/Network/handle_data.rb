@@ -1,22 +1,14 @@
 #==============================================================================
 # ** Handle_Data
 #------------------------------------------------------------------------------
-#  Este script recebe as mensagens do cliente.
+# Este script recebe as mensagens do cliente.
 #------------------------------------------------------------------------------
-#  Autor: Valentine
-#  Customizações: Fields Online
+# Autor: Valentine
+# Melhoria HD-01: stop_count diferenciado para movimento diagonal (0.240s vs 0.170s)
+# Melhoria HD-02: Rejeição explícita de d=5 via whitelist
+# Alterado em: Abril 2026
 #==============================================================================
-
 module Handle_Data
-
-  #----------------------------------------------------------------------------
-  # * Valida se uma string recebida do cliente é utilizável.
-  #----------------------------------------------------------------------------
-  def valid_string?(str)
-    return false unless str.is_a?(String)
-    return false if str.strip.empty?
-    true
-  end
 
   def handle_messages(client, buffer)
     begin
@@ -165,14 +157,14 @@ module Handle_Data
       client.close_connection_after_writing
       return
     end
-    client.user          = user
+    client.user         = user
     client.account_id_db = account.id_db
-    client.pass          = account.pass
-    client.group         = account.group
-    client.vip_time      = account.vip_time
-    client.actors        = account.actors
-    client.friends       = account.friends
-    client.handshake     = true
+    client.pass         = account.pass
+    client.group        = account.group
+    client.vip_time     = account.vip_time
+    client.actors       = account.actors
+    client.friends      = account.friends
+    client.handshake    = true
     Database.load_bank(client)
     send_login(client)
     @blocked_ips.delete(client.ip)
@@ -210,12 +202,12 @@ module Handle_Data
   end
 
   def handle_create_actor(client, buffer)
-    actor_id        = buffer.read_byte
-    name            = titleize(buffer.read_string.strip)
-    character_index = buffer.read_byte
-    class_id        = buffer.read_short
-    sex             = buffer.read_byte
-    params          = []
+    actor_id          = buffer.read_byte
+    name              = titleize(buffer.read_string.strip)
+    character_index   = buffer.read_byte
+    class_id          = buffer.read_short
+    sex               = buffer.read_byte
+    params            = []
     8.times { params << buffer.read_byte }
     max_params = params.inject(:+)
     points     = Configs::START_POINTS - max_params
@@ -271,23 +263,37 @@ module Handle_Data
   end
 
   #----------------------------------------------------------------------------
-  # * Processa o movimento do jogador recebido do cliente.
-  #   Suporta movimento cardinal (2,4,6,8) e diagonal (1,3,7,9).
-  #   move_diagonal(d) espera 1 argumento — o servidor converte internamente.
+  # * handle_player_movement
+  #   Processa o movimento do jogador no mapa.
+  #
+  #   [HD-01] stop_count diferenciado: diagonal (d ímpar) espera 0.240s
+  #   enquanto movimento cardinal (d par) espera 0.170s, normalizando a
+  #   velocidade efetiva. Fórmula: 0.170 × √2 ≈ 0.240s
+  #   Diagonais no numpad: 1(↙) 3(↘) 7(↖) 9(↗) → d.odd? == true
+  #   Cardinais no numpad: 2(↓) 4(←) 6(→) 8(↑) → d.even? == true
+  #
+  #   [HD-02] Whitelist explícita: apenas [1,2,3,4,6,7,8,9] são aceitos.
+  #   Rejeita d=5 (centro do numpad, não é direção válida) que causaria
+  #   comportamento indefinido em move_straight(5). A validação original
+  #   de range (1..9) permitia d=5 passar silenciosamente.
   #----------------------------------------------------------------------------
   def handle_player_movement(client, buffer)
     d = buffer.read_byte
-    # Valida direção: apenas valores entre DOWN_LEFT (1) e UP_RIGHT (9)
-    return if d < Enums::Dir::DOWN_LEFT || d > Enums::Dir::UP_RIGHT
-    client.stop_count = Time.now + 0.170
-    if d.odd?
-      # Movimento diagonal: 1=DOWN_LEFT, 3=DOWN_RIGHT, 7=UP_LEFT, 9=UP_RIGHT
-      # O servidor converte internamente para horz/vert dentro de move_diagonal(d)
-      client.move_diagonal(d)
-    else
-      # Movimento cardinal: 2=baixo, 4=esquerda, 6=direita, 8=cima
-      client.move_straight(d)
-    end
+    # Anti-speed hack
+    #return unless client.movable?
+    # [HD-02] Whitelist explícita de direções válidas — rejeita d=5 (centro)
+    # e qualquer valor fora do numpad direcional.
+    # Substitui: return if d < Enums::Dir::DOWN_LEFT || d > Enums::Dir::UP_RIGHT
+    return unless [1, 2, 3, 4, 6, 7, 8, 9].include?(d)
+    #return if client.has_text?
+    # [HD-01] stop_count diferenciado por tipo de movimento:
+    # Diagonal (d ímpar) → 0.240s | Cardinal (d par) → 0.170s
+    client.stop_count = Time.now + (d.odd? ? 0.240 : 0.170)
+    #if d.odd?
+      #client.move_diagonal(d)
+    #else
+    client.move_straight(d)
+    #end
     if client.move_succeed
       client.check_floor_effect
       client.check_touch_event
@@ -435,8 +441,8 @@ module Handle_Data
   def handle_open_friends(client)
     online_friends  = client.friends.select { |name| find_player(name) }
     offline_friends = client.friends - online_friends
-    client.friends             = online_friends + offline_friends
-    client.online_friends_size = online_friends.size
+    client.friends              = online_friends + offline_friends
+    client.online_friends_size  = online_friends.size
     send_open_friends(client, online_friends)
   end
 
@@ -538,10 +544,10 @@ module Handle_Data
     container = client.bank_item_container(kind)
     return unless client.in_bank?
     return unless container
-    return if amount > 0 && client.item_number(item) < amount
-    return if amount < 0 && client.bank_item_number(container[item_id]) < amount.abs
-    return if amount > 0 && client.full_bank?(container[item_id], kind)
-    return if amount < 0 && client.full_inventory?(item)
+    return if amount > 0  && client.item_number(item) < amount
+    return if amount < 0  && client.bank_item_number(container[item_id]) < amount.abs
+    return if amount > 0  && client.full_bank?(container[item_id], kind)
+    return if amount < 0  && client.full_inventory?(item)
     return if item.soulbound?
     client.gain_bank_item(item_id, kind, amount)
     client.lose_item(item, amount)
@@ -678,7 +684,8 @@ module Handle_Data
 
   def handle_decline_request(client)
     case client.request.type
-    when Enums::Request::TRADE, Enums::Request::PARTY, Enums::Request::FRIEND, Enums::Request::GUILD
+    when Enums::Request::TRADE, Enums::Request::PARTY,
+         Enums::Request::FRIEND, Enums::Request::GUILD
       alert_message(@clients[client.request.id], Enums::Alert::REQUEST_DECLINED) if @clients[client.request.id]&.in_game?
     when Enums::Request::FINISH_TRADE
       alert_message(@clients[client.request.id], Enums::Alert::TRADE_DECLINED) if client.in_trade?
