@@ -28,7 +28,7 @@ module Settings_Defaults
   USER          = ""       # Nome do último usuário logado (vazio = nenhum)
   MUSIC_VOLUME  = 100      # Volume da música (BGM). Range: 0 a 100
   SOUND_VOLUME  = 100      # Volume dos efeitos sonoros (BGS/SE). Range: 0 a 100
-  RESOLUTION_ID = 0        # ID da resolução padrão (veja Configs::RESOLUTIONS)
+  RESOLUTION_ID = 3        # ID da resolução padrão (veja Configs::RESOLUTIONS)
   FULLSCREEN    = 0        # Tela cheia: 0 = janela, 1 = tela cheia
   VSYNC         = 1        # VSync: 0 = desativado, 1 = ativado (recomendado)
 end

@@ -131,9 +131,10 @@ module Configs
 
   # Resoluções disponíveis para seleção pelo jogador
   RESOLUTIONS = [
-    { :width => 800,  :height => 608 },   # Resolução padrão (recomendada)
-    { :width => 1024, :height => 608 },   # Wide padrão
-    { :width => 1024, :height => 672 },   # Wide alta
+    { :width => 800,  :height => 608 },  # ID 0 — padrão mínimo
+    { :width => 1024, :height => 608 },  # ID 1 — wide padrão
+    { :width => 1024, :height => 672 },  # ID 2 — wide alta
+    { :width => 1152, :height => 768 },  # ID 3 — Fields Online HML (recomendada)
   ]
 
   #============================================================================
