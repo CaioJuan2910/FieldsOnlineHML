@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fields Online HML — Próximos Passos</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #0f1525;
+    --bg-card: #111827;
+    --bg-card-hover: #141d2e;
+    --gold: #c8952a;
+    --gold-light: #e8b84b;
+    --gold-dim: #8a6420;
+    --blue: #4a9eff;
+    --green: #2ecc71;
+    --orange: #e67e22;
+    --purple: #9b59b6;
+    --red: #e74c3c;
+    --text-primary: #e8eaf0;
+    --text-secondary: #8892a4;
+    --text-muted: #4a5568;
+    --border-subtle: #1e2a3a;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--bg-primary);
+    background-image:
+      radial-gradient(ellipse at 20% 10%, rgba(200,149,42,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(74,158,255,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(15,21,37,0.8) 0%, transparent 100%);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 0 0 60px;
+  }
+
+  /* ─── HEADER ─── */
+  .header {
+    background: linear-gradient(180deg, #0d1220 0%, var(--bg-primary) 100%);
+    border-bottom: 1px solid rgba(200,149,42,0.2);
+    padding: 40px 24px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--gold-light), var(--gold), transparent);
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(200,149,42,0.3), transparent);
+  }
+
+  .header-ornament {
+    font-family: 'Cinzel', serif;
+    color: var(--gold-dim);
+    font-size: 11px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.7;
+  }
+
+  .header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(22px, 4vw, 36px);
+    font-weight: 700;
+    color: var(--gold-light);
+    letter-spacing: 1px;
+    text-shadow: 0 0 30px rgba(200,149,42,0.3), 0 2px 4px rgba(0,0,0,0.5);
+    margin-bottom: 8px;
+  }
+
+  .header-subtitle {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+  }
+
+  .header-badges {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-success {
+    background: rgba(46,204,113,0.12);
+    border: 1px solid rgba(46,204,113,0.35);
+    color: #2ecc71;
+  }
+
+  .badge-info {
+    background: rgba(74,158,255,0.1);
+    border: 1px solid rgba(74,158,255,0.3);
+    color: var(--blue);
+  }
+
+  /* ─── PROGRESS BAR ─── */
+  .progress-container {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .progress-label span:last-child {
+    color: var(--gold);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .progress-track {
+    height: 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.05);
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 20%;
+    background: linear-gradient(90deg, var(--gold-dim), var(--gold), var(--gold-light));
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    animation: progressIn 1.2s ease-out forwards;
+  }
+
+  @keyframes progressIn {
+    from { width: 0%; }
+    to { width: 20%; }
+  }
+
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2.5s infinite 1.5s;
+  }
+
+  @keyframes shimmer {
+    0% { left: -60%; }
+    100% { left: 160%; }
+  }
+
+  .phase-dots {
+    display: flex;
+    justify-content: space-between;
+    max-width: 480px;
+    margin: 10px auto 0;
+  }
+
+  .phase-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  .phase-dot .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    border: 1px solid transparent;
+  }
+
+  .phase-dot.done .dot {
+    background: var(--gold);
+    box-shadow: 0 0 6px rgba(200,149,42,0.5);
+  }
+
+  .phase-dot.done { color: var(--gold); }
+
+  /* ─── MAIN CONTAINER ─── */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ─── SECTION TITLES ─── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 40px 0 20px;
+  }
+
+  .section-header h2 {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(200,149,42,0.3), transparent);
+  }
+
+  /* ─── STATUS CARD (Fase 1) ─── */
+  .status-card {
+    background: linear-gradient(135deg, #0f1a0f 0%, #111827 60%, #0f1525 100%);
+    border: 1px solid rgba(46,204,113,0.25);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .status-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #2ecc71, transparent);
+  }
+
+  .status-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .status-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .status-card-title h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #2ecc71;
+  }
+
+  .status-metrics {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .metric-pill {
+    background: rgba(46,204,113,0.1);
+    border: 1px solid rgba(46,204,113,0.2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #2ecc71;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .status-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+  }
+
+  .status-item {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(46,204,113,0.12);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .status-item-title {
+    font-family: 'Inter', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2ecc71;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-item-details {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .status-item-details li {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .status-item-details li::before {
+    content: '›';
+    color: #2ecc71;
+    font-weight: 700;
+  }
+
+  .status-total {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: rgba(46,204,113,0.06);
+    border: 1px solid rgba(46,204,113,0.15);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .total-stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .total-stat strong {
+    color: #2ecc71;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  /* ─── PHASE CARDS GRID ─── */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .phase-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 22px;
+    border: 1px solid var(--border-subtle);
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .phase-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    opacity: 0.6;
+    transition: opacity 0.25s ease;
+  }
+
+  .phase-card:hover {
+    transform: translateY(-4px);
+    background: var(--bg-card-hover);
+  }
+
+  .phase-card:hover::before { opacity: 1; }
+
+  /* Blue card */
+  .card-blue { border-color: rgba(74,158,255,0.2); }
+  .card-blue::before { background: linear-gradient(90deg, transparent, var(--blue), transparent); }
+  .card-blue:hover { border-color: rgba(74,158,255,0.6); box-shadow: 0 8px 32px rgba(74,158,255,0.12), 0 0 0 1px rgba(74,158,255,0.15); }
+
+  /* Green card */
+  .card-green { border-color: rgba(46,204,113,0.15); }
+  .card-green::before { background: linear-gradient(90deg, transparent, var(--green), transparent); }
+  .card-green:hover { border-color: rgba(46,204,113,0.5); box-shadow: 0 8px 32px rgba(46,204,113,0.1), 0 0 0 1px rgba(46,204,113,0.12); }
+
+  /* Orange card */
+  .card-orange { border-color: rgba(230,126,34,0.15); }
+  .card-orange::before { background: linear-gradient(90deg, transparent, var(--orange), transparent); }
+  .card-orange:hover { border-color: rgba(230,126,34,0.5); box-shadow: 0 8px 32px rgba(230,126,34,0.1), 0 0 0 1px rgba(230,126,34,0.12); }
+
+  /* Purple card */
+  .card-purple { border-color: rgba(155,89,182,0.15); }
+  .card-purple::before { background: linear-gradient(90deg, transparent, var(--purple), transparent); }
+  .card-purple:hover { border-color: rgba(155,89,182,0.5); box-shadow: 0 8px 32px rgba(155,89,182,0.1), 0 0 0 1px rgba(155,89,182,0.12); }
+
+  /* ─── GLOW PULSE (Fase 2) ─── */
+  .card-featured {
+    animation: glowPulse 2.8s ease-in-out infinite;
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      border-color: rgba(74,158,255,0.25);
+      box-shadow: 0 0 0 0 rgba(74,158,255,0);
+    }
+    50% {
+      border-color: rgba(74,158,255,0.7);
+      box-shadow: 0 0 20px rgba(74,158,255,0.18), 0 0 40px rgba(74,158,255,0.08), inset 0 0 20px rgba(74,158,255,0.03);
+    }
+  }
+
+  .card-featured:hover {
+    animation: none;
+    border-color: rgba(74,158,255,0.8);
+    box-shadow: 0 8px 40px rgba(74,158,255,0.2), 0 0 0 1px rgba(74,158,255,0.2);
+  }
+
+  /* ─── CARD INTERNALS ─── */
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .card-title-group { flex: 1; }
+
+  .card-phase-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    opacity: 0.7;
+  }
+
+  .card-title {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .card-blue .card-phase-label,
+  .card-blue .card-title { color: var(--blue); }
+  .card-green .card-phase-label,
+  .card-green .card-title { color: var(--green); }
+  .card-orange .card-phase-label,
+  .card-orange .card-title { color: var(--orange); }
+  .card-purple .card-phase-label,
+  .card-purple .card-title { color: var(--purple); }
+
+  .status-badge {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .badge-available {
+    background: rgba(74,158,255,0.15);
+    border: 1px solid rgba(74,158,255,0.4);
+    color: var(--blue);
+  }
+
+  .badge-waiting {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text-muted);
+  }
+
+  .badge-future {
+    background: rgba(155,89,182,0.12);
+    border: 1px solid rgba(155,89,182,0.3);
+    color: var(--purple);
+  }
+
+  .card-files {
+    margin-bottom: 12px;
+  }
+
+  .card-files-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .file-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .file-tag {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-family: 'Inter', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .card-objective {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 6px;
+    border-left: 2px solid rgba(255,255,255,0.08);
+  }
+
+  .card-blue .card-objective { border-left-color: rgba(74,158,255,0.3); }
+  .card-green .card-objective { border-left-color: rgba(46,204,113,0.3); }
+  .card-orange .card-objective { border-left-color: rgba(230,126,34,0.3); }
+  .card-purple .card-objective { border-left-color: rgba(155,89,182,0.3); }
+
+  /* ─── STEPS TABLE ─── */
+  .steps-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+
+  .step-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.2s;
+  }
+
+  .step-item:hover { background: rgba(255,255,255,0.03); }
+
+  .step-num {
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 28px;
+    opacity: 0.8;
+  }
+
+  .card-blue .step-num { color: var(--blue); }
+  .card-green .step-num { color: var(--green); }
+  .card-orange .step-num { color: var(--orange); }
+
+  .step-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.3;
+  }
+
+  /* ─── INSPIRATION TAGS ─── */
+  .inspiration {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .inspiration-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .inspo-tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    background: rgba(200,149,42,0.08);
+    border: 1px solid rgba(200,149,42,0.2);
+    color: var(--gold-dim);
+  }
+
+  /* ─── FUTURE SYSTEMS LIST ─── */
+  .future-systems {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .future-system {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    background: rgba(0,0,0,0.15);
+    border-radius: 5px;
+    border: 1px solid rgba(155,89,182,0.08);
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .future-system:hover {
+    background: rgba(155,89,182,0.05);
+    border-color: rgba(155,89,182,0.2);
+  }
+
+  .future-system-icon { font-size: 13px; }
+
+  .future-system-name {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .future-system-file {
+    font-family: 'Inter', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+  }
+
+  /* ─── PARALLEL OPTIONS ─── */
+  .parallel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .parallel-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 18px 20px;
+    transition: transform 0.2s, border-color 0.2s;
+    cursor: pointer;
+  }
+
+  .parallel-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .parallel-card.red:hover { border-color: rgba(231,76,60,0.4); }
+  .parallel-card.docs:hover { border-color: rgba(200,149,42,0.4); }
+
+  .parallel-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .parallel-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .parallel-icon.red { background: rgba(231,76,60,0.12); border: 1px solid rgba(231,76,60,0.2); }
+  .parallel-icon.docs { background: rgba(200,149,42,0.1); border: 1px solid rgba(200,149,42,0.2); }
+
+  .parallel-title {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .parallel-card.red .parallel-title { color: #e74c3c; }
+  .parallel-card.docs .parallel-title { color: var(--gold); }
+
+  .parallel-files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+
+  .parallel-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .ptag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+
+  .ptag-red {
+    background: rgba(231,76,60,0.1);
+    border: 1px solid rgba(231,76,60,0.2);
+    color: #e74c3c;
+  }
+
+  .ptag-gold {
+    background: rgba(200,149,42,0.1);
+    border: 1px solid rgba(200,149,42,0.2);
+    color: var(--gold);
+  }
+
+  .parallel-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    margin-top: 50px;
+    border-top: 1px solid rgba(200,149,42,0.12);
+    padding: 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+
+  .footer::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: 20%; right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(200,149,42,0.3), transparent);
+  }
+
+  .footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .footer-sep {
+    color: rgba(200,149,42,0.3);
+  }
+
+  .footer-highlight {
+    color: var(--gold-dim);
+    font-weight: 500;
+  }
+
+  .footer-aura {
+    color: var(--blue);
+    font-weight: 500;
+    opacity: 0.7;
+  }
+
+  /* ─── RECOMMENDED BANNER ─── */
+  .recommended-banner {
+    background: linear-gradient(135deg, rgba(74,158,255,0.06) 0%, rgba(74,158,255,0.02) 100%);
+    border: 1px solid rgba(74,158,255,0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--blue);
+    letter-spacing: 0.5px;
+  }
+
+  .recommended-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--blue);
+    animation: dotPulse 1.5s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes dotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+    margin: 14px 0;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 640px) {
+    .header { padding: 28px 16px 24px; }
+    .container { padding: 0 14px; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .parallel-grid { grid-template-columns: 1fr; }
+    .status-items { grid-template-columns: 1fr; }
+    .status-card-header { flex-direction: column; align-items: flex-start; }
+    .status-metrics { gap: 8px; }
+    .footer-content { flex-direction: column; gap: 4px; }
+    .footer-sep { display: none; }
+  }
+
+  /* ─── SCROLL ANIMATION ─── */
+  .fade-in {
+    opacity: 0;
+    transform: translateY(16px);
+    animation: fadeInUp 0.5s ease forwards;
+  }
+
+  @keyframes fadeInUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-in:nth-child(1) { animation-delay: 0.1s; }
+  .fade-in:nth-child(2) { animation-delay: 0.2s; }
+  .fade-in:nth-child(3) { animation-delay: 0.3s; }
+  .fade-in:nth-child(4) { animation-delay: 0.4s; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ HEADER -->
+<header class="header">
+  <div class="header-ornament">⚔ Fields Online · Development Report ⚔</div>
+  <h1>Fields Online HML — Próximos Passos</h1>
+  <p class="header-subtitle">📋 Relatório de Progresso &nbsp;·&nbsp; 11/04/2026 &nbsp;·&nbsp; VXA-OS Engine</p>
+
+  <div class="header-badges">
+    <span class="badge badge-success">✅ Fase 1 Concluída</span>
+    <span class="badge badge-info">🔵 Fase 2 Disponível</span>
+    <span class="badge" style="background:rgba(200,149,42,0.1);border:1px solid rgba(200,149,42,0.3);color:var(--gold);">⚙ Ruby / RGSS3</span>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-label">
+      <span>🗺 Progresso Geral do Projeto</span>
+      <span>20% &nbsp;·&nbsp; Fase 1 de 5</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill"></div>
+    </div>
+    <div class="phase-dots">
+      <div class="phase-dot done"><div class="dot"></div><span>F1</span></div>
+      <div class="phase-dot"><div class="dot"></div><span>F2</span></div>
+      <div class="phase-dot"><div class="dot"></div><span>F3</span></div>
+      <div class="phase-dot"><div class="dot"></div><span>F4</span></div>
+      <div class="phase-dot"><div class="dot"></div><span>F5</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════════════════════════════ MAIN -->
+<main class="container">
+
+  <!-- ─── STATUS CARD: FASE 1 ─── -->
+  <div class="section-header">
+    <h2>✅ Status Atual</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="status-card">
+    <div class="status-card-header">
+      <div class="status-card-title">
+        <span style="font-size:20px;">🏆</span>
+        <h3>Fase 1 Concluída — Configs & Settings</h3>
+      </div>
+      <div class="status-metrics">
+        <div class="metric-pill">✅ 40 testes</div>
+        <div class="metric-pill">💯 100% aprovação</div>
+        <div class="metric-pill">🔒 Zero breaking changes</div>
+      </div>
+    </div>
+
+    <div class="status-items">
+      <div class="status-item">
+        <div class="status-item-title">✅ [VS] Configs.rb</div>
+        <ul class="status-item-details">
+          <li>288 → ~420 linhas (+46% expansão)</li>
+          <li>26 seções documentadas e organizadas</li>
+          <li>Resolução 1152×768 adicionada</li>
+          <li>20/20 testes aprovados ✔</li>
+        </ul>
+      </div>
+      <div class="status-item">
+        <div class="status-item-title">✅ [VS] Settings_File.rb</div>
+        <ul class="status-item-details">
+          <li>63 → ~120 linhas (+90% expansão)</li>
+          <li>Bug crítico VSync corrigido</li>
+          <li>Bug crítico Fullscreen corrigido</li>
+          <li>20/20 testes aprovados ✔</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="status-total">
+      <div class="total-stat"><strong>40</strong> testes aprovados</div>
+      <div class="total-stat"><strong>100%</strong> taxa de aprovação</div>
+      <div class="total-stat"><strong>2</strong> bugs críticos corrigidos</div>
+      <div class="total-stat"><strong>0</strong> breaking changes</div>
+      <div class="total-stat"><strong>26</strong> seções documentadas</div>
+    </div>
+  </div>
+
+  <!-- ─── PRÓXIMOS PASSOS ─── -->
+  <div class="section-header">
+    <h2>🗺 Onde Podemos Ir Agora</h2>
+    <div class="section-line"></div>
+  </div>
+
+  <div class="cards-grid">
+
+    <!-- CARD 1: FASE 2 — HUD (RECOMENDADO) -->
+    <div class="phase-card card-blue card-featured fade-in">
+      <div class="recommended-banner">
+        <div class="recommended-dot"></div>
+        🔵 PRÓXIMO PASSO RECOMENDADO
+      </div>
+
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-phase-label">Fase 2</div>
+          <div class="card-title">HUD Principal</div>
+        </div>
+        <span class="status-badge badge-available">DISPONÍVEL</span>
+      </div>
+
+      <div class="card-files">
+        <div class="card-files-label">📁 Arquivos</div>
+        <div class="file-tags">
+          <span class="file-tag">[VS] Sprite_HUD.rb</span>
+          <span class="file-tag">[VS] Sprite_States.rb</span>
+          <span class="file-tag">[VS] Sprite_Desc.rb</span>
+          <span class="file-tag">[VS] Sprite2.rb</span>
+        </div>
+      </div>
+
+      <div class="card-objective">
+        🎯 Revisar e modernizar as barras de HP/MP/EXP — o elemento mais visível do jogo. Redesign visual inspirado em MMORPGs clássicos com configurações modulares.
+      </div>
+
+      <div class="steps-label">📋 Etapas</div>
+      <div class="steps-list">
+        <div class="step-item">
+          <span class="step-num">2.1</span>
+          <span class="step-text">Análise completa do Sprite_HUD atual</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2.2</span>
+          <span class="step-text">Redesign visual das barras (estilo MU Online)</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2.3</span>
+          <span class="step-text">Configurações modulares e documentadas</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">2.4</span>
+          <span class="step-text">Testes multi-resolução (incluindo 1152×768)</span>
+        </div>
+      </div>
+
+      <div class="inspiration">
+        <span class="inspiration-label">✨ Inspiração:</span>
+        <span class="inspo-tag">MU Online</span>
+        <span class="inspo-tag">Tibia</span>
+        <span class="inspo-tag">Ragnarok</span>
+      </div>
+    </div>
+
+    <!-- CARD 2: FASE 3 — MINIMAP -->
+    <div class="phase-card card-green fade-in">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-phase-label">Fase 3</div>
+          <div class="card-title">Minimap</div>
+        </div>
+        <span class="status-badge badge-waiting">AGUARDANDO F2</span>
+      </div>
+
+      <div class="card-files">
+        <div class="card-files-label">📁 Arquivo</div>
+        <div class="file-tags">
+          <span class="file-tag">[VS] Sprite_Minimap.rb</span>
+        </div>
+      </div>
+
+      <div class="card-objective">
+        🗺 Minimap quadrado com frame desenhado via Bitmap (sem Windowskin). Marcadores de jogador e NPCs, posicionado no canto superior direito sem sobrepor a HUD.
+      </div>
+
+      <div class="steps-label">📋 Etapas</div>
+      <div class="steps-list">
+        <div class="step-item">
+          <span class="step-num">3.1</span>
+          <span class="step-text">Análise do minimap atual e limitações</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3.2</span>
+          <span class="step-text">Implementação base quadrada via Bitmap</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3.3</span>
+          <span class="step-text">Marcadores de jogador, NPCs e inimigos</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">3.4</span>
+          <span class="step-text">Configurações e posicionamento (canto sup. direito)</span>
+        </div>
+      </div>
+
+      <div class="inspiration">
+        <span class="inspiration-label">✨ Inspiração:</span>
+        <span class="inspo-tag">Tibia Online</span>
+        <span class="inspo-tag">MU Online</span>
+        <span class="inspo-tag">Ragnarok</span>
+      </div>
+    </div>
+
+    <!-- CARD 3: FASE 4 — DROP -->
+    <div class="phase-card card-orange fade-in">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-phase-label">Fase 4</div>
+          <div class="card-title">Sistema de Drop</div>
+        </div>
+        <span class="status-badge badge-waiting">AGUARDANDO F3</span>
+      </div>
+
+      <div class="card-files">
+        <div class="card-files-label">📁 Arquivos</div>
+        <div class="file-tags">
+          <span class="file-tag">[VS] Sprite_Drop.rb</span>
+          <span class="file-tag">[VS] Game_Drop.rb</span>
+        </div>
+      </div>
+
+      <div class="card-objective">
+        🎁 Popups de drop empilhados e elegantes. Coleta por clique do mouse e tecla SPACE. Feedback visual e sonoro ao coletar itens do chão.
+      </div>
+
+      <div class="steps-label">📋 Etapas</div>
+      <div class="steps-list">
+        <div class="step-item">
+          <span class="step-num">4.1</span>
+          <span class="step-text">Análise dos scripts de drop atuais</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4.2</span>
+          <span class="step-text">Redesign dos popups (empilhamento elegante)</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4.3</span>
+          <span class="step-text">Coleta por clique (mouse) e tecla (SPACE)</span>
+        </div>
+        <div class="step-item">
+          <span class="step-num">4.4</span>
+          <span class="step-text">Feedback visual e sonoro ao coletar</span>
+        </div>
+      </div>
+
+      <div class="inspiration">
+        <span class="inspiration-label">✨ Mecânicas:</span>
+        <span class="inspo-tag">Mouse Click</span>
+        <span class="inspo-tag">SPACE Key</span>
+        <span class="inspo-tag">Visual FX</span>
+      </div>
+    </div>
+
+    <!-- CARD 4: FASE 5 — SISTEMAS AVANÇADOS -->
+    <div class="phase-card card-purple fade-in">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-phase-label">Fase 5</div>
+          <div class="card-title">Sistemas Avançados</div>
+        </div>
+        <span class="status-badge badge-future">FUTURO</span>
+      </div>
+
+      <div class="card-objective">
+        🔮 Sistemas complexos que serão abordados após a consolidação das fases anteriores. Cada sistema representa uma funcionalidade core do MMO.
+      </div>
+
+      <div class="future-systems">
+        <div class="future-system">
+          <span class="future-system-icon">📜</span>
+          <span class="future-system-name">Sistema de Quest</span>
+          <span class="future-system-file">Game_Quest.rb · Quests.rb</span>
+        </div>
+        <div class="future-system">
+          <span class="future-system-icon">💰</span>
+          <span class="future-system-name">Sistema de Trade</span>
+          <span class="future-system-file">Game_Trade.rb</span>
+        </div>
+        <div class="future-system">
+          <span class="future-system-icon">⚔</span>
+          <span class="future-system-name">Sistema de Guild</span>
+          <span class="future-system-file">Game_Guild.rb</span>
+        </div>
+        <div class="future-system">
+          <span class="future-system-icon">👥</span>
+          <span class="future-system-name">Sistema de Party</span>
+          <span class="future-system-file">Game_Party.rb</span>
+        </div>
+        <div class="future-system">
+          <span class="future-system-icon">🏦</span>
+          <span class="future-system-name">Sistema de Bank</span>
+          <span class="future-system-file">Game_Bank.rb</span>
+        </div>
+        <div class="future-system">
+          <span class="future-system-icon">🔐</span>
+          <span class="future-system-name">Login Polish</span>
+          <span class="future-system-file">Scene_Login.rb</span>
+        </div>
+        <div class="future-system">
+          <span class="future-system-icon">🧙</span>
+          <span class="future-system-name">Character Selection</span>
+          <span class="future-system-file">Scene_Character.rb</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ─── OPÇÕES PARALELAS ─── -->
+  <div class="section-header">
+    <h2>⚡ Opções Paralelas</h2>
+    <div class="section-line"></div>
+  </div>
+  <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Podem ser realizadas em qualquer fase, independentemente do progresso principal.</p>
+
+  <div class="parallel-grid">
+
+    <!-- Rede & Comunicação -->
+    <div class="parallel-card red">
+      <div class="parallel-card-header">
+        <div class="parallel-icon red">🔴</div>
+        <div>
+          <div class="parallel-title">Rede & Comunicação</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Estabilidade · Performance · Segurança</div>
+        </div>
+      </div>
+      <div class="parallel-files">
+        <span class="file-tag">[VS] Network.rb</span>
+        <span class="file-tag">[VS] Socket.rb</span>
+        <span class="file-tag">[VS] Send_Data.rb</span>
+      </div>
+      <div class="divider"></div>
+      <div class="parallel-tags">
+        <span class="ptag ptag-red">🔒 Segurança</span>
+        <span class="ptag ptag-red">⚡ Performance</span>
+        <span class="ptag ptag-red">🌐 Estabilidade</span>
+      </div>
+      <p class="parallel-desc" style="margin-top:10px;">Revisão e hardening dos scripts de rede. Correção de possíveis vulnerabilidades, otimização de pacotes e melhoria na estabilidade da conexão cliente-servidor.</p>
+    </div>
+
+    <!-- Documentação -->
+    <div class="parallel-card docs">
+      <div class="parallel-card-header">
+        <div class="parallel-icon docs">📝</div>
+        <div>
+          <div class="parallel-title">Documentação</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Atualização · Relatórios · Organização</div>
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <div class="card-files-label" style="margin-bottom:6px;">📋 Tarefas</div>
+        <div class="future-systems" style="gap:5px;">
+          <div class="future-system" style="border-color:rgba(200,149,42,0.1);">
+            <span class="future-system-icon">✅</span>
+            <span class="future-system-name" style="font-size:11px;">Atualizar Plano de Desenvolvimento</span>
+            <span class="future-system-file">Fase 1 concluída</span>
+          </div>
+          <div class="future-system" style="border-color:rgba(200,149,42,0.1);">
+            <span class="future-system-icon">📊</span>
+            <span class="future-system-name" style="font-size:11px;">Gerar novo relatório de repositório</span>
+            <span class="future-system-file">GitHub</span>
+          </div>
+        </div>
+      </div>
+      <div class="parallel-tags">
+        <span class="ptag ptag-gold">📁 README</span>
+        <span class="ptag ptag-gold">📊 Relatório</span>
+        <span class="ptag ptag-gold">🗂 Changelog</span>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════ FOOTER -->
+<footer class="footer">
+  <div class="footer-content">
+    <span>⚔ <span class="footer-highlight">Projeto: Fields Online HML</span></span>
+    <span class="footer-sep">·</span>
+    <span>🗺 Fase <span class="footer-highlight">1 de 5</span></span>
+    <span class="footer-sep">·</span>
+    <span>📊 Progresso: <span class="footer-highlight">20%</span></span>
+    <span class="footer-sep">·</span>
+    <span>👨‍💻 Desenvolvido por <span class="footer-highlight">Caio Juan De Lima Silva</span></span>
+    <span class="footer-sep">·</span>
+    <span>🤖 Revisado por <span class="footer-aura">Aura AI</span></span>
+  </div>
+</footer>
+
+</body>
+</html>
