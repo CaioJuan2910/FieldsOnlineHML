@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fields Online HML — Varredura Geral</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #c8952a;
+    --gold-light: #e8b84b;
+    --gold-dim: rgba(200,149,42,0.15);
+    --blue: #4a9eff;
+    --blue-dim: rgba(74,158,255,0.15);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.15);
+    --purple: #a855f7;
+    --purple-dim: rgba(168,85,247,0.15);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.15);
+    --orange: #f97316;
+    --orange-dim: rgba(249,115,22,0.15);
+    --yellow: #eab308;
+    --bg: #0d0f14;
+    --bg2: #12151c;
+    --bg3: #181c26;
+    --bg4: #1e2330;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e2e8f0;
+    --text-muted: #8892a4;
+    --text-dim: #5a6478;
+    --radius: 14px;
+    --radius-sm: 8px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── BACKGROUND GRID ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(74,158,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,158,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+    70%  { box-shadow: 0 0 0 10px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+  @keyframes pulse-ring-blue {
+    0%   { box-shadow: 0 0 0 0 rgba(74,158,255,0.4); }
+    70%  { box-shadow: 0 0 0 10px rgba(74,158,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(74,158,255,0); }
+  }
+  @keyframes bar-fill {
+    from { width: 0; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-6px); }
+  }
+  @keyframes glow-gold {
+    0%, 100% { text-shadow: 0 0 20px rgba(200,149,42,0.5); }
+    50%       { text-shadow: 0 0 40px rgba(200,149,42,0.9), 0 0 80px rgba(200,149,42,0.3); }
+  }
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  .anim-1 { animation: fadeInUp 0.6s ease both; }
+  .anim-2 { animation: fadeInUp 0.6s 0.1s ease both; }
+  .anim-3 { animation: fadeInUp 0.6s 0.2s ease both; }
+  .anim-4 { animation: fadeInUp 0.6s 0.3s ease both; }
+  .anim-5 { animation: fadeInUp 0.6s 0.4s ease both; }
+  .anim-6 { animation: fadeInUp 0.6s 0.5s ease both; }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 56px 0 40px;
+    text-align: center;
+    animation: fadeInDown 0.8s ease both;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .header-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 16px;
+    animation: float 3s ease-in-out infinite;
+  }
+  .header h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 40%, #ff9f43 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite, glow-gold 2s ease-in-out infinite;
+    margin-bottom: 10px;
+  }
+  .header-sub {
+    font-size: 15px;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    margin-bottom: 28px;
+  }
+  .header-sub span {
+    color: var(--blue);
+    font-weight: 600;
+  }
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border: 1px solid;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: default;
+  }
+  .badge:hover { transform: translateY(-2px); }
+  .badge-green {
+    background: var(--green-dim);
+    border-color: rgba(34,197,94,0.4);
+    color: var(--green);
+    animation: pulse-ring 2s infinite;
+  }
+  .badge-blue {
+    background: var(--blue-dim);
+    border-color: rgba(74,158,255,0.4);
+    color: var(--blue);
+    animation: pulse-ring-blue 2.5s infinite;
+  }
+  .badge-gold {
+    background: var(--gold-dim);
+    border-color: rgba(200,149,42,0.4);
+    color: var(--gold-light);
+  }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 48px 0 0;
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+  }
+  .section-title::before {
+    content: '';
+    display: block;
+    width: 4px; height: 20px;
+    border-radius: 2px;
+  }
+  .section-title.green::before  { background: var(--green); }
+  .section-title.red::before    { background: var(--red); }
+  .section-title.blue::before   { background: var(--blue); }
+  .section-title.gold::before   { background: var(--gold); }
+  .section-title.purple::before { background: var(--purple); }
+
+  /* ── CARDS GRID ── */
+  .cards-grid {
+    display: grid;
+    gap: 20px;
+  }
+  .cards-grid-3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .cards-grid-2 { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+
+  /* ── CARD BASE ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    box-shadow: var(--shadow);
+    transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+  .card.green-card::before  { background: linear-gradient(90deg, var(--green), #16a34a); }
+  .card.green-card:hover    { border-color: rgba(34,197,94,0.3); }
+  .card.blue-card::before   { background: linear-gradient(90deg, var(--blue), #2563eb); }
+  .card.blue-card:hover     { border-color: rgba(74,158,255,0.3); }
+  .card.gold-card::before   { background: linear-gradient(90deg, var(--gold), #d97706); }
+  .card.gold-card:hover     { border-color: rgba(200,149,42,0.3); }
+  .card.purple-card::before { background: linear-gradient(90deg, var(--purple), #7c3aed); }
+  .card.purple-card:hover   { border-color: rgba(168,85,247,0.3); }
+  .card.red-card::before    { background: linear-gradient(90deg, var(--red), var(--orange)); }
+  .card.red-card            { border-color: rgba(239,68,68,0.25); background: linear-gradient(135deg, var(--bg2), rgba(239,68,68,0.05)); }
+  .card.red-card:hover      { border-color: rgba(239,68,68,0.45); }
+
+  /* ── CARD HEADER ── */
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+  .card-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-weight: 400;
+  }
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .pill-green  { background: var(--green-dim);  color: var(--green);  border: 1px solid rgba(34,197,94,0.3); }
+  .pill-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(74,158,255,0.3); }
+  .pill-gold   { background: var(--gold-dim);   color: var(--gold-light); border: 1px solid rgba(200,149,42,0.3); }
+  .pill-purple { background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(168,85,247,0.3); }
+  .pill-red    { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(239,68,68,0.3); }
+  .pill-orange { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(249,115,22,0.3); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    margin: 16px 0 12px;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .progress-track {
+    height: 8px;
+    background: var(--bg4);
+    border-radius: 50px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 50px;
+    animation: bar-fill 1.2s ease both;
+  }
+  .fill-green  { background: linear-gradient(90deg, var(--green), #16a34a); }
+  .fill-blue   { background: linear-gradient(90deg, var(--blue), #2563eb); }
+  .fill-gold   { background: linear-gradient(90deg, var(--gold), #d97706); }
+  .fill-purple { background: linear-gradient(90deg, var(--purple), #7c3aed); }
+
+  /* ── ITEM LIST ── */
+  .item-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .item-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    padding: 8px 12px;
+    background: var(--bg3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .item-list li:hover { background: var(--bg4); border-color: var(--border2); }
+  .item-list li .icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+  .item-list li strong { color: var(--text); font-weight: 600; }
+  .item-list li .tag {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 50px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .tag-red    { background: var(--red-dim);    color: var(--red); }
+  .tag-orange { background: var(--orange-dim); color: var(--orange); }
+  .tag-yellow { background: rgba(234,179,8,0.15); color: var(--yellow); }
+  .tag-blue   { background: var(--blue-dim);   color: var(--blue); }
+  .tag-green  { background: var(--green-dim);  color: var(--green); }
+
+  /* ── STAT ROW ── */
+  .stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .stat-chip .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-green  { background: var(--green); }
+  .dot-blue   { background: var(--blue); }
+  .dot-gold   { background: var(--gold); }
+  .dot-purple { background: var(--purple); }
+  .dot-red    { background: var(--red); }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 16px 0;
+  }
+
+  /* ── ALERT CARD ── */
+  .alert-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .alert-icon {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    background: var(--red-dim);
+    border: 1px solid rgba(239,68,68,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    animation: blink 2s ease-in-out infinite;
+  }
+  .alert-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--red);
+    line-height: 1.2;
+  }
+  .alert-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── OPTION CARDS ── */
+  .option-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .option-card .recommended-ribbon {
+    position: absolute;
+    top: 16px; right: -28px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 4px 36px;
+    transform: rotate(45deg);
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(74,158,255,0.4);
+  }
+  .option-icon {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+  }
+  .icon-blue   { background: var(--blue-dim);   border: 1px solid rgba(74,158,255,0.3); }
+  .icon-gold   { background: var(--gold-dim);   border: 1px solid rgba(200,149,42,0.3); }
+  .icon-purple { background: var(--purple-dim); border: 1px solid rgba(168,85,247,0.3); }
+  .option-title {
+    font-size: 17px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+  .option-file {
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: var(--bg4);
+    border: 1px solid var(--border2);
+    color: var(--text-muted);
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+  .option-steps { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+  .option-steps li {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--bg3);
+    border-radius: 6px;
+    border-left: 2px solid var(--border2);
+  }
+  .option-steps li::before { content: '→'; color: var(--text-dim); flex-shrink: 0; }
+  .option-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── ROADMAP ── */
+  .roadmap {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+    padding-left: 32px;
+  }
+  .roadmap::before {
+    content: '';
+    position: absolute;
+    left: 11px; top: 20px; bottom: 20px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--green), var(--blue), var(--gold), var(--purple), var(--text-dim));
+  }
+  .roadmap-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 20px 24px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .roadmap-item:hover { transform: translateX(4px); }
+  .roadmap-dot {
+    position: absolute;
+    left: -32px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    border: 2px solid var(--bg);
+    z-index: 1;
+    flex-shrink: 0;
+  }
+  .rdot-green  { background: var(--green);  box-shadow: 0 0 12px rgba(34,197,94,0.6); }
+  .rdot-blue   { background: var(--blue);   box-shadow: 0 0 12px rgba(74,158,255,0.6); animation: pulse-ring-blue 2s infinite; }
+  .rdot-gold   { background: var(--gold);   box-shadow: 0 0 12px rgba(200,149,42,0.4); }
+  .rdot-purple { background: var(--purple); box-shadow: 0 0 12px rgba(168,85,247,0.4); }
+  .rdot-dim    { background: var(--bg4);    border-color: var(--text-dim); }
+  .roadmap-content { flex: 1; }
+  .roadmap-phase {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-bottom: 4px;
+  }
+  .roadmap-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .roadmap-desc {
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .roadmap-status {
+    flex-shrink: 0;
+    align-self: center;
+  }
+
+  /* ── NEXT STEPS ── */
+  .steps-list { display: flex; flex-direction: column; gap: 10px; }
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: transform 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .step-item:hover { transform: translateX(4px); background: var(--bg3); }
+  .step-num {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .num-red    { background: var(--red-dim);    color: var(--red);    border: 1px solid rgba(239,68,68,0.4); }
+  .num-orange { background: var(--orange-dim); color: var(--orange); border: 1px solid rgba(249,115,22,0.4); }
+  .num-yellow { background: rgba(234,179,8,0.15); color: var(--yellow); border: 1px solid rgba(234,179,8,0.4); }
+  .num-blue   { background: var(--blue-dim);   color: var(--blue);   border: 1px solid rgba(74,158,255,0.4); }
+  .step-content { flex: 1; }
+  .step-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+  .step-desc {
+    font-size: 12.5px;
+    color: var(--text-muted);
+  }
+  .step-priority {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 50px;
+    letter-spacing: 0.8px;
+    align-self: center;
+    flex-shrink: 0;
+  }
+  .pri-red    { background: var(--red-dim);    color: var(--red); }
+  .pri-orange { background: var(--orange-dim); color: var(--orange); }
+  .pri-yellow { background: rgba(234,179,8,0.15); color: var(--yellow); }
+  .pri-blue   { background: var(--blue-dim);   color: var(--blue); }
+
+  /* ── STATS BAR ── */
+  .stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+    animation: fadeInUp 0.6s 0.05s ease both;
+  }
+  .stat-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat-box:hover { transform: translateY(-3px); }
+  .stat-box.green-box { border-color: rgba(34,197,94,0.2); }
+  .stat-box.blue-box  { border-color: rgba(74,158,255,0.2); }
+  .stat-box.gold-box  { border-color: rgba(200,149,42,0.2); }
+  .stat-box.red-box   { border-color: rgba(239,68,68,0.2); }
+  .stat-value {
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+  }
+  .sv-green  { color: var(--green); }
+  .sv-blue   { color: var(--blue); }
+  .sv-gold   { color: var(--gold-light); }
+  .sv-red    { color: var(--red); }
+
+  /* ── FOOTER ── */
+  .footer {
+    margin-top: 64px;
+    padding: 32px 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    position: relative;
+    z-index: 1;
+  }
+  .footer span { color: var(--gold); font-weight: 600; }
+
+  /* ── INLINE CODE ── */
+  code {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    background: var(--bg4);
+    border: 1px solid var(--border2);
+    padding: 1px 6px;
+    border-radius: 4px;
+    color: var(--blue);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .container { padding: 0 16px; }
+    .header { padding: 36px 0 28px; }
+    .cards-grid-3, .cards-grid-2 { grid-template-columns: 1fr; }
+    .roadmap { padding-left: 28px; }
+    .stats-overview { grid-template-columns: repeat(2, 1fr); }
+    .step-priority { display: none; }
+  }
+  @media (max-width: 480px) {
+    .stats-overview { grid-template-columns: repeat(2, 1fr); }
+    .badge { font-size: 12px; padding: 6px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════ -->
+<!--  HEADER                                                        -->
+<!-- ══════════════════════════════════════════════════════════════ -->
+<div class="container">
+  <header class="header">
+    <span class="header-icon">⚔️</span>
+    <h1>Fields Online HML — Varredura Geral</h1>
+    <p class="header-sub">Situação Atual &nbsp;·&nbsp; 13/04/2026 &nbsp;·&nbsp; <span>Aura AI</span></p>
+    <div class="badges">
+      <span class="badge badge-green">🎮 Jogo 100% Funcionando</span>
+      <span class="badge badge-gold">📊 ~20% Concluído</span>
+      <span class="badge badge-blue">🔵 Fase 2 em Andamento</span>
+    </div>
+  </header>
+
+  <!-- ── STATS OVERVIEW ── -->
+  <div class="stats-overview">
+    <div class="stat-box green-box">
+      <div class="stat-value sv-green">40</div>
+      <div class="stat-label">Testes Aprovados</div>
+    </div>
+    <div class="stat-box blue-box">
+      <div class="stat-value sv-blue">99</div>
+      <div class="stat-label">Scripts no Repo</div>
+    </div>
+    <div class="stat-box gold-box">
+      <div class="stat-value sv-gold">1</div>
+      <div class="stat-label">Script [FO] Criado</div>
+    </div>
+    <div class="stat-box red-box">
+      <div class="stat-value sv-red">6</div>
+      <div class="stat-label">Scripts [FO] Pendentes</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!--  SEÇÃO 1 — CONCLUÍDO                                          -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-title green">✅ &nbsp;Seção 1 — O Que Foi Concluído</div>
+    <div class="cards-grid cards-grid-3">
+
+      <!-- Card 1 — Fase 1 -->
+      <div class="card green-card anim-1">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🏆 Fase 1: Configs &amp; Settings</div>
+            <div class="card-subtitle">Fundação do projeto · 100% completa</div>
+          </div>
+          <span class="status-pill pill-green">✅ CONCLUÍDA</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Progresso</span><span style="color:var(--green);font-weight:700;">100%</span></div>
+          <div class="progress-track"><div class="progress-fill fill-green" style="width:100%;"></div></div>
+        </div>
+        <ul class="item-list">
+          <li>
+            <span class="icon">📄</span>
+            <div><strong>[VS] Configs.rb</strong><br>288 → ~420 linhas · 26 seções documentadas · Resolução 1152×768</div>
+          </li>
+          <li>
+            <span class="icon">📄</span>
+            <div><strong>[VS] Settings_File.rb</strong><br>63 → ~120 linhas · Bug VSync corrigido · Bug Fullscreen corrigido</div>
+          </li>
+        </ul>
+        <div class="stat-row">
+          <div class="stat-chip"><span class="dot dot-green"></span>40 testes aprovados</div>
+          <div class="stat-chip"><span class="dot dot-green"></span>100% taxa</div>
+          <div class="stat-chip"><span class="dot dot-green"></span>0 breaking changes</div>
+        </div>
+      </div>
+
+      <!-- Card 2 — Fase 2 HUD -->
+      <div class="card blue-card anim-2">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🖥️ Fase 2: HUD Principal</div>
+            <div class="card-subtitle">Em andamento · Etapas 2.3 e 2.4 pendentes</div>
+          </div>
+          <span class="status-pill pill-blue">🔄 50%</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>Progresso</span><span style="color:var(--blue);font-weight:700;">50%</span></div>
+          <div class="progress-track"><div class="progress-fill fill-blue" style="width:50%;"></div></div>
+        </div>
+        <ul class="item-list">
+          <li>
+            <span class="icon">✅</span>
+            <div><strong>Etapa 2.1</strong> — Mapeamento do Sprite_HUD.rb original</div>
+          </li>
+          <li>
+            <span class="icon">✅</span>
+            <div><strong>Etapa 2.2</strong> — <code>[VS] Sprite_HUD.rb</code> reescrito v2.2.0<br>
+            <span style="font-size:11.5px;color:var(--text-dim);">HUD_Config · barras via Bitmap · sem assets externos · EXP como Sprite2 · DRAGGABLE=false</span></div>
+          </li>
+          <li>
+            <span class="icon">◇</span>
+            <div><strong>Etapa 2.3</strong> — Configs Modulares <span style="color:var(--orange);font-size:11.5px;font-weight:600;">PENDENTE</span><br>
+            <span style="font-size:11.5px;color:var(--text-dim);">FONT_NAME · FONT_SIZE · BAR_X · BAR_Y · SHOW_HP · SHOW_MP · SHOW_EXP</span></div>
+          </li>
+          <li>
+            <span class="icon">◇</span>
+            <div><strong>Etapa 2.4</strong> — Testes Multi-Resolução <span style="color:var(--orange);font-size:11.5px;font-weight:600;">PENDENTE</span><br>
+            <span style="font-size:11.5px;color:var(--text-dim);">800×608 · 1024×608 · 1024×672</span></div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Card 3 — FO Font -->
+      <div class="card green-card anim-3">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🔤 [FO] Font.rb v1.0.0</div>
+            <div class="card-subtitle">Único script [FO] existente · Fonte moderna</div>
+          </div>
+          <span class="status-pill pill-green">✅ CRIADO</span>
+        </div>
+        <div class="divider"></div>
+        <ul class="item-list">
+          <li>
+            <span class="icon">🔡</span>
+            <div>Fonte <strong>VL Gothic</strong> substituída por <strong>Nunito</strong> (Google Fonts)</div>
+          </li>
+          <li>
+            <span class="icon">⚙️</span>
+            <div>Carregamento TTF externo via <strong>Win32API</strong> — sem instalação no SO</div>
+          </li>
+          <li>
+            <span class="icon">📦</span>
+            <div>Módulo <code>FO_FONT_CONFIG</code> centralizado</div>
+          </li>
+          <li>
+            <span class="icon">🛠️</span>
+            <div>Incidente de servidor <strong>resolvido</strong></div>
+          </li>
+        </ul>
+        <div class="stat-row">
+          <div class="stat-chip"><span class="dot dot-green"></span>v1.0.0 estável</div>
+          <div class="stat-chip"><span class="dot dot-blue"></span>Win32API</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!--  SEÇÃO 2 — ALERTA CRÍTICO                                     -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-title red">⚠️ &nbsp;Seção 2 — Alerta Crítico</div>
+    <div class="card red-card anim-4">
+      <div class="alert-header">
+        <div class="alert-icon">⚠️</div>
+        <div>
+          <div class="alert-title">Nenhum script [FO] de gameplay criado ainda!</div>
+          <div class="alert-desc">O repositório tem <strong style="color:var(--text);">99 scripts</strong> (52 [RM] + 47 [VS]) mas apenas <code>[FO] Font.rb</code> existe como script personalizado do Fields Online.</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;font-weight:600;">Scripts prioritários ainda não criados:</p>
+      <ul class="item-list">
+        <li>
+          <span class="icon">📁</span>
+          <div><strong>[FO] Configs</strong> — Módulo central de configurações do Fields Online</div>
+          <span class="tag tag-red">🔴 CRÍTICA</span>
+        </li>
+        <li>
+          <span class="icon">🖥️</span>
+          <div><strong>[FO] Sprite_HUD Melhorado</strong> — Baseado na Fase 2 em andamento</div>
+          <span class="tag tag-orange">🟠 Fase 2</span>
+        </li>
+        <li>
+          <span class="icon">🗺️</span>
+          <div><strong>[FO] Minimap Quadrado</strong> — Inspirado em Tibia, MU Online, Ragnarok</div>
+          <span class="tag tag-yellow">🟡 Fase 3</span>
+        </li>
+        <li>
+          <span class="icon">⚡</span>
+          <div><strong>[FO] Skill Cooldown</strong> — UI Visual de habilidades</div>
+          <span class="tag tag-blue">🔵 UI Visual</span>
+        </li>
+        <li>
+          <span class="icon">💥</span>
+          <div><strong>[FO] Damage Popup</strong> — Indicador flutuante de dano</div>
+          <span class="tag tag-blue">🔵 Indicador</span>
+        </li>
+        <li>
+          <span class="icon">💎</span>
+          <div><strong>[FO] Sprite_Drop Melhorado</strong> — Sistema de drops aprimorado</div>
+          <span class="tag tag-yellow">🟡 Melhoria</span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!--  SEÇÃO 3 — ONDE PODEMOS IR AGORA                              -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-title blue">🧭 &nbsp;Seção 3 — Onde Podemos Ir Agora</div>
+    <div class="cards-grid cards-grid-3">
+
+      <!-- Opção Azul — RECOMENDADO -->
+      <div class="card blue-card option-card anim-1">
+        <div class="recommended-ribbon">RECOMENDADO</div>
+        <div class="option-icon icon-blue">🖥️</div>
+        <div class="option-title" style="color:var(--blue);">Fase 2: Concluir HUD Principal</div>
+        <div class="option-file">[VS] Sprite_HUD.rb</div>
+        <ul class="option-steps">
+          <li>Etapa 2.3: Adicionar módulo de Configs Modulares (FONT_NAME, BAR_X, SHOW_HP, etc.)</li>
+          <li>Etapa 2.4: Testar em múltiplas resoluções (800×608, 1024×608, 1024×672)</li>
+          <li>Finalizar documentação v2.2.0 completa</li>
+        </ul>
+        <div class="option-footer">
+          <span class="status-pill pill-green">✅ DISPONÍVEL</span>
+          <span class="status-pill pill-blue">⬇️ Baixo Risco</span>
+          <span class="status-pill pill-gold">🎯 Impacto Visual Alto</span>
+        </div>
+      </div>
+
+      <!-- Opção Gold -->
+      <div class="card gold-card option-card anim-2">
+        <div class="option-icon icon-gold">🗺️</div>
+        <div class="option-title" style="color:var(--gold-light);">Fase 3: [FO] Sprite_Minimap</div>
+        <div class="option-file">[FO] Sprite_Minimap.rb</div>
+        <ul class="option-steps">
+          <li>Primeiro script [FO] real de gameplay</li>
+          <li>Minimap quadrado · Frame via Bitmap · Sem Windowskin</li>
+          <li>Inspiração: Tibia, MU Online, Ragnarok Online</li>
+        </ul>
+        <div class="option-footer">
+          <span class="status-pill pill-orange">⏳ AGUARDANDO FASE 2</span>
+          <span class="status-pill pill-gold">🎮 Gameplay</span>
+        </div>
+      </div>
+
+      <!-- Opção Purple -->
+      <div class="card purple-card option-card anim-3">
+        <div class="option-icon icon-purple">⚙️</div>
+        <div class="option-title" style="color:var(--purple);">Paralelo: [FO] Configs Central</div>
+        <div class="option-file">[FO] Configs.rb</div>
+        <ul class="option-steps">
+          <li>Criar o módulo central de configurações do Fields Online</li>
+          <li>Consolidar Font, HUD, Rede, Limits, Colors em um único lugar</li>
+          <li>Prioridade: CRÍTICA para todo o projeto</li>
+        </ul>
+        <div class="option-footer">
+          <span class="status-pill pill-red">🔴 CRÍTICO</span>
+          <span class="status-pill pill-purple">⚡ A Qualquer Momento</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!--  SEÇÃO 4 — ROADMAP VISUAL                                     -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-title gold">🗺️ &nbsp;Seção 4 — Roadmap Visual</div>
+    <div class="roadmap anim-5">
+
+      <div class="roadmap-item" style="border-color:rgba(34,197,94,0.2);">
+        <div class="roadmap-dot rdot-green">✓</div>
+        <div class="roadmap-content">
+          <div class="roadmap-phase">Fase 1</div>
+          <div class="roadmap-title">Configs &amp; Settings</div>
+          <div class="roadmap-desc">
+            <code>[VS] Configs.rb</code> &nbsp;·&nbsp; <code>[VS] Settings_File.rb</code> &nbsp;·&nbsp; 40 testes aprovados &nbsp;·&nbsp; 0 breaking changes
+          </div>
+        </div>
+        <div class="roadmap-status"><span class="status-pill pill-green">✅ CONCLUÍDA</span></div>
+      </div>
+
+      <div class="roadmap-item" style="border-color:rgba(74,158,255,0.2);">
+        <div class="roadmap-dot rdot-blue">2</div>
+        <div class="roadmap-content">
+          <div class="roadmap-phase">Fase 2</div>
+          <div class="roadmap-title">HUD Principal</div>
+          <div class="roadmap-desc">
+            <code>[VS] Sprite_HUD.rb</code> v2.2.0 &nbsp;·&nbsp; Etapas 2.3 e 2.4 pendentes &nbsp;·&nbsp; Configs Modulares + Testes Multi-Resolução
+          </div>
+          <div class="progress-wrap" style="margin-top:10px;margin-bottom:0;">
+            <div class="progress-label"><span>Progresso da Fase</span><span style="color:var(--blue);font-weight:700;">50%</span></div>
+            <div class="progress-track"><div class="progress-fill fill-blue" style="width:50%;"></div></div>
+          </div>
+        </div>
+        <div class="roadmap-status"><span class="status-pill pill-blue">🔄 50%</span></div>
+      </div>
+
+      <div class="roadmap-item" style="border-color:rgba(200,149,42,0.2);">
+        <div class="roadmap-dot rdot-gold">3</div>
+        <div class="roadmap-content">
+          <div class="roadmap-phase">Fase 3</div>
+          <div class="roadmap-title">Minimap [FO]</div>
+          <div class="roadmap-desc">
+            <code>[FO] Sprite_Minimap.rb</code> &nbsp;·&nbsp; Minimap quadrado &nbsp;·&nbsp; Frame via Bitmap &nbsp;·&nbsp; Inspiração: Tibia · MU Online · Ragnarok
+          </div>
+        </div>
+        <div class="roadmap-status"><span class="status-pill pill-orange">⏳ AGUARDANDO</span></div>
+      </div>
+
+      <div class="roadmap-item" style="border-color:rgba(168,85,247,0.2);">
+        <div class="roadmap-dot rdot-purple">4</div>
+        <div class="roadmap-content">
+          <div class="roadmap-phase">Fase 4</div>
+          <div class="roadmap-title">Sistemas de Gameplay</div>
+          <div class="roadmap-desc">
+            <code>[FO] Skill_Cooldown.rb</code> &nbsp;·&nbsp; <code>[FO] Damage_Popup.rb</code> &nbsp;·&nbsp; <code>[FO] Sprite_Drop.rb</code>
+          </div>
+        </div>
+        <div class="roadmap-status"><span class="status-pill pill-purple">🔒 FUTURO</span></div>
+      </div>
+
+      <div class="roadmap-item" style="border-color:rgba(255,255,255,0.06);">
+        <div class="roadmap-dot rdot-dim">5</div>
+        <div class="roadmap-content">
+          <div class="roadmap-phase">Fase 5</div>
+          <div class="roadmap-title">Sistemas Avançados</div>
+          <div class="roadmap-desc">
+            Job System &nbsp;·&nbsp; Item Raridade &nbsp;·&nbsp; Quest Chains &nbsp;·&nbsp; Expansões futuras do Fields Online
+          </div>
+        </div>
+        <div class="roadmap-status"><span class="status-pill" style="background:rgba(255,255,255,0.05);color:var(--text-dim);border:1px solid var(--border);">🔮 PLANEJADO</span></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!--  SEÇÃO 5 — PRÓXIMOS PASSOS                                    -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-title purple">🎯 &nbsp;Seção 5 — Próximos Passos Sugeridos</div>
+    <div class="steps-list anim-6">
+
+      <div class="step-item">
+        <div class="step-num num-red">1</div>
+        <div class="step-content">
+          <div class="step-title">🔴 Concluir Etapa 2.3 — Configurações Modulares do HUD</div>
+          <div class="step-desc">Adicionar <code>FONT_NAME</code>, <code>FONT_SIZE</code>, <code>BAR_X</code>, <code>BAR_Y</code>, <code>SHOW_HP</code>, <code>SHOW_MP</code>, <code>SHOW_EXP</code> ao módulo HUD_Config do <code>[VS] Sprite_HUD.rb</code></div>
+        </div>
+        <span class="step-priority pri-red">IMEDIATO</span>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num num-red">2</div>
+        <div class="step-content">
+          <div class="step-title">🔴 Concluir Etapa 2.4 — Testes de Resolução</div>
+          <div class="step-desc">Validar HUD nas resoluções 800×608, 1024×608 e 1024×672 para garantir compatibilidade multi-resolução</div>
+        </div>
+        <span class="step-priority pri-red">IMEDIATO</span>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num num-orange">3</div>
+        <div class="step-content">
+          <div class="step-title">🟠 Criar [FO] Configs — Módulo Central</div>
+          <div class="step-desc">Consolidar Font, HUD, Rede, Limits e Colors em um único módulo central. Prioridade crítica para toda a arquitetura do Fields Online</div>
+        </div>
+        <span class="step-priority pri-orange">CRÍTICO</span>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num num-yellow">4</div>
+        <div class="step-content">
+          <div class="step-title">🟡 Criar [FO] Sprite_Minimap — Fase 3</div>
+          <div class="step-desc">Primeiro script [FO] real de gameplay. Minimap quadrado com frame via Bitmap, sem Windowskin. Inspirado em Tibia, MU Online e Ragnarok Online</div>
+        </div>
+        <span class="step-priority pri-yellow">PRÓXIMO</span>
+      </div>
+
+      <div class="step-item">
+        <div class="step-num num-blue">5</div>
+        <div class="step-content">
+          <div class="step-title">🔵 Integrar [FO] Font ao [FO] Configs</div>
+          <div class="step-desc">Quando <code>[FO] Configs.rb</code> for criado, migrar as configurações de <code>FO_FONT_CONFIG</code> para o módulo central, mantendo retrocompatibilidade</div>
+        </div>
+        <span class="step-priority pri-blue">VALIDAÇÃO</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <!--  FOOTER                                                        -->
+  <!-- ══════════════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <p>⚔ <span>Fields Online HML</span> &nbsp;·&nbsp; Varredura por <span>Aura AI</span> &nbsp;·&nbsp; 13/04/2026 &nbsp;·&nbsp; <span>RPG Maker VX Ace + VXA-OS</span></p>
+    <p style="margin-top:8px;font-size:11px;color:var(--text-dim);">Dashboard gerado automaticamente · Dados baseados na base de conhecimento do projeto</p>
+  </footer>
+
+</div>
+
+</body>
+</html>
