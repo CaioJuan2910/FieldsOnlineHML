@@ -156,6 +156,8 @@
 [VS] Scene_Character
 [VS] Scene_Map
 
+[FO] Sprite_HUD
+
 ▼ Main~blank
 no_script_name
 [RM] Main
