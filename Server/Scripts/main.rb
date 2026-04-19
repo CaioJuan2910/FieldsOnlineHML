@@ -9,6 +9,7 @@
 load './configs.ini'
 load './vocab.ini'
 
+require_relative 'Configs'
 require 'eventmachine'
 require 'sequel'
 require 'colorize'
