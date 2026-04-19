@@ -11,8 +11,7 @@ module Database
 
 	def self.sql_client
 		if DATABASE_PATH.empty?
-			#Sequel.connect("mysql2://#{DATABASE_USER}:#{DATABASE_PASS}@#{DATABASE_HOST}:#{DATABASE_PORT}/#{DATABASE_NAME}")
-			Sequel.connect("postgres://#{DATABASE_USER}:#{DATABASE_PASS}@#{DATABASE_HOST}/#{DATABASE_NAME}")
+			Sequel.connect("mysql2://#{DATABASE_USER}:#{DATABASE_PASS}@#{DATABASE_HOST}:#{DATABASE_PORT}/#{DATABASE_NAME}")
 		else
 			Sequel.connect("sqlite://Data/#{DATABASE_PATH}.db")
 		end

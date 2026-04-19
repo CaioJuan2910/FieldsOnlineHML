@@ -18,11 +18,6 @@ require 'json'
 require './Data/rpg'
 require './Data/rgss'
 
-
-require_relative 'Configs'
-require_relative 'FO/core'
-require_relative 'FO/logger'
-require_relative 'FO/safe'
 require_relative 'Kernel/scripts'
 require_relative 'Kernel/enums'
 require_relative 'Kernel/structs'

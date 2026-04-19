@@ -72,7 +72,7 @@ class Game_Event
 	end
 
 	def clear_enemy
-		@action_time = Time.now + 0.8
+		@action_time = Time.now + Configs::ATTACK_TIME
 		@revive_time = Time.now
 		@escape = false
 		@hp = 0
