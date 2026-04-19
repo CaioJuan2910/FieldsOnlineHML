@@ -121,112 +121,61 @@ module Handle_Data
 		end
 	end
 	
-	#==============================================================================
-# ** [FO PATCH] Handle_Login
-#------------------------------------------------------------------------------
-# Autor: Fields Online
-# Versão: 1.1.0
-#------------------------------------------------------------------------------
-
-def handle_login(client, buffer)
-
-  FO.safe_call("FO Login") do
-
-    FO.info("Tentativa de login recebida")
-
-    # ===============================
-    # Leitura dos dados
-    # ===============================
-    user = buffer.read_string.force_encoding('UTF-8').delete('[/\\\]')
-    pass = buffer.read_string
-    version = buffer.read_short
-
-    FO.info("Usuário: #{user}")
-    FO.info("Versão: #{version}")
-
-    # ===============================
-    # Validações iniciais
-    # ===============================
-    if login_hacking_attempt?(client)
-      FO.warn("Tentativa de hack: IP #{client.ip}")
-      client.close_connection
-      return
-    end
-
-    if version != Configs::GAME_VERSION
-      FO.warn("Versão inválida: #{user}")
-      send_failed_login(client, Enums::Login::OLD_VERSION)
-      client.close_connection_after_writing
-      return
-    end
-
-    if ip_blocked?(client.ip)
-      FO.warn("IP bloqueado: #{client.ip}")
-      send_failed_login(client, Enums::Login::IP_BLOCKED)
-      client.close_connection_after_writing
-      return
-    end
-
-    if !Database.account_exist?(user)
-      FO.warn("Usuário não existe: #{user}")
-      send_failed_login(client, Enums::Login::INVALD_USER)
-      add_attempt(client)
-      client.close_connection_after_writing
-      return
-    end
-
-    if multi_accounts?(user, client.ip)
-      FO.warn("Multi-account: #{user}")
-      send_failed_login(client, Enums::Login::MULTI_ACCOUNT)
-      client.close_connection_after_writing
-      return
-    end
-
-    # ===============================
-    # Carregar conta
-    # ===============================
-    account = Database.load_account(user)
-
-    if pass != account.pass
-      FO.warn("Senha incorreta: #{user}")
-      send_failed_login(client, Enums::Login::INVALID_PASS)
-      add_attempt(client)
-      client.close_connection_after_writing
-      return
-    end
-
-    if banned?(account.id_db)
-      FO.warn("Conta banida: #{user}")
-      send_failed_login(client, Enums::Login::ACC_BANNED)
-      client.close_connection_after_writing
-      return
-    end
-
-    # ===============================
-    # Login bem-sucedido
-    # ===============================
-    FO.info("Login OK: #{user}")
-
-    client.user = user
-    client.account_id_db = account.id_db
-    client.pass = account.pass
-    client.group = account.group
-    client.vip_time = account.vip_time
-    client.actors = account.actors
-    client.friends = account.friends
-    client.handshake = true
-
-    Database.load_bank(client)
-
-    send_login(client)
-
-    @blocked_ips.delete(client.ip)
-
-    puts("#{user} logou com o IP #{client.ip}.")
-
-  end
-
-end
+	def handle_login(client, buffer)
+		# Altera a codificação padrão do nome de usuário recebido pela Socket do Ruby (ASCII-8BIT)
+		#para UTF-8, evitando erro ao exibir a mensagem no console do Server.exe. Impede
+		#que uma mesma conta seja utilizada mais de uma vez
+		user = buffer.read_string.force_encoding('UTF-8').delete('[/\\\]')
+		pass = buffer.read_string
+		version = buffer.read_short
+		if login_hacking_attempt?(client)
+			client.close_connection
+			return
+		elsif version != Configs::GAME_VERSION
+			send_failed_login(client, Enums::Login::OLD_VERSION)
+			# Fecha a conexão somente após a mensagem ser enviada
+			client.close_connection_after_writing
+			return
+		elsif ip_blocked?(client.ip)
+			send_failed_login(client, Enums::Login::IP_BLOCKED)
+			client.close_connection_after_writing
+			return
+		elsif !Database.account_exist?(user)
+			send_failed_login(client, Enums::Login::INVALD_USER)
+			add_attempt(client)
+			client.close_connection_after_writing
+			return
+		elsif multi_accounts?(user, client.ip)
+			send_failed_login(client, Enums::Login::MULTI_ACCOUNT)
+			client.close_connection_after_writing
+			return
+		end
+		account = Database.load_account(user)
+		if pass != account.pass
+			send_failed_login(client, Enums::Login::INVALID_PASS)
+			add_attempt(client)
+			client.close_connection_after_writing
+			return
+		elsif banned?(account.id_db)
+			send_failed_login(client, Enums::Login::ACC_BANNED)
+			client.close_connection_after_writing
+			return
+		end
+		client.user = user
+		client.account_id_db = account.id_db
+		# Salva a senha, já que, ao excluir personagem, é necessário verificar
+		#se a senha que o usuário digitou está correta
+		client.pass = account.pass
+		client.group = account.group
+		client.vip_time = account.vip_time
+		client.actors = account.actors
+		client.friends = account.friends
+		client.handshake = true
+		Database.load_bank(client)
+		send_login(client)
+		@blocked_ips.delete(client.ip)
+		puts("#{user} logou com o IP #{client.ip}.")
+	end
 
 	def handle_create_account(client, buffer)
 		# Altera a codificação padrão do nome de usuário recebido pela Socket do Ruby (ASCII-8BIT)

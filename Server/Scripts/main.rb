@@ -9,7 +9,6 @@
 load './configs.ini'
 load './vocab.ini'
 
-require_relative 'Configs'
 require 'eventmachine'
 require 'sequel'
 require 'colorize'
@@ -19,6 +18,10 @@ require 'json'
 require './Data/rpg'
 require './Data/rgss'
 
+require_relative 'Configs'
+require_relative 'FO/[FO] Core'
+require_relative 'FO/[FO] Logger'
+require_relative 'FO/[FO] Safe'
 require_relative 'Kernel/scripts'
 require_relative 'Kernel/enums'
 require_relative 'Kernel/structs'
