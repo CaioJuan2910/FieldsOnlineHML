@@ -11,26 +11,6 @@ Além disso, aqui nas Fontes do Chat, existe também materiais para que possa co
 Vamos iniciar o desenvolvimento do nosso MMORPG 2D do zero, utilizando como base a ferramenta RPG Maker VX Ace, integrada à plataforma online VXA-OS (Valentine Online System). O objetivo é construir um projeto robusto, escalável e bem estruturado, capaz de oferecer uma experiência multiplayer consistente.
 
 Nosso MMORPG terá como principais inspirações grandes títulos do gênero, como Tibia Online, MU Online, Ragnarok Online, Diablo e World of Warcraft. Cada um desses jogos traz elementos fundamentais que podemos analisar e adaptar, como sistemas de progressão, combate, classes, economia, exploração e interação entre jogadores.
-
-📚 Fase 1: Estudo e Compreensão das Ferramentas
-
-Antes de iniciar qualquer implementação, é essencial realizar uma análise completa e aprofundada das tecnologias envolvidas:
-
-🔹 RPG Maker VX Ace
-Entender a estrutura do engine (Scenes, Windows, Sprites, Scripts, etc.)
-Funcionamento do RGSS3 (Ruby Game Scripting System)
-Organização do banco de dados (Actors, Classes, Skills, Items, Maps)
-Sistema de eventos (Event Commands)
-Pipeline gráfico e gerenciamento de recursos
-🔹 VXA-OS (Valentine Online System)
-Estrutura cliente-servidor
-Comunicação via sockets
-Sincronização de dados entre jogadores
-Gerenciamento de contas, login e autenticação
-Controle de mapas online e movimentação em tempo real
-Manipulação e segurança dos dados
-📁 Materiais de Apoio
-
 Utilize os seguintes diretórios como base principal para estudo e análise:
 
 Client (Cliente do jogo):
@@ -51,6 +31,7 @@ Arquivo .csv → Define a ordem correta dos scripts dentro do Client (EXTREMAMEN
 🖼️ Imagens e referências:
 Prints das telas do RPG Maker (para entender organização visual e lógica)
 Server1 e Server2 → Mostram a estrutura interna dos scripts do servidor
+
 🎯 Objetivo Inicial
 
 Neste primeiro momento, o foco não será programar, mas sim:
@@ -59,14 +40,6 @@ Realizar uma análise completa e detalhada de toda a estrutura existente
 Entender como os scripts do cliente e servidor se comunicam
 Identificar possíveis problemas, melhorias e pontos críticos
 Mapear o funcionamento geral do sistema online
-🧠 Resultado Esperado
-
-Ao final dessa fase, devemos ter:
-
-Um entendimento profundo do funcionamento do RPG Maker VX Ace com VXA-OS
-Um mapeamento claro da arquitetura do projeto
-Base sólida para iniciar o desenvolvimento com segurança
-Identificação de possíveis melhorias e otimizações
 
 Faça a análise técnica completa do Client + Server (linha por linha dos scripts principais)
 E monte um plano de desenvolvimento do MMORPG passo a passo (tipo roadmap profissional) em PDF
