@@ -18,6 +18,12 @@ require 'json'
 require './Data/rpg'
 require './Data/rgss'
 
+# Carregar serviços (NOVO)
+require_relative 'Services/player_service'
+require_relative 'Services/inventory_service'
+require_relative 'Services/equipment_service'
+
+# Sistema original
 require_relative 'Kernel/scripts'
 require_relative 'Kernel/enums'
 require_relative 'Kernel/structs'
