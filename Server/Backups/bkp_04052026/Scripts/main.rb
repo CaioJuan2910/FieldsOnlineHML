@@ -22,7 +22,6 @@ require './Data/rgss'
 require_relative 'Services/player_service'
 require_relative 'Services/inventory_service'
 require_relative 'Services/equipment_service'
-require_relative 'Services/trade_service'
 
 # Sistema original
 require_relative 'Kernel/scripts'
