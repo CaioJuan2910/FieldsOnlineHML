@@ -134,7 +134,6 @@ class Game_Client < EventMachine::Connection
   def hit_enemy(event, animation_id, ani_index, skill)
     change_target(event.id, Enums::Target::ENEMY)
     event.target.id = @id
-    @combat_service.process_attack(self, event, skill)
     event.item_apply(self, skill, animation_id, ani_index)
   end
 

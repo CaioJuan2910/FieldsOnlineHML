@@ -66,6 +66,7 @@ class Game_Client < EventMachine::Connection
 		@inventory_service = InventoryService.new
 		@equipment_service = EquipmentService.new
 		@trade_service = TradeService.new
+		@combat_service = CombatService.new
 		@through = false
 		@target = Target.new
 		@request = Target.new
