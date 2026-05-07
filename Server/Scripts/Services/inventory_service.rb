@@ -1,6 +1,15 @@
 class InventoryService
 
 def gain_item(client, item, amount)
+  return if item.nil?
+  return if amount == 0
+
+  # ❗ proteção contra exploit
+  if amount.abs > 1000
+    LoggerService.warn("Item exploit attempt", player: client.name, item: item.id, amount: amount)
+    return
+  end
+
   container = item_container(client, item)
   return unless container
 
@@ -10,9 +19,10 @@ def gain_item(client, item, amount)
   container.delete(item.id) if container[item.id] == 0
 
   kind = kind_item(item)
+
   $network.send_player_item(client, item.id, kind, amount, false, false)
 
-  update_quest_item(client, item)
+  LoggerService.info("Item updated", player: client.name, item: item.id, amount: amount)
 end
 
   def lose_item(client, item, amount)

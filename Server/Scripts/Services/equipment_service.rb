@@ -1,17 +1,22 @@
 class EquipmentService
 
-  def change_equip(client, slot_id, item_id)
-    new_item = equip_object(slot_id, item_id)
-    old_item = equip_object(slot_id, client.equips[slot_id])
+def change_equip(client, slot_id, item_id)
+  return if item_id.nil?
+  return if item_id < 0
 
-    return unless can_trade_item(client, new_item, old_item, slot_id)
+  new_item = equip_object(slot_id, item_id)
+  old_item = equip_object(slot_id, client.equips[slot_id])
 
-    client.equips[slot_id] = item_id
+  return unless can_trade_item(client, new_item, old_item, slot_id)
 
-    $network.send_player_equip(client, slot_id)
+  client.equips[slot_id] = item_id
 
-    client.refresh
-  end
+  $network.send_player_equip(client, slot_id)
+
+  LoggerService.info("Equip changed", player: client.name, slot: slot_id, item: item_id)
+
+  client.refresh
+end
 
   private
 

@@ -1,0 +1,4 @@
+[2026-05-04 15:56:39] [INFO] [player=Dev] Gold updated 
+[2026-05-04 15:56:42] [INFO] [player=Dev] Gold updated 
+[2026-05-04 15:56:51] [INFO] [player=Dev] Gold updated 
+[2026-05-04 15:56:52] [INFO] [player=Dev] Item updated 

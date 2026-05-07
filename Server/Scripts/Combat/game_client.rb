@@ -131,12 +131,11 @@ class Game_Client < EventMachine::Connection
     client.item_apply(self, skill, animation_id, ani_index)
   end
 
-  def hit_enemy(event, animation_id, ani_index, skill)
-    change_target(event.id, Enums::Target::ENEMY)
-    event.target.id = @id
-    @combat_service.process_attack(self, event, skill)
-    event.item_apply(self, skill, animation_id, ani_index)
-  end
+def hit_enemy(event, animation_id, ani_index, skill)
+  change_target(event.id, Enums::Target::ENEMY)
+  event.target.id = @id
+  event.item_apply(self, skill, animation_id, ani_index)
+end
 
   def send_attack(hp_damage, mp_damage, critical, attacker_id, attacker_type, ani_index, animation_id, not_show_missed)
     $network.send_attack_player(@map_id, hp_damage, mp_damage, critical, attacker_id, attacker_type, ani_index, @id, animation_id, not_show_missed)

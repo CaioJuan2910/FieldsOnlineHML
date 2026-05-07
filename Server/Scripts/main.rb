@@ -24,6 +24,7 @@ require_relative 'Services/inventory_service'
 require_relative 'Services/equipment_service'
 require_relative 'Services/trade_service'
 require_relative 'Services/combat_service'
+require_relative 'Services/logger_service.rb'
 
 # Sistema original
 require_relative 'Kernel/scripts'
